@@ -1,0 +1,141 @@
+# =============================================================================
+# Docker Compose Configuration for Angular Template
+# =============================================================================
+# This compose file provides multiple deployment profiles:
+# - dev: Development environment with hot-reload
+# - prod: Production environment with SSR
+# - prod-no-ssr: Production environment with static files and Nginx
+# =============================================================================
+
+name: ${APP_NAME:-my-angular-app}
+
+# Define reusable configuration
+x-common-variables: &common-variables
+  UID: ${UID:-1000}
+  GID: ${GID:-1000}
+  NODE_ENV: ${NODE_ENV:-development}
+services:
+  create:
+    # user: "${UID:-1000}:${GID:-1000}"  # UID:GID of the host or created user
+    image: node:22-alpine
+    working_dir: /app
+    profiles: ["create"]
+    volumes:
+      - .:/app
+    ports:
+      - "${DEV_PORT:-4200}:4200"
+    environment:
+      - APP_NAME=my-angular-app
+      - ANGULAR_CREATE_OPTIONS=--routing --style=scss --ssr
+      - NODE_NO_WARNINGS=1
+    command: >
+      sh -c "
+        npm install -g @angular/cli &&
+        ng new ${APP_NAME} --skip-git --skip-install ${ANGULAR_CREATE_OPTIONS} &&
+        rm -rf ${APP_NAME}/.gitignore &&
+        mv ${APP_NAME}/README.md ${APP_NAME}/README-${APP_NAME}.md &&
+        mv ${APP_NAME}/* . &&
+        mv ${APP_NAME}/.* . 2>/dev/null || true &&
+        rm -rf ${APP_NAME} &&
+        npm i &&
+        npm pkg set scripts.serve:ssr=\"npm run serve:ssr:${APP_NAME}\"
+      "
+  # Development service with hot-reload
+  dev:
+    build: 
+      context: .
+      target: development
+      args:
+        <<: *common-variables
+    container_name: ${APP_NAME:-my-angular-app}-dev
+    ports:
+      - "${DEV_PORT:-4200}:4200"
+    volumes:
+      # Mount source code for hot-reload (excludes node_modules for performance)
+      - .:/app:cached
+      - /app/node_modules
+      - angular_cache:/app/.angular
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - NG_CLI_ANALYTICS=false
+      - CI=true
+    # Override default command for development with additional options
+    command: >
+      ng serve --host 0.0.0.0 --port 4200 --poll=1000
+    # Health check for development container
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Restart policy
+    restart: unless-stopped
+    profiles: ["dev"]
+
+  # Production service with SSR
+  prod:
+    build: 
+      context: .
+      target: build
+      args:
+        <<: *common-variables
+        NODE_ENV: production
+      cache_from:
+        - node:22-alpine
+    container_name: ${APP_NAME:-my-angular-app}-prod
+    ports:
+      - "${PROD_PORT:-4000}:4000"
+    environment:
+      - NODE_ENV=production
+      - NG_CLI_ANALYTICS=false
+    # Health check for production SSR container
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Restart policy for production
+    restart: unless-stopped
+    profiles: ["prod"]
+
+  # Production service without SSR (static files with Nginx)
+  prod-no-ssr:
+    build: 
+      context: .
+      target: production-no-ssr
+      args:
+        <<: *common-variables
+        NODE_ENV: production
+      cache_from:
+        - node:22-alpine
+    container_name: ${APP_NAME:-my-angular-app}-prod-no-ssr
+    ports:
+      - "${PROD_NO_SSR_PORT:-4100}:80"
+    environment:
+      - NGINX_HOST=localhost
+      - NGINX_PORT=80
+    # Health check for Nginx container
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    # Restart policy for production
+    restart: unless-stopped
+    profiles: ["prod-no-ssr"]
+
+# Named volumes for better performance and persistence
+volumes:
+  # Angular cache volume for better build performance
+  angular_cache:
+    driver: local
+
+# Network configuration (optional - Docker creates default network)
+networks:
+  default:
+    name: ${APP_NAME:-my-angular-app}-network
+    driver: bridge

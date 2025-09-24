@@ -1,0 +1,203 @@
+# =============================================================================
+# Docker Ignore File for Angular Application
+# =============================================================================
+# This file excludes unnecessary files from the Docker build context
+# to improve build performance and reduce image size
+# =============================================================================
+
+# Dependencies and build artifacts
+node_modules/
+dist/
+.angular/
+coverage/
+.nyc_output/
+
+# Development and build tools
+.vscode/
+.idea/
+*.log
+*.tmp
+.env
+.env.*
+!.env.example
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Docker files (not needed in container)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Documentation and project files
+README*.md
+*.md
+docs/
+.editorconfig
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+
+# Testing
+karma.conf.js
+*.spec.ts
+*.test.ts
+e2e/
+cypress/
+cypress.json
+jest.config.js
+.nyc_output/
+coverage/
+
+# Linting and formatting
+.eslintrc*
+.prettierrc*
+.stylelintrc*
+tslint.json
+.jshintrc
+.jsbeautifyrc
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# Temporary files
+.tmp/
+temp/
+*.tmp
+*.temp
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+yarn-error.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE and editor files
+*.sublime-*
+.vscode/
+.idea/
+*.iml
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.tmproj
+.vscode/
+.vs/
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Build optimization files
+webpack-bundle-analyzer-report.html
+lighthouse-report.html
+stats.json
+
+# Local development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Cache directories
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.test
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Temporary folders
+tmp/
+temp/
+
+# Makefile (not needed in container)
+Makefile
+
+# Git hooks
+.git/hooks/
+
+# Build artifacts that don't need to be included
+dist/
+build/
+out/
