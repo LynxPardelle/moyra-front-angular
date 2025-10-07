@@ -39,9 +39,6 @@ help: ## Show this help message with all available commands
 	@echo "$(CYAN)🐳 Angular - Docker Management$(NC)"
 	@echo "$(CYAN)============================================$(NC)"
 	@echo ""
-	@echo "$(GREEN)🎯 Project Setup:$(NC)"
-	@echo "  create            - Create new Angular project structure"
-	@echo ""
 	@echo "$(GREEN)🚀 Development Commands:$(NC)"
 	@echo "  dev               - Start development server with hot-reload"
 	@echo "  dev-logs          - Show development container logs"
@@ -87,20 +84,6 @@ help: ## Show this help message with all available commands
 	@echo "  DEV_PORT: $(DEV_PORT)"
 	@echo "  PROD_PORT: $(PROD_PORT)"
 	@echo "  PROD_NO_SSR_PORT: $(PROD_NO_SSR_PORT)"
-	
-# =============================================================================
-# Create Commands
-# =============================================================================
-
-create: ## Create new Angular project structure
-	@echo "$(CYAN)🎯 Creating Angular project structure...$(NC)"
-	@if [ ! -d "./src" ]; then \
-		echo "$(YELLOW)Initializing new project: $(APP_NAME)$(NC)"; \
-		UID=$$(id -u) GID=$$(id -g) COMPOSE_BAKE=true docker-compose -p $(APP_NAME) --profile create up --build; \
-		echo "$(GREEN)✅ Project created successfully$(NC)"; \
-	else \
-		echo "$(YELLOW)⚠️ Project already exists. Delete src/ folder to recreate$(NC)"; \
-	fi
 
 # =============================================================================
 # Development Commands
@@ -299,6 +282,6 @@ env-info: ## Display environment information
 	@echo "GID: $(GID)"
 
 # Mark all targets as PHONY to avoid conflicts with file names
-.PHONY: help create dev dev-detached dev-logs dev-shell prod prod-detached prod-no-ssr prod-no-ssr-detached \
+.PHONY: help dev dev-detached dev-logs dev-shell prod prod-detached prod-no-ssr prod-no-ssr-detached \
         stop restart clean rebuild prune install install-dev update status logs health debug inspect \
         test lint build-check backup restore check-tools validate validate-angular env-info

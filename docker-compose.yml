@@ -15,31 +15,6 @@ x-common-variables: &common-variables
   GID: ${GID:-1000}
   NODE_ENV: ${NODE_ENV:-development}
 services:
-  create:
-    # user: "${UID:-1000}:${GID:-1000}"  # UID:GID of the host or created user
-    image: node:22-alpine
-    working_dir: /app
-    profiles: ["create"]
-    volumes:
-      - .:/app
-    ports:
-      - "${DEV_PORT:-4200}:4200"
-    environment:
-      - APP_NAME=my-angular-app
-      - ANGULAR_CREATE_OPTIONS=--routing --style=scss --ssr
-      - NODE_NO_WARNINGS=1
-    command: >
-      sh -c "
-        npm install -g @angular/cli &&
-        ng new ${APP_NAME} --skip-git --skip-install ${ANGULAR_CREATE_OPTIONS} &&
-        rm -rf ${APP_NAME}/.gitignore &&
-        mv ${APP_NAME}/README.md ${APP_NAME}/README-${APP_NAME}.md &&
-        mv ${APP_NAME}/* . &&
-        mv ${APP_NAME}/.* . 2>/dev/null || true &&
-        rm -rf ${APP_NAME} &&
-        npm i &&
-        npm pkg set scripts.serve:ssr=\"npm run serve:ssr:${APP_NAME}\"
-      "
   # Development service with hot-reload
   dev:
     build: 

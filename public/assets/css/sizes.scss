@@ -1,0 +1,532 @@
+$sizes: () !default;
+
+$sizes: map-merge(
+	(
+		"5": 5,
+		"10": 10,
+		"15": 15,
+		"20": 20,
+		"25": 25,
+		"30": 30,
+		"33": 33,
+		"35": 35,
+		"40": 40,
+		"45": 45,
+		"50": 50,
+		"55": 55,
+		"60": 60,
+		"65": 65,
+		"66": 66,
+		"70": 70,
+		"75": 75,
+		"80": 80,
+		"85": 85,
+		"90": 90,
+		"95": 95,
+		"99": 99,
+		"100": 100,
+	),
+	$sizes
+);
+
+$lowSizes: () !default;
+
+$lowSizes: map-merge(
+	(
+    "0": 0,
+		"1": 1,
+		"2": 2,
+		"3": 3,
+		"4": 4,
+		"5": 5,
+	),
+	$lowSizes
+);
+
+$ultraLowSizes: () !default;
+
+$ultraLowSizes: map-merge(
+	(
+		"0_25": 0.25,
+		"0_50": 0.5,
+		"0_75": 0.75,
+		"1": 1,
+		"1_25": 1.25,
+		"1_5": 1.5,
+		"1_75": 1.75,
+		"2": 2,
+		"2_25": 2.25,
+		"2_5": 2.5,
+		"2_75": 2.75,
+		"3": 3,
+		"3_25": 3.25,
+		"3_5": 3.5,
+		"3_75": 3.75,
+		"4": 4,
+		"4_25": 4.25,
+		"4_5": 4.5,
+		"4_75": 4.75,
+		"5": 5,
+	),
+	$ultraLowSizes
+);
+
+$highSizes: () !default;
+
+$highSizes: map-merge(
+	(
+		"25": 25,
+		"50": 50,
+		"75": 75,
+		"100": 100,
+		"125": 125,
+		"150": 150,
+		"175": 175,
+		"200": 200,
+		"225": 225,
+		"250": 250,
+		"275": 275,
+		"300": 300,
+		"325": 325,
+		"350": 350,
+		"375": 375,
+		"400": 400,
+		"425": 425,
+		"450": 450,
+		"475": 475,
+		"500": 500,
+		"525": 525,
+		"550": 550,
+		"575": 575,
+    "600": 600,
+    "625": 625,
+		"650": 650,
+		"675": 675,
+		"700": 700,
+		"725": 725,
+		"750": 750,
+		"775": 775,
+		"800": 800,
+		"825": 825,
+		"850": 850,
+		"875": 875,
+		"900": 900,
+		"925": 925,
+		"950": 950,
+		"975": 975,
+    "1000": 1000,
+    "1025": 1025,
+		"1050": 1050,
+		"1075": 1075,
+		"1100": 1100,
+		"1125": 1125,
+		"1150": 1150,
+		"1175": 1175,
+    "1200": 1200,
+		"1225": 1225,
+		"1250": 1250,
+		"1275": 1275,
+    "1300": 1300,
+    "1325": 1325,
+		"1350": 1350,
+		"1375": 1375,
+		"1400": 1400,
+		"1425": 1425,
+		"1450": 1450,
+		"1475": 1475,
+		"1500": 1500,
+		"1525": 1525,
+		"1550": 1550,
+	),
+	$highSizes
+);
+
+$percent: 0%;
+$vw: 0vw;
+$vh: 0vh;
+$rem: 0rem;
+$px: 0px;
+
+$bp-sm: 576px;
+$bp-md: 768px;
+$bp-lg: 992px;
+$bp-xl: 1200px;
+$bp-xxl: 1400px;
+
+@mixin property-variant($parent, $size, $property_name, $property_name2: null) {
+  #{$parent} {
+    #{$property_name}: $size !important;
+    @if $property_name2 {
+      #{$property_name2}: $size !important;
+    }
+	}
+
+}
+
+@mixin property-variant-bp($parent, $size, $property_name, $bp, $property_name2: null) {
+  @media only screen and (min-width: $bp) {
+    div {
+      #{$parent} {
+        #{$property_name}: $size !important;
+        @if $property_name2 {
+          #{$property_name2}: $size !important;
+        }
+      }
+    }
+    #{$parent} {
+      #{$property_name}: $size !important;
+      @if $property_name2 {
+        #{$property_name2}: $size !important;
+      }
+    }
+  }
+}
+
+@each $size, $value in $sizes {
+  $valuePercent: $value + $percent;
+	$valueVW: $value + $vw;
+	$valuePX: $value + $px;
+  $valueVH: $value + $vh;
+  // Width:
+	@include property-variant(".w-#{$size}", $valuePercent, width);
+  @include property-variant-bp(".w-sm-#{$size}", $valuePercent, width, $bp-sm);
+  @include property-variant-bp(".w-md-#{$size}", $valuePercent, width, $bp-md);
+  @include property-variant-bp(".w-lg-#{$size}", $valuePercent, width, $bp-lg);
+  @include property-variant-bp(".w-xl-#{$size}", $valuePercent, width, $bp-xl);
+  @include property-variant-bp(".w-xll-#{$size}", $valuePercent, width, $bp-xxl);
+	@include property-variant(".w-#{$size}vw", $valueVW, width);
+  @include property-variant-bp(".w-sm-#{$size}vw", $valueVW, width, $bp-sm);
+  @include property-variant-bp(".w-md-#{$size}vw", $valueVW, width, $bp-md);
+  @include property-variant-bp(".w-lg-#{$size}vw", $valueVW, width, $bp-lg);
+  @include property-variant-bp(".w-xl-#{$size}vw", $valueVW, width, $bp-xl);
+  @include property-variant-bp(".w-xll-#{$size}vw", $valueVW, width, $bp-xxl);
+	@include property-variant(".w-#{$size}px", $valuePX, width);
+  @include property-variant-bp(".w-sm-#{$size}px", $valuePX, width, $bp-sm);
+  @include property-variant-bp(".w-md-#{$size}px", $valuePX, width, $bp-md);
+  @include property-variant-bp(".w-lg-#{$size}px", $valuePX, width, $bp-lg);
+  @include property-variant-bp(".w-xl-#{$size}px", $valuePX, width, $bp-xl);
+  @include property-variant-bp(".w-xll-#{$size}px", $valuePX, width, $bp-xxl);
+
+  // Max-width
+  @include property-variant(".w-max-#{$size}", $valuePercent, max-width);
+  @include property-variant-bp(".w-max-sm-#{$size}", $valuePercent, max-width, $bp-sm);
+  @include property-variant-bp(".w-max-md-#{$size}", $valuePercent, max-width, $bp-md);
+  @include property-variant-bp(".w-max-lg-#{$size}", $valuePercent, max-width, $bp-lg);
+  @include property-variant-bp(".w-max-xl-#{$size}", $valuePercent, max-width, $bp-xl);
+  @include property-variant-bp(".w-max-xll-#{$size}", $valuePercent, max-width, $bp-xxl);
+	@include property-variant(".w-max-#{$size}vw", $valueVW, max-width);
+  @include property-variant-bp(".w-max-sm-#{$size}vw", $valueVW, max-width, $bp-sm);
+  @include property-variant-bp(".w-max-md-#{$size}vw", $valueVW, max-width, $bp-md);
+  @include property-variant-bp(".w-max-lg-#{$size}vw", $valueVW, max-width, $bp-lg);
+  @include property-variant-bp(".w-max-xl-#{$size}vw", $valueVW, max-width, $bp-xl);
+  @include property-variant-bp(".w-max-xll-#{$size}vw", $valueVW, max-width, $bp-xxl);
+	@include property-variant(".w-max-#{$size}px", $valuePX, max-width);
+  @include property-variant-bp(".w-max-sm-#{$size}px", $valuePX, max-width, $bp-sm);
+  @include property-variant-bp(".w-max-md-#{$size}px", $valuePX, max-width, $bp-md);
+  @include property-variant-bp(".w-max-lg-#{$size}px", $valuePX, max-width, $bp-lg);
+  @include property-variant-bp(".w-max-xl-#{$size}px", $valuePX, max-width, $bp-xl);
+  @include property-variant-bp(".w-max-xll-#{$size}px", $valuePX, max-width, $bp-xxl);
+
+  // Min-width:
+	@include property-variant(".w-min-#{$size}", $valuePercent, min-width);
+  @include property-variant-bp(".w-min-sm-#{$size}", $valuePercent, min-width, $bp-sm);
+  @include property-variant-bp(".w-min-md-#{$size}", $valuePercent, min-width, $bp-md);
+  @include property-variant-bp(".w-min-lg-#{$size}", $valuePercent, min-width, $bp-lg);
+  @include property-variant-bp(".w-min-xl-#{$size}", $valuePercent, min-width, $bp-xl);
+  @include property-variant-bp(".w-min-xll-#{$size}", $valuePercent, min-width, $bp-xxl);
+	@include property-variant(".w-min-#{$size}vw", $valueVW, min-width);
+  @include property-variant-bp(".w-min-sm-#{$size}vw", $valueVW, min-width, $bp-sm);
+  @include property-variant-bp(".w-min-md-#{$size}vw", $valueVW, min-width, $bp-md);
+  @include property-variant-bp(".w-min-lg-#{$size}vw", $valueVW, min-width, $bp-lg);
+  @include property-variant-bp(".w-min-xl-#{$size}vw", $valueVW, min-width, $bp-xl);
+  @include property-variant-bp(".w-min-xll-#{$size}vw", $valueVW, min-width, $bp-xxl);
+	@include property-variant(".w-min-#{$size}px", $valuePX, min-width);
+  @include property-variant-bp(".w-min-sm-#{$size}px", $valuePX, min-width, $bp-sm);
+  @include property-variant-bp(".w-min-md-#{$size}px", $valuePX, min-width, $bp-md);
+  @include property-variant-bp(".w-min-lg-#{$size}px", $valuePX, min-width, $bp-lg);
+  @include property-variant-bp(".w-min-xl-#{$size}px", $valuePX, min-width, $bp-xl);
+  @include property-variant-bp(".w-min-xll-#{$size}px", $valuePX, min-width, $bp-xxl);
+
+  // Height:
+	@include property-variant(".h-#{$size}", $valuePercent, height);
+  @include property-variant-bp(".h-sm-#{$size}", $valuePercent, height, $bp-sm);
+  @include property-variant-bp(".h-md-#{$size}", $valuePercent, height, $bp-md);
+  @include property-variant-bp(".h-lg-#{$size}", $valuePercent, height, $bp-lg);
+  @include property-variant-bp(".h-xl-#{$size}", $valuePercent, height, $bp-xl);
+  @include property-variant-bp(".h-xll-#{$size}", $valuePercent, height, $bp-xxl);
+	@include property-variant(".h-#{$size}vh", $valueVH, height);
+  @include property-variant-bp(".h-sm-#{$size}vh", $valueVH, height, $bp-sm);
+  @include property-variant-bp(".h-md-#{$size}vh", $valueVH, height, $bp-md);
+  @include property-variant-bp(".h-lg-#{$size}vh", $valueVH, height, $bp-lg);
+  @include property-variant-bp(".h-xl-#{$size}vh", $valueVH, height, $bp-xl);
+  @include property-variant-bp(".h-xll-#{$size}vh", $valueVH, height, $bp-xxl);
+	@include property-variant(".h-#{$size}px", $valuePX, height);
+  @include property-variant-bp(".h-sm-#{$size}px", $valuePX, height, $bp-sm);
+  @include property-variant-bp(".h-md-#{$size}px", $valuePX, height, $bp-md);
+  @include property-variant-bp(".h-lg-#{$size}px", $valuePX, height, $bp-lg);
+  @include property-variant-bp(".h-xl-#{$size}px", $valuePX, height, $bp-xl);
+  @include property-variant-bp(".h-xll-#{$size}px", $valuePX, height, $bp-xxl);
+  @include property-variant(".h-#{$size}vw", $valueVW, height);
+  @include property-variant-bp(".h-sm-#{$size}vw", $valueVW, height, $bp-sm);
+  @include property-variant-bp(".h-md-#{$size}vw", $valueVW, height, $bp-md);
+  @include property-variant-bp(".h-lg-#{$size}vw", $valueVW, height, $bp-lg);
+  @include property-variant-bp(".h-xl-#{$size}vw", $valueVW, height, $bp-xl);
+  @include property-variant-bp(".h-xll-#{$size}vw", $valueVW, height, $bp-xxl);
+
+  // Max-height:
+	@include property-variant(".h-max-#{$size}", $valuePercent, max-height);
+  @include property-variant-bp(".h-max-sm-#{$size}", $valuePercent, max-height, $bp-sm);
+  @include property-variant-bp(".h-max-md-#{$size}", $valuePercent, max-height, $bp-md);
+  @include property-variant-bp(".h-max-lg-#{$size}", $valuePercent, max-height, $bp-lg);
+  @include property-variant-bp(".h-max-xl-#{$size}", $valuePercent, max-height, $bp-xl);
+  @include property-variant-bp(".h-max-xll-#{$size}", $valuePercent, max-height, $bp-xxl);
+	@include property-variant(".h-max-#{$size}vh", $valueVH, max-height);
+  @include property-variant-bp(".h-max-sm-#{$size}vh", $valueVH, max-height, $bp-sm);
+  @include property-variant-bp(".h-max-md-#{$size}vh", $valueVH, max-height, $bp-md);
+  @include property-variant-bp(".h-max-lg-#{$size}vh", $valueVH, max-height, $bp-lg);
+  @include property-variant-bp(".h-max-xl-#{$size}vh", $valueVH, max-height, $bp-xl);
+  @include property-variant-bp(".h-max-xll-#{$size}vh", $valueVH, max-height, $bp-xxl);
+	@include property-variant(".h-max-#{$size}px", $valuePX, max-height);
+  @include property-variant-bp(".h-max-sm-#{$size}px", $valuePX, max-height, $bp-sm);
+  @include property-variant-bp(".h-max-md-#{$size}px", $valuePX, max-height, $bp-md);
+  @include property-variant-bp(".h-max-lg-#{$size}px", $valuePX, max-height, $bp-lg);
+  @include property-variant-bp(".h-max-xl-#{$size}px", $valuePX, max-height, $bp-xl);
+  @include property-variant-bp(".h-max-xll-#{$size}px", $valuePX, max-height, $bp-xxl);
+
+  // Min-height:
+	@include property-variant(".h-min-#{$size}", $valuePercent, min-height);
+  @include property-variant-bp(".h-min-sm-#{$size}", $valuePercent, min-height, $bp-sm);
+  @include property-variant-bp(".h-min-md-#{$size}", $valuePercent, min-height, $bp-md);
+  @include property-variant-bp(".h-min-lg-#{$size}", $valuePercent, min-height, $bp-lg);
+  @include property-variant-bp(".h-min-xl-#{$size}", $valuePercent, min-height, $bp-xl);
+  @include property-variant-bp(".h-min-xll-#{$size}", $valuePercent, min-height, $bp-xxl);
+	@include property-variant(".h-min-#{$size}vh", $valueVH, min-height);
+  @include property-variant-bp(".h-min-sm-#{$size}vh", $valueVH, min-height, $bp-sm);
+  @include property-variant-bp(".h-min-md-#{$size}vh", $valueVH, min-height, $bp-md);
+  @include property-variant-bp(".h-min-lg-#{$size}vh", $valueVH, min-height, $bp-lg);
+  @include property-variant-bp(".h-min-xl-#{$size}vh", $valueVH, min-height, $bp-xl);
+  @include property-variant-bp(".h-min-xll-#{$size}vh", $valueVH, min-height, $bp-xxl);
+	@include property-variant(".h-min-#{$size}px", $valuePX, min-height);
+  @include property-variant-bp(".h-min-sm-#{$size}px", $valuePX, min-height, $bp-sm);
+  @include property-variant-bp(".h-min-md-#{$size}px", $valuePX, min-height, $bp-md);
+  @include property-variant-bp(".h-min-lg-#{$size}px", $valuePX, min-height, $bp-lg);
+  @include property-variant-bp(".h-min-xl-#{$size}px", $valuePX, min-height, $bp-xl);
+  @include property-variant-bp(".h-min-xll-#{$size}px", $valuePX, min-height, $bp-xxl);
+
+  // Rounded:
+  @include property-variant(".rounded-#{$size}", $valuePX, border-radius);
+
+  // Z-Index
+  @include property-variant(".z-#{$size}", $value, z-index);
+
+  // Position
+  @include property-variant(".top-#{$size}", $valuePercent, top);
+  @include property-variant-bp(".top-sm-#{$size}", $valuePercent, top, $bp-sm);
+  @include property-variant-bp(".top-md-#{$size}", $valuePercent, top, $bp-md);
+  @include property-variant-bp(".top-lg-#{$size}", $valuePercent, top, $bp-lg);
+  @include property-variant-bp(".top-xl-#{$size}", $valuePercent, top, $bp-xl);
+  @include property-variant-bp(".top-xll-#{$size}", $valuePercent, top, $bp-xxl);
+  @include property-variant(".bottom-#{$size}", $valuePercent, bottom);
+  @include property-variant-bp(".bottom-sm-#{$size}", $valuePercent, bottom, $bp-sm);
+  @include property-variant-bp(".bottom-md-#{$size}", $valuePercent, bottom, $bp-md);
+  @include property-variant-bp(".bottom-lg-#{$size}", $valuePercent, bottom, $bp-lg);
+  @include property-variant-bp(".bottom-xl-#{$size}", $valuePercent, bottom, $bp-xl);
+  @include property-variant-bp(".bottom-xll-#{$size}", $valuePercent, bottom, $bp-xxl);
+  @include property-variant(".end-#{$size}", $valuePercent, right);
+  @include property-variant-bp(".end-sm-#{$size}", $valuePercent, right, $bp-sm);
+  @include property-variant-bp(".end-md-#{$size}", $valuePercent, right, $bp-md);
+  @include property-variant-bp(".end-lg-#{$size}", $valuePercent, right, $bp-lg);
+  @include property-variant-bp(".end-xl-#{$size}", $valuePercent, right, $bp-xl);
+  @include property-variant-bp(".end-xll-#{$size}", $valuePercent, right, $bp-xxl);
+  @include property-variant(".start-#{$size}", $valuePercent, left);
+  @include property-variant-bp(".start-sm-#{$size}", $valuePercent, left, $bp-sm);
+  @include property-variant-bp(".start-md-#{$size}", $valuePercent, left, $bp-md);
+  @include property-variant-bp(".start-lg-#{$size}", $valuePercent, left, $bp-lg);
+  @include property-variant-bp(".start-xl-#{$size}", $valuePercent, left, $bp-xl);
+  @include property-variant-bp(".start-xll-#{$size}", $valuePercent, left, $bp-xxl);
+}
+
+@each $size, $value in $ultraLowSizes {
+	$valueREM: $value + $rem;
+  // Width:
+	@include property-variant(".w-#{$size}rem", $valueREM, width);
+  @include property-variant-bp(".w-sm-#{$size}rem", $valueREM, width, $bp-sm);
+  @include property-variant-bp(".w-md-#{$size}rem", $valueREM, width, $bp-md);
+  @include property-variant-bp(".w-lg-#{$size}rem", $valueREM, width, $bp-lg);
+  @include property-variant-bp(".w-xl-#{$size}rem", $valueREM, width, $bp-xl);
+  @include property-variant-bp(".w-xll-#{$size}rem", $valueREM, width, $bp-xxl);
+
+  // Height:
+	@include property-variant(".h-#{$size}rem", $valueREM, height);
+  @include property-variant-bp(".h-sm-#{$size}rem", $valueREM, height, $bp-sm);
+  @include property-variant-bp(".h-md-#{$size}rem", $valueREM, height, $bp-md);
+  @include property-variant-bp(".h-lg-#{$size}rem", $valueREM, height, $bp-lg);
+  @include property-variant-bp(".h-xl-#{$size}rem", $valueREM, height, $bp-xl);
+  @include property-variant-bp(".h-xll-#{$size}rem", $valueREM, height, $bp-xxl);
+
+  // FontSize
+  @include property-variant(".fs-#{$size}rem", $valueREM, font-size);
+  @include property-variant-bp(".fs-sm-#{$size}rem", $valueREM, font-size, $bp-sm);
+  @include property-variant-bp(".fs-md-#{$size}rem", $valueREM, font-size, $bp-md);
+  @include property-variant-bp(".fs-lg-#{$size}rem", $valueREM, font-size, $bp-lg);
+  @include property-variant-bp(".fs-xl-#{$size}rem", $valueREM, font-size, $bp-xl);
+  @include property-variant-bp(".fs-xll-#{$size}rem", $valueREM, font-size, $bp-xxl);
+
+  // Padding
+  @include property-variant(".p-#{$size}rem", $valueREM, padding);
+  @include property-variant-bp(".p-sm-#{$size}rem", $valueREM, padding, $bp-sm);
+  @include property-variant-bp(".p-md-#{$size}rem", $valueREM, padding, $bp-md);
+  @include property-variant-bp(".p-lg-#{$size}rem", $valueREM, padding, $bp-lg);
+  @include property-variant-bp(".p-xl-#{$size}rem", $valueREM, padding, $bp-xl);
+  @include property-variant-bp(".p-xll-#{$size}rem", $valueREM, padding, $bp-xxl);
+
+  // Padding-Top
+  @include property-variant(".pt-#{$size}rem", $valueREM, padding-top);
+  @include property-variant-bp(".pt-sm-#{$size}rem", $valueREM, padding-top, $bp-sm);
+  @include property-variant-bp(".pt-md-#{$size}rem", $valueREM, padding-top, $bp-md);
+  @include property-variant-bp(".pt-lg-#{$size}rem", $valueREM, padding-top, $bp-lg);
+  @include property-variant-bp(".pt-xl-#{$size}rem", $valueREM, padding-top, $bp-xl);
+  @include property-variant-bp(".pt-xll-#{$size}rem", $valueREM, padding-top, $bp-xxl);
+
+  // Padding-Bottom
+  @include property-variant(".pb-#{$size}rem", $valueREM, padding-bottom);
+  @include property-variant-bp(".pb-sm-#{$size}rem", $valueREM, padding-bottom, $bp-sm);
+  @include property-variant-bp(".pb-md-#{$size}rem", $valueREM, padding-bottom, $bp-md);
+  @include property-variant-bp(".pb-lg-#{$size}rem", $valueREM, padding-bottom, $bp-lg);
+  @include property-variant-bp(".pb-xl-#{$size}rem", $valueREM, padding-bottom, $bp-xl);
+  @include property-variant-bp(".pb-xll-#{$size}rem", $valueREM, padding-bottom, $bp-xxl);
+
+  // Padding-Left
+  @include property-variant(".ps-#{$size}rem", $valueREM, padding-left);
+  @include property-variant-bp(".ps-sm-#{$size}rem", $valueREM, padding-left, $bp-sm);
+  @include property-variant-bp(".ps-md-#{$size}rem", $valueREM, padding-left, $bp-md);
+  @include property-variant-bp(".ps-lg-#{$size}rem", $valueREM, padding-left, $bp-lg);
+  @include property-variant-bp(".ps-xl-#{$size}rem", $valueREM, padding-left, $bp-xl);
+  @include property-variant-bp(".ps-xll-#{$size}rem", $valueREM, padding-left, $bp-xxl);
+
+  // Padding-Right
+  @include property-variant(".pe-#{$size}rem", $valueREM, padding-right);
+  @include property-variant-bp(".pe-sm-#{$size}rem", $valueREM, padding-right, $bp-sm);
+  @include property-variant-bp(".pe-md-#{$size}rem", $valueREM, padding-right, $bp-md);
+  @include property-variant-bp(".pe-lg-#{$size}rem", $valueREM, padding-right, $bp-lg);
+  @include property-variant-bp(".pe-xl-#{$size}rem", $valueREM, padding-right, $bp-xl);
+  @include property-variant-bp(".pe-xll-#{$size}rem", $valueREM, padding-right, $bp-xxl);
+
+  // Padding-Y
+  @include property-variant(".py-#{$size}rem", $valueREM, padding-top, padding-bottom);
+  @include property-variant-bp(".py-sm-#{$size}rem", $valueREM, padding-top, $bp-sm, padding-bottom);
+  @include property-variant-bp(".py-md-#{$size}rem", $valueREM, padding-top, $bp-md, padding-bottom);
+  @include property-variant-bp(".py-lg-#{$size}rem", $valueREM, padding-top, $bp-lg, padding-bottom);
+  @include property-variant-bp(".py-xl-#{$size}rem", $valueREM, padding-top, $bp-xl, padding-bottom);
+  @include property-variant-bp(".py-xll-#{$size}rem", $valueREM, padding-top, $bp-xxl, padding-bottom);
+
+  // Padding-X
+  @include property-variant(".px-#{$size}rem", $valueREM, padding-right, padding-right);
+  @include property-variant-bp(".px-sm-#{$size}rem", $valueREM, padding-right, $bp-sm, padding-right);
+  @include property-variant-bp(".px-md-#{$size}rem", $valueREM, padding-right, $bp-md, padding-right);
+  @include property-variant-bp(".px-lg-#{$size}rem", $valueREM, padding-right, $bp-lg, padding-right);
+  @include property-variant-bp(".px-xl-#{$size}rem", $valueREM, padding-right, $bp-xl, padding-right);
+  @include property-variant-bp(".px-xll-#{$size}rem", $valueREM, padding-right, $bp-xxl, padding-right);
+
+  // Margin
+  @include property-variant(".m-#{$size}rem", $valueREM, margin);
+  @include property-variant-bp(".m-sm-#{$size}rem", $valueREM, margin, $bp-sm);
+  @include property-variant-bp(".m-md-#{$size}rem", $valueREM, margin, $bp-md);
+  @include property-variant-bp(".m-lg-#{$size}rem", $valueREM, margin, $bp-lg);
+  @include property-variant-bp(".m-xl-#{$size}rem", $valueREM, margin, $bp-xl);
+  @include property-variant-bp(".m-xll-#{$size}rem", $valueREM, margin, $bp-xxl);
+
+  // Margin-Top
+  @include property-variant(".mt-#{$size}rem", $valueREM, margin-top);
+  @include property-variant-bp(".mt-sm-#{$size}rem", $valueREM, margin-top, $bp-sm);
+  @include property-variant-bp(".mt-md-#{$size}rem", $valueREM, margin-top, $bp-md);
+  @include property-variant-bp(".mt-lg-#{$size}rem", $valueREM, margin-top, $bp-lg);
+  @include property-variant-bp(".mt-xl-#{$size}rem", $valueREM, margin-top, $bp-xl);
+  @include property-variant-bp(".mt-xll-#{$size}rem", $valueREM, margin-top, $bp-xxl);
+
+  // Margin-Bottom
+  @include property-variant(".mb-#{$size}rem", $valueREM, margin-bottom);
+  @include property-variant-bp(".mb-sm-#{$size}rem", $valueREM, margin-bottom, $bp-sm);
+  @include property-variant-bp(".mb-md-#{$size}rem", $valueREM, margin-bottom, $bp-md);
+  @include property-variant-bp(".mb-lg-#{$size}rem", $valueREM, margin-bottom, $bp-lg);
+  @include property-variant-bp(".mb-xl-#{$size}rem", $valueREM, margin-bottom, $bp-xl);
+  @include property-variant-bp(".mb-xll-#{$size}rem", $valueREM, margin-bottom, $bp-xxl);
+
+  // Margin-Left
+  @include property-variant(".ms-#{$size}rem", $valueREM, margin-left);
+  @include property-variant-bp(".ms-sm-#{$size}rem", $valueREM, margin-left, $bp-sm);
+  @include property-variant-bp(".ms-md-#{$size}rem", $valueREM, margin-left, $bp-md);
+  @include property-variant-bp(".ms-lg-#{$size}rem", $valueREM, margin-left, $bp-lg);
+  @include property-variant-bp(".ms-xl-#{$size}rem", $valueREM, margin-left, $bp-xl);
+  @include property-variant-bp(".ms-xll-#{$size}rem", $valueREM, margin-left, $bp-xxl);
+
+  // Margin-Right
+  @include property-variant(".me-#{$size}rem", $valueREM, margin-right);
+  @include property-variant-bp(".me-sm-#{$size}rem", $valueREM, margin-right, $bp-sm);
+  @include property-variant-bp(".me-md-#{$size}rem", $valueREM, margin-right, $bp-md);
+  @include property-variant-bp(".me-lg-#{$size}rem", $valueREM, margin-right, $bp-lg);
+  @include property-variant-bp(".me-xl-#{$size}rem", $valueREM, margin-right, $bp-xl);
+  @include property-variant-bp(".me-xll-#{$size}rem", $valueREM, margin-right, $bp-xxl);
+
+  // Margin-Y
+  @include property-variant(".my-#{$size}rem", $valueREM, margin-top, margin-bottom);
+  @include property-variant-bp(".my-sm-#{$size}rem", $valueREM, margin-top, $bp-sm, margin-bottom);
+  @include property-variant-bp(".my-md-#{$size}rem", $valueREM, margin-top, $bp-md, margin-bottom);
+  @include property-variant-bp(".my-lg-#{$size}rem", $valueREM, margin-top, $bp-lg, margin-bottom);
+  @include property-variant-bp(".my-xl-#{$size}rem", $valueREM, margin-top, $bp-xl, margin-bottom);
+  @include property-variant-bp(".my-xll-#{$size}rem", $valueREM, margin-top, $bp-xxl, margin-bottom);
+
+  // Margin-X
+  @include property-variant(".mx-#{$size}rem", $valueREM, margin-right, margin-right);
+  @include property-variant-bp(".mx-sm-#{$size}rem", $valueREM, margin-right, $bp-sm, margin-right);
+  @include property-variant-bp(".mx-md-#{$size}rem", $valueREM, margin-right, $bp-md, margin-right);
+  @include property-variant-bp(".mx-lg-#{$size}rem", $valueREM, margin-right, $bp-lg, margin-right);
+  @include property-variant-bp(".mx-xl-#{$size}rem", $valueREM, margin-right, $bp-xl, margin-right);
+  @include property-variant-bp(".mx-xll-#{$size}rem", $valueREM, margin-right, $bp-xxl, margin-right);
+
+  // Z-Index
+  @include property-variant(".z-#{$size}", $value, z-index);
+}
+
+@each $size, $value in $highSizes {
+	$value: $value + $px;
+  // Width:
+	@include property-variant(".w-min-#{$size}px", $value, min-width);
+  @include property-variant-bp(".w-min-sm-#{$size}px", $value, min-width, $bp-sm);
+  @include property-variant-bp(".w-min-md-#{$size}px", $value, min-width, $bp-md);
+  @include property-variant-bp(".w-min-lg-#{$size}px", $value, min-width, $bp-lg);
+  @include property-variant-bp(".w-min-xl-#{$size}px", $value, min-width, $bp-xl);
+  @include property-variant-bp(".w-min-xll-#{$size}px", $value, min-width, $bp-xxl);
+	@include property-variant(".w-max-#{$size}px", $value, max-width);
+  @include property-variant-bp(".w-max-sm-#{$size}px", $value, max-width, $bp-sm);
+  @include property-variant-bp(".w-max-md-#{$size}px", $value, max-width, $bp-md);
+  @include property-variant-bp(".w-max-lg-#{$size}px", $value, max-width, $bp-lg);
+  @include property-variant-bp(".w-max-xl-#{$size}px", $value, max-width, $bp-xl);
+  @include property-variant-bp(".w-max-xll-#{$size}px", $value, max-width, $bp-xxl);
+	@include property-variant(".w-#{$size}px", $value, width);
+  @include property-variant-bp(".w-sm-#{$size}px", $value, width, $bp-sm);
+  @include property-variant-bp(".w-md-#{$size}px", $value, width, $bp-md);
+  @include property-variant-bp(".w-lg-#{$size}px", $value, width, $bp-lg);
+  @include property-variant-bp(".w-xl-#{$size}px", $value, width, $bp-xl);
+  @include property-variant-bp(".w-xll-#{$size}px", $value, width, $bp-xxl);
+
+  // Height:
+	@include property-variant(".h-min-#{$size}px", $value, min-height);
+  @include property-variant-bp(".h-min-sm-#{$size}px", $value, min-height, $bp-sm);
+  @include property-variant-bp(".h-min-md-#{$size}px", $value, min-height, $bp-md);
+  @include property-variant-bp(".h-min-lg-#{$size}px", $value, min-height, $bp-lg);
+  @include property-variant-bp(".h-min-xl-#{$size}px", $value, min-height, $bp-xl);
+  @include property-variant-bp(".h-min-xll-#{$size}px", $value, min-height, $bp-xxl);
+	@include property-variant(".h-max-#{$size}px", $value, max-height);
+  @include property-variant-bp(".h-max-sm-#{$size}px", $value, max-height, $bp-sm);
+  @include property-variant-bp(".h-max-md-#{$size}px", $value, max-height, $bp-md);
+  @include property-variant-bp(".h-max-lg-#{$size}px", $value, max-height, $bp-lg);
+  @include property-variant-bp(".h-max-xl-#{$size}px", $value, max-height, $bp-xl);
+  @include property-variant-bp(".h-max-xll-#{$size}px", $value, max-height, $bp-xxl);
+	@include property-variant(".h-#{$size}px", $value, height);
+  @include property-variant-bp(".h-sm-#{$size}px", $value, height, $bp-sm);
+  @include property-variant-bp(".h-md-#{$size}px", $value, height, $bp-md);
+  @include property-variant-bp(".h-lg-#{$size}px", $value, height, $bp-lg);
+  @include property-variant-bp(".h-xl-#{$size}px", $value, height, $bp-xl);
+  @include property-variant-bp(".h-xll-#{$size}px", $value, height, $bp-xxl);
+}

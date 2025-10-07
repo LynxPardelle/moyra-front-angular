@@ -49,7 +49,7 @@ RUN set -e; \
 COPY --chown=appuser:appgroup package*.json ./
 
 # Install Angular CLI globally with specific version for consistency
-RUN npm install -g @angular/cli@19.2.15
+RUN npm install -g @angular/cli@20.3.1
 RUN npm cache clean --force
 
 # Install dependencies with optimizations
@@ -92,7 +92,7 @@ COPY --chown=appuser:appgroup package*.json ./
 
 # Install Angular CLI globally and all dependencies (including dev dependencies)
 # Use npm install to handle package-lock.json regeneration
-RUN npm install -g @angular/cli@19.2.15
+RUN npm install -g @angular/cli@20.3.1
 RUN npm cache clean --force
 RUN npm install --no-audit --no-fund
 RUN npm cache clean --force

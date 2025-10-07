@@ -1,0 +1,73 @@
+$titleM: #29303b !default;
+$textM: #29303b !default;
+$linkM: #4b8ff5 !default;
+$bg1M: #ffffff !default;
+$bg2M: #88eff9 !default;
+$rgbTxtM: rgb(41, 48, 59) !default;
+$facebook: #0a58ca !default;
+$whatsApp: #48C02D !default;
+$twitter: #1C9BEA !default;
+$gmail: #CF4B3B !default;
+$linkedIn: #2465AA !default;
+$udark: #050505 !default;
+$tdark: #000000 !default;
+$ulight: #f5f5f5 !default;
+$tlight: #ffffff !default;
+$trdark25: rgba(0,0,0,0.25) !default;
+
+$theme-colors: () !default;
+
+$theme-colors: map-merge(
+  (
+    "titleM": $titleM,
+    "textM": $textM,
+    "linkM": $linkM,
+    "bg1M": $bg1M,
+    "bg2M": $bg2M,
+    "rgbTxtM": $rgbTxtM,
+    "facebook": $facebook,
+    "whatsApp": $whatsApp,
+    "twitter": $twitter,
+    "gmail": $gmail,
+    "linkedIn": $linkedIn,
+    "udark": $udark,
+    "tdark": $tdark,
+    "ulight": $ulight,
+    "tlight": $tlight,
+    "trdark25": $trdark25,
+    ),
+  $theme-colors
+);
+
+@mixin hover-focus() {
+  &:hover,
+  &:focus {
+    @content;
+  }
+}
+
+@mixin text-emphasis-variant($parent, $color) {
+  #{$parent} {
+    color: $color !important;
+  }
+}
+
+@each $color, $value in $theme-colors {
+  @include text-emphasis-variant(".text-#{$color}", $value);
+}
+
+@mixin bg-variant($parent, $color) {
+  #{$parent} {
+    background-color: $color !important;
+  }
+  a#{$parent},
+  button#{$parent} {
+    @include hover-focus() {
+      background-color: darken($color, 10%) !important;
+    }
+  }
+}
+
+@each $color, $value in $theme-colors {
+  @include bg-variant(".bg-#{$color}", $value);
+}

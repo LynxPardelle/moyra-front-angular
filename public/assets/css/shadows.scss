@@ -1,0 +1,233 @@
+@import "./colors.scss";
+@import "./sizes.scss";
+
+$minus: -1;
+
+@mixin box-shadowMMM-variant($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    box-shadow: $oneSize + $px $twoSize + $px $threeSize + $px $color !important;
+  }
+}
+
+@mixin box-shadowmMM-variant($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    box-shadow: ($oneSize * $minus + $px) ($twoSize + $px $threeSize + $px)
+      $color !important;
+  }
+}
+
+@mixin box-shadowMmM-variant($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    box-shadow: $oneSize + $px ($twoSize * $minus + $px) $threeSize + $px $color !important;
+  }
+}
+
+@mixin box-shadowmmM-variant($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    box-shadow: ($oneSize * $minus + $px) ($twoSize * $minus + $px) $threeSize +
+      $px $color !important;
+  }
+}
+
+@mixin text-shadowMMM-variant($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    text-shadow: $oneSize + $px $twoSize + $px $threeSize + $px $color !important;
+  }
+}
+
+@mixin text-shadowmMM-variant($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    text-shadow: ($oneSize * $minus + $px) ($twoSize + $px $threeSize + $px)
+      $color !important;
+  }
+}
+
+@mixin text-shadowMmM-variant($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    text-shadow: $oneSize + $px ($twoSize * $minus + $px) $threeSize + $px
+      $color !important;
+  }
+}
+
+@mixin text-shadowmmM-variant($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    text-shadow: ($oneSize * $minus + $px) ($twoSize * $minus + $px) $threeSize +
+      $px $color !important;
+  }
+}
+
+/* Inset */
+@mixin box-shadowMMM-variant-inset($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    box-shadow: inset $oneSize + $px $twoSize + $px $threeSize + $px $color !important;
+  }
+}
+
+@mixin box-shadowmMM-variant-inset($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    box-shadow: inset ($oneSize * $minus + $px) ($twoSize + $px $threeSize + $px)
+      $color !important;
+  }
+}
+
+@mixin box-shadowMmM-variant-inset($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    box-shadow: inset $oneSize + $px ($twoSize * $minus + $px) $threeSize + $px $color !important;
+  }
+}
+
+@mixin box-shadowmmM-variant-inset($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    box-shadow: inset ($oneSize * $minus + $px) ($twoSize * $minus + $px) $threeSize +
+      $px $color !important;
+  }
+}
+
+@mixin text-shadowMMM-variant-inset($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    text-shadow: inset $oneSize + $px $twoSize + $px $threeSize + $px $color !important;
+  }
+}
+
+@mixin text-shadowmMM-variant-inset($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    text-shadow: inset ($oneSize * $minus + $px) ($twoSize + $px $threeSize + $px)
+      $color !important;
+  }
+}
+
+@mixin text-shadowMmM-variant-inset($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    text-shadow: inset $oneSize + $px ($twoSize * $minus + $px) $threeSize + $px
+      $color !important;
+  }
+}
+
+@mixin text-shadowmmM-variant-inset($parent, $oneSize, $twoSize, $threeSize, $color) {
+  #{$parent} {
+    text-shadow: inset ($oneSize * $minus + $px) ($twoSize * $minus + $px) $threeSize +
+      $px $color !important;
+  }
+}
+
+@each $color, $colorValue in $theme-colors {
+  @each $oneSize, $oneSizeValue in $lowSizes {
+    @each $twoSize, $twoSizeValue in $lowSizes {
+      @each $threeSize, $threeSizeValue in $lowSizes {
+        @include box-shadowMMM-variant(
+          ".box-shadow-#{$oneSize}-#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include box-shadowmMM-variant(
+          ".box-shadow--#{$oneSize}-#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include box-shadowMmM-variant(
+          ".box-shadow-#{$oneSize}--#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include box-shadowmmM-variant(
+          ".box-shadow--#{$oneSize}--#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include text-shadowMMM-variant(
+          ".text-shadow-#{$oneSize}-#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include text-shadowmMM-variant(
+          ".text-shadow--#{$oneSize}-#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include text-shadowMmM-variant(
+          ".text-shadow-#{$oneSize}--#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include text-shadowmmM-variant(
+          ".text-shadow--#{$oneSize}--#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        /* Inset */
+        @include box-shadowMMM-variant-inset(
+          ".box-shadow-#{$oneSize}-#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include box-shadowmMM-variant-inset(
+          ".box-shadow--#{$oneSize}-#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include box-shadowMmM-variant-inset(
+          ".box-shadow-#{$oneSize}--#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include box-shadowmmM-variant-inset(
+          ".box-shadow--#{$oneSize}--#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include text-shadowMMM-variant-inset(
+          ".text-shadow-#{$oneSize}-#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include text-shadowmMM-variant-inset(
+          ".text-shadow--#{$oneSize}-#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include text-shadowMmM-variant-inset(
+          ".text-shadow-#{$oneSize}--#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+        @include text-shadowmmM-variant-inset(
+          ".text-shadow--#{$oneSize}--#{$twoSize}-#{$threeSize}-#{$color}",
+          $oneSizeValue,
+          $twoSizeValue,
+          $threeSizeValue,
+          $colorValue
+        );
+      }
+    }
+  }
+}
