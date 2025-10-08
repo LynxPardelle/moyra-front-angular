@@ -1,0 +1,88 @@
+<h2 class="bef bef-text-titleM text-center my-3">Soluciones</h2>
+
+<a
+  href="/admin/solucion"
+  [routerLink]="['/admin/solucion']"
+  class="btn bef bef-btn-linkM bef-text-bg1M mx-auto my-3 d-block bef-w-300px"
+  *ngIf="
+    identity &&
+    identity.role == 'ROLE_ADMIN' &&
+    canChange === true &&
+    isAdmin === true
+  "
+>
+  Crear nuevo servicio
+</a>
+
+<!-- Cards -->
+<section
+  class="cards d-flex flex-wrap flex-column flex-md-row justify-content-evenly align-items-stretch"
+>
+  <div
+    *ngFor="let servicio of servicios; index as i"
+    class="card my-3 mx-auto bef bef-hmn-500px bef-boxShadow-0__4px__4px__tdark__OPA__0_25 bef-rounded-15px overflow-hidden"
+  >
+    <div class="card-body d-flex flex-column justify-content-between  p-0">
+      <img
+        *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
+        class="card-img-top w-100 bef bef-h-200px overflow-hidden obj-fit-cover"
+        src="{{ urlServicio + 'get-file/' + servicio.mainImg.location }}"
+        alt="{{ servicio.mainImg.title }}"
+      />
+      <div>
+        <a
+          href="/solucion/{{ servicio.urltitle }}"
+          class="text-decoration-none"
+          [routerLink]="['/solucion', servicio.urltitle]"
+        >
+          <h4 class="card-title m-3 text-center">{{ servicio.title }}</h4>
+        </a>
+        <hr class="mx-3" />
+      </div>
+      <div
+        *ngIf="servicio.desc && servicio.desc !== ''"
+        class="card-text mx-3"
+        [innerHTML]="
+          Linkify(this.valuefy(reduceFy(servicio.desc)), '#000', '#4b8ff5') | safeHtml
+        "
+      ></div>
+
+      <!-- Card Button -->
+      <div
+        class="d-flex justify-content-end align-items-center m-3"
+        [ngClass]="{
+          'justify-content-end': isAdmin === false,
+          'justify-content-between': isAdmin === true
+        }"
+      >
+        <ng-container *ngIf="isAdmin === false; else elseButtonAdminTemplate">
+          <!-- SeeMore -->
+          <a
+            class="btn py-1 px-3 m-0 position-relative bef bef-btn-linkM text-center bef-rounded-5px bef-text-light text-decoration-none"
+            href="/solucion/{{ servicio.urltitle }}"
+            [routerLink]="['/solucion', servicio.urltitle]"
+          >
+            Ver Más
+          </a>
+        </ng-container>
+        <ng-template #elseButtonAdminTemplate>
+          <button
+            (click)="deleteServicio(servicio._id)"
+            class="btn bef bef-btn-linkM bef-text-bg1M py-1 px-3 m-0 text-center bef-rounded-5px"
+          >
+            Borrar
+          </button>
+
+          <!-- SeeMore -->
+          <a
+            class="btn py-1 px-3 m-0 position-relative bef-btn-linkM text-center bef-rounded-5px bef-text-bg1M text-decoration-none"
+            href="/admin/solucion/{{ servicio.urltitle }}"
+            [routerLink]="['/admin/solucion', servicio.urltitle]"
+          >
+            Ver Más
+          </a>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</section>

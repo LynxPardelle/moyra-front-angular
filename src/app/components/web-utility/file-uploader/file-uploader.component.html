@@ -1,0 +1,232 @@
+<button
+  type="button"
+  class="btn bg-linkM d-block m-auto text-bg1M"
+  title="Sube varios archivos"
+  (click)="openModal(subirArchivosPN)"
+>
+  <svg
+    width="1em"
+    height="1em"
+    viewBox="0 0 16 16"
+    class="bi bi-folder-plus"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      fill-rule="evenodd"
+      d="M9.828 4H2.19a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91H9v1H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181L15.546 8H14.54l.265-2.91A1 1 0 0 0 13.81 4H9.828zm-2.95-1.707L7.587 3H2.19c-.24 0-.47.042-.684.12L1.5 2.98a1 1 0 0 1 1-.98h3.672a1 1 0 0 1 .707.293z"
+    />
+    <path
+      fill-rule="evenodd"
+      d="M13.5 10a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1H13v-1.5a.5.5 0 0 1 .5-.5z"
+    />
+    <path
+      fill-rule="evenodd"
+      d="M13 12.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0v-2z"
+    />
+  </svg>
+</button>
+
+<ng-template #subirArchivosPN>
+  <div class="bg-bg1M border-3 overflow-hidden">
+    <div class="modal-header bg-titleM">
+      <h4 class="modal-title pull-left text-bg1M">Sube el archivo</h4>
+      <button
+        type="button"
+        class="btn close pull-right text-bg1M fs-2rem"
+        aria-label="Close"
+        (click)="closeEnd(modalRef)"
+      >
+        <span aria-hidden="true">X</span>
+      </button>
+    </div>
+    <div class="modal-body bg-bg1M">
+      <!-- File Upload -->
+      <div *ngIf="doneUploading === false">
+        <div
+          [ngStyle]="{
+            visibility: files && files[0] ? 'hidden' : 'initial',
+            position: files && files[0] ? 'absolute' : 'initial',
+            'z-index': files && files[0] ? '-10' : '1'
+          }"
+        >
+          <!-- Drag & Drop -->
+          <div>
+            <div
+              *ngIf="typeMeta === 'multi'"
+              class="
+                drop-container
+                ushadow-1
+                d-flex
+                align-items-center
+                justify-content-center
+              "
+              ngFileDrop
+              [options]="optionsMulti"
+              (uploadOutput)="onUploadOutput($event)"
+              [uploadInput]="uploadInput"
+              [ngClass]="{ 'is-drop-over': dragOver }"
+              style="height: 200px"
+            >
+              <h3>Drag &amp; Drop</h3>
+            </div>
+            <div
+              *ngIf="typeMeta === 'one'"
+              class="
+                drop-container
+                ushadow-1
+                d-flex
+                align-items-center
+                justify-content-center
+              "
+              ngFileDrop
+              [options]="optionsOne"
+              (uploadOutput)="onUploadOutput($event)"
+              [uploadInput]="uploadInput"
+              [ngClass]="{ 'is-drop-over': dragOver }"
+              style="height: 200px"
+            >
+              <h3>Drag &amp; Drop</h3>
+            </div>
+          </div>
+
+          <label
+            class="
+              btn
+              bg-linkM
+              w-75
+              text-bg1M
+              cursor-pointer
+              text-center
+              d-block
+              mx-auto
+              my-5
+              position-relative
+              rounded-pill
+            "
+          >
+            <input
+              *ngIf="typeMeta === 'multi'"
+              type="file"
+              ngFileSelect
+              [options]="optionsMulti"
+              (uploadOutput)="onUploadOutput($event)"
+              [uploadInput]="uploadInput"
+              multiple
+            />
+            <input
+              *ngIf="typeMeta === 'one'"
+              type="file"
+              ngFileSelect
+              [options]="optionsOne"
+              (uploadOutput)="onUploadOutput($event)"
+              [uploadInput]="uploadInput"
+              multiple
+            />
+            o escoge el archivo
+          </label>
+        </div>
+
+        <div *ngIf="files && files[0]">
+          <div *ngFor="let file of files">
+            <p
+              class="d-block m-auto w-100"
+              *ngIf="
+                file.nativeFile && file.nativeFile.name && file.nativeFile.size
+              "
+            >
+              <span class="d-block m-auto w-75">
+                {{
+                  file.nativeFile.name + " " + toKBorMB(file.nativeFile.size)
+                }}
+              </span>
+              <span class="d-block m-auto w-25" *ngIf="fileProgress">
+                <span
+                  class="d-block m-auto w-100"
+                  *ngFor="let fileProg of fileProgress"
+                >
+                  <span
+                    *ngIf="
+                      fileProg.progress &&
+                      fileProg.progress.data &&
+                      fileProg.progress.data.percentage &&
+                      fileProg.name == file.name
+                    "
+                    class="d-block m-auto w-100 border rounded border-white"
+                    [ngStyle]="{
+                      background: toLinearGradientProgress(
+                        '#88eff9',
+                        fileProg.progress.data.percentage
+                      )
+                    }"
+                  >
+                    <span
+                      [ngStyle]="{
+                        color:
+                          fileProg.progress.data.percentage < 100
+                            ? 'textM'
+                            : fileProg.progress.data.percentage == 100
+                            ? 'white'
+                            : fileProg.progress.data.percentage < 100
+                            ? 'white'
+                            : 'black'
+                      }"
+                    >
+                      {{ fileProg.progress.data.percentage }}
+                    </span>
+                  </span>
+                </span>
+              </span>
+              <br />
+            </p>
+          </div>
+        </div>
+
+        <div *ngIf="messagesErrorFiles">
+          <div *ngFor="let mError of messagesErrorFiles">
+            <p>{{ mError }}</p>
+          </div>
+        </div>
+
+        <button
+          *ngIf="files && files[0]"
+          type="button"
+          class="
+            btn
+            bg-linkM
+            w-75
+            text-center text-bg1M
+            d-block
+            mx-auto
+            rounded-pill
+          "
+          (click)="startUpload()"
+        >
+          Empieza a subir el archivo
+        </button>
+      </div>
+
+      <!-- END: File Upload -->
+      <div *ngIf="doneUploading === true">
+        <p>
+          El archivo se ha subido correctamente
+          <span *ngIf="messagesErrorFiles && messagesErrorFiles[0]">
+            excepto por el siguiente:
+          </span>
+        </p>
+        <div *ngIf="messagesErrorFiles && messagesErrorFiles[0]">
+          <div *ngFor="let mError of messagesErrorFiles">
+            <p>{{ mError }}</p>
+            <br />
+          </div>
+        </div>
+        <button
+          class="btn d-block m-auto bg-linkM text-bg1M"
+          (click)="closeEnd(modalRef)"
+        >
+          Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-template>

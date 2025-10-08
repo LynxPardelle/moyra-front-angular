@@ -1,0 +1,10 @@
+<p *ngIf="main && main.errorMessage && main.errorMessage !== ''">
+  {{ main.errorMessage }}
+</p>
+<div
+        *ngIf="main && main.errorMessage && main.errorMessage !== ''"
+        class="card-text mx-3"
+        [innerHTML]="
+          Linkify(this.valuefy(main.errorMessage), '#000', '#4b8ff5') | safeHtml
+        "
+      ></div>

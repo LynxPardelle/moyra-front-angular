@@ -1,0 +1,485 @@
+<!-- Edit/Delete Buttons -->
+<div
+  class="position-fixed bef bef-top-15per bef-top-md-10per end-0"
+  *ngIf="
+    identity &&
+    identity.role == 'ROLE_ADMIN' &&
+    canChange === true &&
+    isAdmin === true
+  "
+>
+  <button
+    *ngIf="editSwitch == false"
+    class="btn bg-linkM text-bg1M mr-2"
+    (click)="switchEdit()"
+  >
+    <svg
+      width="1em"
+      height="1em"
+      viewBox="0 0 16 16"
+      class="bi bi-pencil-square"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456l-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"
+      />
+      <path
+        fill-rule="evenodd"
+        d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"
+      />
+    </svg>
+  </button>
+
+  <button
+    *ngIf="editSwitch == true"
+    class="btn bg-linkM text-bg1M mr-2 font-weight-normal float-right"
+    (click)="switchEdit()"
+  >
+    X
+  </button>
+</div>
+
+<img
+  *ngIf="main && main.mainImg && main.mainImg.location"
+  class="w-100 bef bef-hmx-50vh obj-fit-cover"
+  src="{{ urlMain + 'get-file/' + main.mainImg.location }}"
+  alt="{{ main.mainImg.title }}"
+/>
+
+<!-- Title -->
+<!-- <div class="w-75 mx-auto mt-5 titleMontano text-decoration-none">
+  <h1 class="text-center h2">
+    Montaño &
+    <wbr />
+    Reyes Arrazola,
+    <wbr />
+    S.C.
+  </h1>
+  <hr class="w-100 d-block mx-auto my-5" />
+</div> -->
+
+<!-- Description -->
+<div
+  *ngIf="main && main.desc && main.desc !== ''"
+  class="w-75 mx-auto mt-5 text-center"
+  [innerHTML]="Linkify(this.valuefy(main.desc), '#000', '#4b8ff5') | safeHtml"
+></div>
+
+<!-- Edit Main Section -->
+<section *ngIf="editSwitch === true">
+  <h3 class="bef bef-text-titleM text-center mt-5">
+    Edición de configuración del sitio
+  </h3>
+
+  <!-- Description Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="desc"
+      >Descripción</label
+    >
+    <textarea
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="text"
+      name="desc"
+      #desc="ngModel"
+      [(ngModel)]="main.desc"
+      placeholder="Descripción"
+      required
+    ></textarea>
+    <span
+      class="bef bef-text-titleM font-weight-bold"
+      *ngIf="!desc.valid && desc.touched"
+    >
+      La descripción es obligatoria.
+    </span>
+  </div>
+
+  <!-- FaceBook Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef-text-textM mb-1 d-block" for="FB">FaceBook Link</label>
+    <input
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="text"
+      name="FB"
+      #FB="ngModel"
+      [(ngModel)]="main.FB"
+      placeholder="FaceBook"
+      required
+    />
+  </div>
+
+  <!-- WhatsApp Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="whatsApp"
+      >WhatsApp</label
+    >
+    <input
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="text"
+      name="whatsApp"
+      #whatsApp="ngModel"
+      [(ngModel)]="main.whatsApp"
+      placeholder="5554127879"
+      required
+    />
+  </div>
+
+  <!-- Twitter Edit -->
+  <!-- <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="twitter">Twitter Link</label>
+    <input
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="text"
+      name="twitter"
+      #twitter="ngModel"
+      [(ngModel)]="main.twitter"
+      placeholder="Twitter"
+      required
+    />
+  </div> -->
+
+  <!-- Email Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="FB">Email</label>
+    <input
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="text"
+      name="mail"
+      #mail="ngModel"
+      [(ngModel)]="main.mail"
+      placeholder="Email"
+      required
+    />
+  </div>
+
+  <!-- LinkedIn Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="linkedIn"
+      >LinkedIn Link</label
+    >
+    <input
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="text"
+      name="linkedIn"
+      #linkedIn="ngModel"
+      [(ngModel)]="main.linkedIn"
+      placeholder="LinkedIn"
+      required
+    />
+  </div>
+
+  <!-- phoneNumber Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="FB"
+      >Número de teléfono</label
+    >
+    <input
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="text"
+      name="phoneNumber"
+      #phoneNumber="ngModel"
+      [(ngModel)]="main.phoneNumber"
+      placeholder="5554127879"
+    />
+  </div>
+
+  <!-- ErrorMessage Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="errorMessage"
+      >Mensaje de error</label
+    >
+    <textarea
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="text"
+      name="errorMessage"
+      #errorMessage="ngModel"
+      [(ngModel)]="main.errorMessage"
+      placeholder="Mensaje de error"
+    ></textarea>
+  </div>
+
+  <!-- SeoTags Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="seoTags"
+      >Palabras clave</label
+    >
+    <input
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="text"
+      name="seoTags"
+      #seoTags="ngModel"
+      [(ngModel)]="main.seoTags"
+      placeholder="Palabras clave"
+    />
+  </div>
+
+  <!-- Submit Button -->
+  <button
+    (click)="onSubmit('main')"
+    class="btn bef bef-btn-linkM bef-text-bg1M mx-auto d-block my-3 w-75"
+  >
+    Confirmar
+  </button>
+
+  <hr class="w-100 d-block mx-auto my-5" />
+
+  <h3 class="bef bef-text-titleM text-center">Cambio de llave</h3>
+
+  <!-- Key Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="key">Llave nueva</label>
+    <input
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="password"
+      name="key"
+      #key="ngModel"
+      [(ngModel)]="main.key"
+      placeholder="Llave nueva"
+      required
+    />
+  </div>
+
+  <!-- KeyOld Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="keyOld"
+      >Llave vieja</label
+    >
+    <input
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="password"
+      name="keyOld"
+      #keyOld="ngModel"
+      [(ngModel)]="main.keyOld"
+      placeholder="Llave vieja"
+      required
+    />
+  </div>
+
+  <!-- Submit Password -->
+  <button
+    (click)="onSubmit('main')"
+    class="btn bef bef-btn-linkM bef-text-bg1M mx-auto d-block my-3 w-75"
+  >
+    Confirmar
+  </button>
+
+  <hr class="w-100 d-block mx-auto my-5" />
+
+  <!-- Image Main Uploads -->
+  <h3 class="bef bef-text-titleM text-center">Subida de imágenes</h3>
+
+  <div class="d-flex flex-wrap justify-content-evenly my-3">
+    <div class="w-50">
+      <h4 class="bef bef-text-titleM text-center">Imagen principal</h4>
+
+      <img
+        *ngIf="main && main.mainImg && main.mainImg.location"
+        class="bef bef-wmx-75per d-block mx-auto bef-hmx-25vh my-3"
+        src="{{ urlMain + 'get-file/' + main.mainImg.location }}"
+        alt="{{ main.mainImg.title }}"
+      />
+
+      <app-file-uploader
+        [type]="'main'"
+        [typeMeta]="'one'"
+        [typeThingComRes]="'main'"
+        [thing]="main.mainImg"
+        [thingInside]="true"
+        [id]="'mainImg'"
+        (pre_loader)="pre_load($event)"
+        (recoverThing)="recoverThingFather($event)"
+      ></app-file-uploader>
+    </div>
+
+    <div class="w-50">
+      <h4 class="bef bef-text-titleM text-center">Logo</h4>
+
+      <img
+        *ngIf="main && main.logo && main.logo.location"
+        class="bef bef-wmx-75per d-block mx-auto bef-hmx-25vh my-3"
+        src="{{ urlMain + 'get-file/' + main.logo.location }}"
+        alt="{{ main.logo.title }}"
+      />
+
+      <app-file-uploader
+        [type]="'main'"
+        [typeMeta]="'one'"
+        [typeThingComRes]="'main'"
+        [thing]="main.logo"
+        [thingInside]="true"
+        [id]="'logo'"
+        (pre_loader)="pre_load($event)"
+        (recoverThing)="recoverThingFather($event)"
+      ></app-file-uploader>
+    </div>
+  </div>
+</section>
+
+<!-- EquipMembers -->
+<section *ngIf="equips">
+  <hr class="w-75 d-block mx-auto my-5" />
+
+  <div
+    class="d-flex flex-column flex-sm-row flex-wrap justify-content-evenly align-items-center"
+  >
+    <div
+      *ngFor="let equip of equips"
+      class="mb-5 mx-auto position-relative bef bef-w-300px bef-w-sm-75per px-2"
+    >
+      <!-- Edit/Delete Buttons -->
+      <div
+        class="position-absolute bef bef-top-15per bef-top-md-10per end-0"
+        *ngIf="
+          identity &&
+          identity.role == 'ROLE_ADMIN' &&
+          canChange === true &&
+          isAdmin === true &&
+          editSwitch === true
+        "
+      >
+        <button
+          class="btn bef bef-btn-linkM bef-text-bg1M mr-2"
+          (click)="switchEquip(equip)"
+        >
+          <svg
+            width="1em"
+            height="1em"
+            viewBox="0 0 16 16"
+            class="bi bi-pencil-square"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456l-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"
+            />
+            <path
+              fill-rule="evenodd"
+              d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"
+            />
+          </svg>
+        </button>
+
+        <button class="btn btn-warning mr-2" (click)="deleteEquip(equip._id)">
+          <svg
+            width="1em"
+            height="1em"
+            viewBox="0 0 16 16"
+            class="bi bi-trash-fill"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5a.5.5 0 0 0-1 0v7a.5.5 0 0 0 1 0v-7z"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <h3 class="text-center w-75 d-block mx-auto">
+        {{ equip.name }}
+      </h3>
+
+      <img
+        *ngIf="equip.photo && equip.photo.location"
+        class="bef bef-w-75per bef-wmn-250px bef-wmx-500px bef-h-300px mx-auto d-block my-4 obj-fit-cover"
+        src="{{ urlMain + 'get-file/' + equip.photo.location }}"
+        alt="{{ equip.photo.title }}"
+      />
+
+      <div
+        *ngIf="equip && equip.desc && equip.desc !== ''"
+        class="bef bef-w-275px bef-w-md-100per mx-auto d-block text-center"
+        [innerHTML]="
+          Linkify(this.valuefy(equip.desc), '#000', '#4b8ff5') | safeHtml
+        "
+      ></div>
+    </div>
+  </div>
+</section>
+
+<!-- Edit Section -->
+<section class="my-3" *ngIf="editSwitch === true">
+  <h3 class="bef bef-text-titleM text-center">
+    <ng-container *ngIf="equip._id === ''; else elseEquipIdTemplate">
+      Crear
+    </ng-container>
+    <ng-template #elseEquipIdTemplate> Editar </ng-template>
+    miembro del equipo
+  </h3>
+
+  <!-- Name Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="name">Nombre</label>
+    <input
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="text"
+      name="name"
+      #name="ngModel"
+      [(ngModel)]="equip.name"
+      placeholder="Nombre"
+      required
+    />
+    <span
+      class="bef bef-text-titleM font-weight-bold"
+      *ngIf="!name.valid && name.touched"
+    >
+      El nombre es obligatorio.
+    </span>
+  </div>
+
+  <!-- Desc Edit -->
+  <div class="d-block w-75 mx-auto my-3">
+    <label class="bef bef-text-textM mb-1 d-block" for="desc"
+      >Descripción</label
+    >
+    <textarea
+      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      type="text"
+      name="desc"
+      #desc="ngModel"
+      [(ngModel)]="equip.desc"
+      placeholder="Descripción"
+      required
+    ></textarea>
+    <span
+      class="bef bef-text-titleM font-weight-bold"
+      *ngIf="!desc.valid && desc.touched"
+    >
+      La descripción es obligatoria.
+    </span>
+  </div>
+
+  <!-- Submit Button -->
+  <button
+    (click)="onSubmit('equip')"
+    class="btn bg-linkM text-bg1M mx-auto d-block my-3 w-75"
+  >
+    Enviar
+  </button>
+
+  <div *ngIf="equip.desc !== '' && equip.name !== ''">
+    <hr class="w-100 d-block mx-auto my-5" />
+
+    <!-- Photo Equip Member Upload -->
+    <h3 class="bef bef-text-titleM text-center">
+      Subida de la foto del miembro del equipo
+    </h3>
+    <img
+      *ngIf="equip && equip.photo && equip.photo.location"
+      class="bef bef-wmx-75per d-block mx-auto bef-hmx-25vh my-3"
+      src="{{ urlMain + 'get-file/' + equip.photo.location }}"
+      alt="{{ equip.photo.title }}"
+    />
+    <app-file-uploader
+      [type]="'main'"
+      [typeMeta]="'one'"
+      [typeThingComRes]="'equip'"
+      [thing]="equip.photo"
+      [thingInside]="true"
+      [id]="equip._id"
+      (pre_loader)="pre_load($event)"
+      (recoverThing)="recoverThingFather($event)"
+    ></app-file-uploader>
+  </div>
+</section>

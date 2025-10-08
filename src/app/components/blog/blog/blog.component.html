@@ -1,0 +1,43 @@
+<!-- Cards -->
+<div
+  class="cards d-flex flex-wrap flex-column flex-md-row justify-content-evenly align-items-center"
+>
+  <div
+    *ngFor="let card of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; index as i"
+    class="card my-3 mx-auto bef bef-boxShadow-0__4px__4px__trdark bef-rounded-15px overflow-hidden"
+  >
+    <div class="card-body p-0">
+      <img
+        class="card-img-top w-100 bef bef-h-200px overflow-hidden"
+        src="{{ 'https://picsum.photos/1200/60' + i }}"
+        alt="{{ 'https://picsum.photos/1200/60' + i }}"
+      />
+      <a
+        href="/articulo/{{ i }}"
+        class="text-decoration-none"
+        [routerLink]="['/articulo', i]"
+      >
+        <h4 class="card-title m-3 text-center">Título del artículo</h4>
+      </a>
+      <hr class="mx-3" />
+      <p class="card-text mx-3">
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Laborum vitae
+        animi voluptatibus obcaecati at tenetur amet necessitatibus voluptatem
+        voluptas. Earum impedit ipsam exercitationem inventore? Laboriosam eum
+        saepe molestias inventore aliquam!
+      </p>
+
+      <!-- Card Button -->
+      <div class="d-flex justify-content-end align-items-center m-3">
+        <!-- SeeMore -->
+        <a
+          class="btn py-1 px-3 m-0 position-relative bef bef-btn-linkM text-center bef-rounded-5px bef-text-light text-decoration-none"
+          href="/articulo/{{ i }}"
+          [routerLink]="['/articulo', i]"
+        >
+          Ver Más
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
