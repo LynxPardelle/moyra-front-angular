@@ -1,43 +1,85 @@
-<!-- Cards -->
-<div
-  class="cards d-flex flex-wrap flex-column flex-md-row justify-content-evenly align-items-center"
->
+<section class="blog-page bef bef-wmx-1100px mx-auto px-3 py-4">
   <div
-    *ngFor="let card of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; index as i"
-    class="card my-3 mx-auto bef bef-boxShadow-0__4px__4px__trdark bef-rounded-15px overflow-hidden"
+    *ngIf="
+      identity &&
+      identity.role === 'ROLE_ADMIN' &&
+      canChange === true &&
+      isAdmin === true
+    "
+    class="d-flex justify-content-end mb-3"
   >
-    <div class="card-body p-0">
-      <img
-        class="card-img-top w-100 bef bef-h-200px overflow-hidden"
-        src="{{ 'https://picsum.photos/1200/60' + i }}"
-        alt="{{ 'https://picsum.photos/1200/60' + i }}"
-      />
-      <a
-        href="/articulo/{{ i }}"
-        class="text-decoration-none"
-        [routerLink]="['/articulo', i]"
-      >
-        <h4 class="card-title m-3 text-center">Título del artículo</h4>
-      </a>
-      <hr class="mx-3" />
-      <p class="card-text mx-3">
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Laborum vitae
-        animi voluptatibus obcaecati at tenetur amet necessitatibus voluptatem
-        voluptas. Earum impedit ipsam exercitationem inventore? Laboriosam eum
-        saepe molestias inventore aliquam!
-      </p>
-
-      <!-- Card Button -->
-      <div class="d-flex justify-content-end align-items-center m-3">
-        <!-- SeeMore -->
-        <a
-          class="btn py-1 px-3 m-0 position-relative bef bef-btn-linkM text-center bef-rounded-5px bef-text-light text-decoration-none"
-          href="/articulo/{{ i }}"
-          [routerLink]="['/articulo', i]"
-        >
-          Ver Más
-        </a>
-      </div>
-    </div>
+    <a
+      class="btn bef bef-btn-linkM bef-text-bg1M text-decoration-none"
+      href="/admin/articulo"
+      [routerLink]="['/admin/articulo']"
+    >
+      Crear nuevo artículo
+    </a>
   </div>
-</div>
+
+  <header class="blog-heading text-center mx-auto mb-4">
+    <h2 class="h3 mb-2">Blog</h2>
+    <p class="m-0 bef bef-text-textM">
+      Análisis legal y criterios prácticos para anticipar riesgos y tomar decisiones informadas.
+    </p>
+  </header>
+
+  <div *ngIf="loading" class="text-center my-5">Cargando artículos...</div>
+
+  <div
+    *ngIf="!loading && articles.length === 0"
+    class="empty-state text-center mx-auto my-5 p-4"
+  >
+    <h3 class="h5">Aún no hay artículos disponibles.</h3>
+    <p class="m-0" *ngIf="isAdmin && canChange">
+      Crea el primer artículo desde el panel de administración.
+    </p>
+  </div>
+
+  <div *ngIf="!loading && articles.length > 0" class="article-grid">
+    <article
+      *ngFor="let article of articles"
+      class="article-card bef bef-boxShadow-0__4px__4px__trdark"
+    >
+      <a
+        class="text-decoration-none"
+        href="/articulo/{{ articleId(article) }}"
+        [routerLink]="[isAdmin ? '/admin/articulo' : '/articulo', articleId(article)]"
+      >
+        <img
+          *ngIf="article.mainImg && fileUrl(article.mainImg)"
+          class="article-card__image"
+          [src]="fileUrl(article.mainImg)"
+          [alt]="article.mainImg.title || article.title"
+        />
+
+        <div class="article-card__body">
+          <p class="article-card__tags" *ngIf="article.tags">{{ article.tags }}</p>
+          <h3 class="article-card__title">{{ article.title }}</h3>
+          <p class="article-card__excerpt" *ngIf="article.intro">
+            {{ excerpt(article.intro) }}
+          </p>
+        </div>
+      </a>
+
+      <div class="article-card__actions">
+        <a
+          class="btn py-1 px-3 bef bef-btn-linkM bef-text-bg1M text-decoration-none"
+          href="/articulo/{{ articleId(article) }}"
+          [routerLink]="[isAdmin ? '/admin/articulo' : '/articulo', articleId(article)]"
+        >
+          Ver artículo
+        </a>
+
+        <button
+          *ngIf="isAdmin && canChange"
+          class="btn btn-warning py-1 px-3"
+          type="button"
+          (click)="deleteArticle(articleRecordId(article))"
+        >
+          Borrar
+        </button>
+      </div>
+    </article>
+  </div>
+</section>

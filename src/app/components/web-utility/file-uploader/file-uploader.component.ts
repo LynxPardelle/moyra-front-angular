@@ -509,6 +509,24 @@ export class FileUploaderComponent implements OnInit {
       return;
     }
 
+    if (this.type === 'article' && this.typeThingComRes === 'article-section') {
+      const articleId = this.thing?.articleId || this.thing?.article;
+      if (!articleId) {
+        throw new Error('No se encontró el artículo de esta sección.');
+      }
+
+      await firstValueFrom(
+        this._http.put(
+          apiUrl(`/articles/${articleId}/sections/${this.id}`),
+          this.typeMeta === 'multi'
+            ? { files: this.mergeFileIds(fileIds) }
+            : { mainFile: firstFileId },
+          { headers }
+        )
+      );
+      return;
+    }
+
     if (this.type === 'article' && this.typeThingComRes === 'article') {
       await firstValueFrom(
         this._http.put(

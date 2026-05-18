@@ -110,6 +110,19 @@ export class ArticleService {
     return this._http.get(this.urlArticle + 'article/' + id);
   }
 
+  getArticleSections(articleId: string): Observable<any> {
+    if (ApiRuntime.isV2) {
+      return this._http.get(apiUrl(`/articles/${articleId}/sections`)).pipe(
+        map((response: any) => ({
+          ...response,
+          articleSections: toLegacyEntity(response.items || []),
+        }))
+      );
+    }
+
+    return this._http.get(this.urlArticle + 'article-sections/' + articleId);
+  }
+
   updateArticle(id: string, article: any): Observable<any> {
     const body = JSON.stringify(
       toApiPayload(article, ['mainImg'], ['sections'])
@@ -167,11 +180,11 @@ export class ArticleService {
     });
   }
 
-  deleteArticleSection(id: string): Observable<any> {
+  deleteArticleSection(articleId: string, id: string): Observable<any> {
     const headers = this.authHeaders();
 
     if (ApiRuntime.isV2) {
-      return this._http.delete(apiUrl(`/articles/${id}/sections/${id}`), {
+      return this._http.delete(apiUrl(`/articles/${articleId}/sections/${id}`), {
         headers,
       });
     }
