@@ -126,24 +126,30 @@ export function toApiPayload(
     return value;
   }
 
-  return Object.entries(value).reduce((payload: any, [key, fieldValue]) => {
+  const payload = Object.entries(value).reduce((nextPayload: any, [key, fieldValue]) => {
     if (key === '_id' || key === 'publicUrl' || key === 'url') {
-      return payload;
+      return nextPayload;
     }
 
     if (fileFields.includes(key)) {
-      payload[key] = toReferenceId(fieldValue);
-      return payload;
+      nextPayload[key] = toReferenceId(fieldValue);
+      return nextPayload;
     }
 
     if (listFields.includes(key) && Array.isArray(fieldValue)) {
-      payload[key] = fieldValue.map(toReferenceId).filter(Boolean);
-      return payload;
+      nextPayload[key] = fieldValue.map(toReferenceId).filter(Boolean);
+      return nextPayload;
     }
 
-    payload[key] = fieldValue;
-    return payload;
+    nextPayload[key] = fieldValue;
+    return nextPayload;
   }, {});
+
+  if (payload.urltitle && !payload.slug) {
+    payload.slug = payload.urltitle;
+  }
+
+  return payload;
 }
 
 export function toLegacyEntity<T = any>(value: any): T {
@@ -158,6 +164,10 @@ export function toLegacyEntity<T = any>(value: any): T {
   const clone: any = { ...value };
   if (clone.id && !clone._id) {
     clone._id = clone.id;
+  }
+
+  if (clone.slug && !clone.urltitle) {
+    clone.urltitle = clone.slug;
   }
 
   for (const field of ['logo', 'mainImg', 'seoImg', 'photo', 'mainFile']) {

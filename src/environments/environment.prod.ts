@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://moyra.org/api',
+  apiBaseUrl: 'https://api-cloud.moyra.org/api/v2',
 };
