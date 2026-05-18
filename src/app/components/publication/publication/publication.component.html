@@ -1,6 +1,6 @@
-<article class="publication-detail bef bef-wmx-980px mx-auto px-3 py-4">
+<article class="publication-detail ank ank-wmx-980px mx-auto px-3 py-4">
   <div
-    class="position-fixed bef bef-top-15per top-md-10per end-0 admin-actions"
+    class="admin-actions"
     *ngIf="
       identity &&
       identity.role === 'ROLE_ADMIN' &&
@@ -10,7 +10,7 @@
   >
     <button
       *ngIf="editSwitch === false"
-      class="btn bef bef-btn-linkM bef-text-bg1M mr-2"
+      class="admin-actions__button"
       type="button"
       (click)="switchEdit()"
       title="Editar publicación"
@@ -20,17 +20,17 @@
 
     <button
       *ngIf="editSwitch === true"
-      class="btn bef bef-btn-linkM bef-text-bg1M mr-2"
+      class="admin-actions__button"
       type="button"
       (click)="switchEdit()"
       title="Cerrar edición"
     >
-      X
+      Cerrar
     </button>
 
     <button
       *ngIf="publicationRecordId(publication)"
-      class="btn btn-warning mr-2"
+      class="admin-actions__button admin-actions__button--danger"
       type="button"
       (click)="deletePublication(publicationRecordId(publication))"
       title="Borrar publicación"
@@ -43,7 +43,7 @@
 
   <ng-container *ngIf="!loading && editSwitch === false">
     <a
-      class="d-inline-block mb-3 text-decoration-none bef bef-text-linkM"
+      class="back-link text-decoration-none"
       href="/publications"
       [routerLink]="[isAdmin ? '/admin/publications' : '/publications']"
     >
@@ -51,7 +51,10 @@
     </a>
 
     <header class="publication-detail__header text-center mx-auto mb-4">
-      <h2 class="mb-3" *ngIf="publication.title">{{ publication.title }}</h2>
+      <p class="publication-detail__eyebrow">Publicación</p>
+      <h1 class="publication-detail__title" *ngIf="publication.title">
+        {{ publication.title }}
+      </h1>
     </header>
 
     <img
@@ -75,7 +78,7 @@
 
     <p *ngIf="publication.youtube" class="text-center my-4">
       <a
-        class="btn bef bef-btn-linkM bef-text-bg1M"
+        class="btn ank ank-btn-linkM ank-text-bg1M"
         [href]="publication.youtube"
         target="_blank"
         rel="noopener"
@@ -112,14 +115,17 @@
   </ng-container>
 
   <section *ngIf="!loading && editSwitch === true" class="publication-editor mx-auto">
-    <h2 class="h3 text-center mb-4">
-      {{ publicationRecordId(publication) ? 'Editar publicación' : 'Crear publicación' }}
-    </h2>
+    <header class="editor-heading">
+      <p class="editor-heading__eyebrow">Editor de publicaciones</p>
+      <h1 class="editor-heading__title">
+        {{ publicationRecordId(publication) ? 'Editar publicación' : 'Crear publicación' }}
+      </h1>
+    </header>
 
     <div class="d-block w-100 mx-auto my-3">
-      <label class="bef bef-text-textM mb-1 d-block" for="title">Título</label>
+      <label class="ank ank-text-textM mb-1 d-block" for="title">Título</label>
       <input
-        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 publication-input"
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 publication-input"
         type="text"
         id="title"
         name="title"
@@ -130,11 +136,11 @@
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
-      <label class="bef bef-text-textM mb-1 d-block" for="urltitle">
+      <label class="ank ank-text-textM mb-1 d-block" for="urltitle">
         link-de-la-publicacion-sin-acentos-ni-espacios
       </label>
       <input
-        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 publication-input"
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 publication-input"
         type="text"
         id="urltitle"
         name="urltitle"
@@ -144,9 +150,9 @@
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
-      <label class="bef bef-text-textM mb-1 d-block" for="text">Contenido</label>
+      <label class="ank ank-text-textM mb-1 d-block" for="text">Contenido</label>
       <textarea
-        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 publication-textarea"
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 publication-textarea"
         id="text"
         name="text"
         [(ngModel)]="publication.text"
@@ -156,11 +162,11 @@
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
-      <label class="bef bef-text-textM mb-1 d-block" for="youtube">
+      <label class="ank ank-text-textM mb-1 d-block" for="youtube">
         Video relacionado
       </label>
       <input
-        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 publication-input"
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 publication-input"
         type="url"
         id="youtube"
         name="youtube"
@@ -170,11 +176,11 @@
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
-      <label class="bef bef-text-textM mb-1 d-block" for="insertions">
+      <label class="ank ank-text-textM mb-1 d-block" for="insertions">
         Inserciones
       </label>
       <textarea
-        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 publication-small-textarea"
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 publication-small-textarea"
         id="insertions"
         name="insertions"
         [ngModel]="insertionLines()"
@@ -184,7 +190,7 @@
     </div>
 
     <button
-      class="btn bef bef-btn-linkM bef-text-bg1M mx-auto d-block my-4 w-100"
+      class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-4 w-100"
       type="button"
       (click)="onSubmit()"
     >
@@ -192,7 +198,7 @@
     </button>
 
     <section *ngIf="publicationRecordId(publication)" class="publication-upload mt-5">
-      <h3 class="h5 text-center mb-3">Imagen principal</h3>
+      <h3 class="editor-section-title">Imagen principal</h3>
       <img
         *ngIf="
           publication.mainFile &&
@@ -216,7 +222,7 @@
 
       <hr class="my-5" />
 
-      <h3 class="h5 text-center mb-3">Archivos relacionados</h3>
+      <h3 class="editor-section-title">Archivos relacionados</h3>
       <app-file-uploader
         [type]="'publication'"
         [typeMeta]="'multi'"

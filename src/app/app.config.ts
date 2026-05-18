@@ -11,7 +11,6 @@ import { ModalModule } from 'ngx-bootstrap/modal';
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { ArticleService } from './services/article.service';
-import { BefService } from './services/bef.service';
 import { MainService } from './services/main.service';
 import { PublicationService } from './services/publication.service';
 import { ServicioService } from './services/servicio.service';
@@ -27,7 +26,6 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withFetch()),
     importProvidersFrom(ModalModule.forRoot()),
     ArticleService,
-    BefService,
     MainService,
     PublicationService,
     ServicioService,

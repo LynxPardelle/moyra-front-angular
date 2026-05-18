@@ -1,6 +1,6 @@
 <!-- Edit/Delete Buttons -->
 <div
-  class="position-fixed bef bef-top-15per bef-top-md-10per end-0"
+  class="position-fixed ank ank-top-15per ank-top-md-10per end-0"
   *ngIf="
     identity &&
     identity.role == 'ROLE_ADMIN' &&
@@ -42,7 +42,7 @@
 
 <img
   *ngIf="main && main.mainImg && main.mainImg.location"
-  class="w-100 bef bef-hmx-50vh obj-fit-cover"
+  class="w-100 ank ank-hmx-50vh obj-fit-cover"
   [src]="main.mainImg.publicUrl || (urlMain + 'get-file/' + main.mainImg.location)"
   alt="{{ main.mainImg.title }}"
 />
@@ -68,17 +68,17 @@
 
 <!-- Edit Main Section -->
 <section *ngIf="editSwitch === true">
-  <h3 class="bef bef-text-titleM text-center mt-5">
+  <h3 class="ank ank-text-titleM text-center mt-5">
     Edición de configuración del sitio
   </h3>
 
   <!-- Description Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="desc"
+    <label class="ank ank-text-textM mb-1 d-block" for="desc"
       >Descripción</label
     >
     <textarea
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="desc"
       #desc="ngModel"
@@ -87,7 +87,7 @@
       required
     ></textarea>
     <span
-      class="bef bef-text-titleM font-weight-bold"
+      class="ank ank-text-titleM font-weight-bold"
       *ngIf="!desc.valid && desc.touched"
     >
       La descripción es obligatoria.
@@ -96,9 +96,9 @@
 
   <!-- FaceBook Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef-text-textM mb-1 d-block" for="FB">FaceBook Link</label>
+    <label class="ank-text-textM mb-1 d-block" for="FB">FaceBook Link</label>
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="FB"
       #FB="ngModel"
@@ -110,11 +110,11 @@
 
   <!-- WhatsApp Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="whatsApp"
+    <label class="ank ank-text-textM mb-1 d-block" for="whatsApp"
       >WhatsApp</label
     >
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="whatsApp"
       #whatsApp="ngModel"
@@ -126,9 +126,9 @@
 
   <!-- Twitter Edit -->
   <!-- <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="twitter">Twitter Link</label>
+    <label class="ank ank-text-textM mb-1 d-block" for="twitter">Twitter Link</label>
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="twitter"
       #twitter="ngModel"
@@ -140,9 +140,9 @@
 
   <!-- Email Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="FB">Email</label>
+    <label class="ank ank-text-textM mb-1 d-block" for="FB">Email</label>
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="mail"
       #mail="ngModel"
@@ -154,11 +154,11 @@
 
   <!-- LinkedIn Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="linkedIn"
+    <label class="ank ank-text-textM mb-1 d-block" for="linkedIn"
       >LinkedIn Link</label
     >
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="linkedIn"
       #linkedIn="ngModel"
@@ -170,11 +170,11 @@
 
   <!-- phoneNumber Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="FB"
+    <label class="ank ank-text-textM mb-1 d-block" for="FB"
       >Número de teléfono</label
     >
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="phoneNumber"
       #phoneNumber="ngModel"
@@ -185,11 +185,11 @@
 
   <!-- ErrorMessage Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="errorMessage"
+    <label class="ank ank-text-textM mb-1 d-block" for="errorMessage"
       >Mensaje de error</label
     >
     <textarea
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="errorMessage"
       #errorMessage="ngModel"
@@ -200,11 +200,11 @@
 
   <!-- SeoTags Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="seoTags"
+    <label class="ank ank-text-textM mb-1 d-block" for="seoTags"
       >Palabras clave</label
     >
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="seoTags"
       #seoTags="ngModel"
@@ -216,20 +216,20 @@
   <!-- Submit Button -->
   <button
     (click)="onSubmit('main')"
-    class="btn bef bef-btn-linkM bef-text-bg1M mx-auto d-block my-3 w-75"
+    class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-3 w-75"
   >
     Confirmar
   </button>
 
   <hr class="w-100 d-block mx-auto my-5" />
 
-  <h3 class="bef bef-text-titleM text-center">Cambio de llave</h3>
+  <h3 class="ank ank-text-titleM text-center">Cambio de llave</h3>
 
   <!-- Key Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="key">Llave nueva</label>
+    <label class="ank ank-text-textM mb-1 d-block" for="key">Llave nueva</label>
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="password"
       name="key"
       #key="ngModel"
@@ -241,11 +241,11 @@
 
   <!-- KeyOld Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="keyOld"
+    <label class="ank ank-text-textM mb-1 d-block" for="keyOld"
       >Llave vieja</label
     >
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="password"
       name="keyOld"
       #keyOld="ngModel"
@@ -258,7 +258,7 @@
   <!-- Submit Password -->
   <button
     (click)="onSubmit('main')"
-    class="btn bef bef-btn-linkM bef-text-bg1M mx-auto d-block my-3 w-75"
+    class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-3 w-75"
   >
     Confirmar
   </button>
@@ -266,15 +266,15 @@
   <hr class="w-100 d-block mx-auto my-5" />
 
   <!-- Image Main Uploads -->
-  <h3 class="bef bef-text-titleM text-center">Subida de imágenes</h3>
+  <h3 class="ank ank-text-titleM text-center">Subida de imágenes</h3>
 
   <div class="d-flex flex-wrap justify-content-evenly my-3">
     <div class="w-50">
-      <h4 class="bef bef-text-titleM text-center">Imagen principal</h4>
+      <h4 class="ank ank-text-titleM text-center">Imagen principal</h4>
 
       <img
         *ngIf="main && main.mainImg && main.mainImg.location"
-        class="bef bef-wmx-75per d-block mx-auto bef-hmx-25vh my-3"
+        class="ank ank-wmx-75per d-block mx-auto ank-hmx-25vh my-3"
         [src]="main.mainImg.publicUrl || (urlMain + 'get-file/' + main.mainImg.location)"
         alt="{{ main.mainImg.title }}"
       />
@@ -292,11 +292,11 @@
     </div>
 
     <div class="w-50">
-      <h4 class="bef bef-text-titleM text-center">Logo</h4>
+      <h4 class="ank ank-text-titleM text-center">Logo</h4>
 
       <img
         *ngIf="main && main.logo && main.logo.location"
-        class="bef bef-wmx-75per d-block mx-auto bef-hmx-25vh my-3"
+        class="ank ank-wmx-75per d-block mx-auto ank-hmx-25vh my-3"
         [src]="main.logo.publicUrl || (urlMain + 'get-file/' + main.logo.location)"
         alt="{{ main.logo.title }}"
       />
@@ -324,11 +324,11 @@
   >
     <div
       *ngFor="let equip of equips"
-      class="mb-5 mx-auto position-relative bef bef-w-300px bef-w-sm-75per px-2"
+      class="mb-5 mx-auto position-relative ank ank-w-300px ank-w-sm-75per px-2"
     >
       <!-- Edit/Delete Buttons -->
       <div
-        class="position-absolute bef bef-top-15per bef-top-md-10per end-0"
+        class="position-absolute ank ank-top-15per ank-top-md-10per end-0"
         *ngIf="
           identity &&
           identity.role == 'ROLE_ADMIN' &&
@@ -338,7 +338,7 @@
         "
       >
         <button
-          class="btn bef bef-btn-linkM bef-text-bg1M mr-2"
+          class="btn ank ank-btn-linkM ank-text-bg1M mr-2"
           (click)="switchEquip(equip)"
         >
           <svg
@@ -382,14 +382,14 @@
 
       <img
         *ngIf="equip.photo && equip.photo.location"
-        class="bef bef-w-75per bef-wmn-250px bef-wmx-500px bef-h-300px mx-auto d-block my-4 obj-fit-cover"
+        class="ank ank-w-75per ank-wmn-250px ank-wmx-500px ank-h-300px mx-auto d-block my-4 obj-fit-cover"
         [src]="equip.photo.publicUrl || (urlMain + 'get-file/' + equip.photo.location)"
         alt="{{ equip.photo.title }}"
       />
 
       <div
         *ngIf="equip && equip.desc && equip.desc !== ''"
-        class="bef bef-w-275px bef-w-md-100per mx-auto d-block text-center"
+        class="ank ank-w-275px ank-w-md-100per mx-auto d-block text-center"
         [innerHTML]="
           Linkify(this.valuefy(equip.desc), '#000', '#4b8ff5') | safeHtml
         "
@@ -400,7 +400,7 @@
 
 <!-- Edit Section -->
 <section class="my-3" *ngIf="editSwitch === true">
-  <h3 class="bef bef-text-titleM text-center">
+  <h3 class="ank ank-text-titleM text-center">
     <ng-container *ngIf="equip._id === ''; else elseEquipIdTemplate">
       Crear
     </ng-container>
@@ -410,9 +410,9 @@
 
   <!-- Name Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="name">Nombre</label>
+    <label class="ank ank-text-textM mb-1 d-block" for="name">Nombre</label>
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="name"
       #name="ngModel"
@@ -421,7 +421,7 @@
       required
     />
     <span
-      class="bef bef-text-titleM font-weight-bold"
+      class="ank ank-text-titleM font-weight-bold"
       *ngIf="!name.valid && name.touched"
     >
       El nombre es obligatorio.
@@ -430,11 +430,11 @@
 
   <!-- Desc Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="desc"
+    <label class="ank ank-text-textM mb-1 d-block" for="desc"
       >Descripción</label
     >
     <textarea
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="desc"
       #desc="ngModel"
@@ -443,7 +443,7 @@
       required
     ></textarea>
     <span
-      class="bef bef-text-titleM font-weight-bold"
+      class="ank ank-text-titleM font-weight-bold"
       *ngIf="!desc.valid && desc.touched"
     >
       La descripción es obligatoria.
@@ -462,12 +462,12 @@
     <hr class="w-100 d-block mx-auto my-5" />
 
     <!-- Photo Equip Member Upload -->
-    <h3 class="bef bef-text-titleM text-center">
+    <h3 class="ank ank-text-titleM text-center">
       Subida de la foto del miembro del equipo
     </h3>
     <img
       *ngIf="equip && equip.photo && equip.photo.location"
-      class="bef bef-wmx-75per d-block mx-auto bef-hmx-25vh my-3"
+      class="ank ank-wmx-75per d-block mx-auto ank-hmx-25vh my-3"
       [src]="equip.photo.publicUrl || (urlMain + 'get-file/' + equip.photo.location)"
       alt="{{ equip.photo.title }}"
     />

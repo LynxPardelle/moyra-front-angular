@@ -1,29 +1,29 @@
 <div class="d-flex flex-column flex-md-row">
   <aside
-    class="position-relative bef bef-z-2  bef-bg-transparent"
+    class="position-relative ank ank-z-2  ank-bg-transparent"
     [ngClass]="{
-      'bef-w-100vw bef-w-lg-25vw bef-w-md-33vw bef-h-md-90vh':
+      'ank-w-100vw ank-w-lg-25vw ank-w-md-33vw ank-h-md-90vh':
         showAside === true,
-      'bef-w-45px bef-h-45px': showAside === false
+      'ank-w-45px ank-h-45px': showAside === false
     }"
   >
     <button
       class="
         btn
-        bef
-        bef-btn-linkM
-        bef-text-bg1M
+        ank
+        ank-btn-linkM
+        ank-text-bg1M
         position-fixed
         start-0
         top-md-10per
-        bef-z-5
-        bef-w-40px
-        bef-h-40px
+        ank-z-5
+        ank-w-40px
+        ank-h-40px
       "
       (click)="showAsideChanger()"
       [ngClass]="{
-        'bef-top-45per': showAside === true,
-        'bef-top-15per': showAside === false
+        'ank-top-45per': showAside === true,
+        'ank-top-15per': showAside === false
       }"
     >
       <ng-container *ngIf="showAside === false; else elseTemplate">
@@ -85,10 +85,10 @@
       class="
         position-fixed
         start-0
-        bef
-        bef-w-100vw bef-w-lg-24vw bef-w-md-32vw
-        bef-h-md-100vh
-        bef-bg-gray__OPA__0_25
+        ank
+        ank-w-100vw ank-w-lg-24vw ank-w-md-32vw
+        ank-h-md-100vh
+        ank-bg-gray__OPA__0_25
         h-md-100
         py-3
         box-shadow-2-0-5-textM
@@ -105,8 +105,8 @@
           flex-wrap flex-row flex-md-column
           justify-content-evenly
           align-items-end align-items-md-start
-          bef
-          bef-w-90per bef-w-md-70per
+          ank
+          ank-w-90per ank-w-md-70per
           mx-auto
           my-3
           p-0
@@ -176,9 +176,9 @@
   </aside>
 
   <div
-    class="bef bef-w-100vw bef-w-lg-75vw bef-w-md-66vw bef-pt-1_5rem bef-pt-md-0"
+    class="ank ank-w-100vw ank-w-lg-75vw ank-w-md-66vw ank-pt-1_5rem ank-pt-md-0"
     [ngClass]="{
-      'bef-w-lg-75vw bef-w-md-66vw': showAside === true
+      'ank-w-lg-75vw ank-w-md-66vw': showAside === true
     }"
   >
     <router-outlet></router-outlet>

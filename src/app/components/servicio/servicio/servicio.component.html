@@ -1,6 +1,6 @@
 <!-- Edit/Delete Buttons -->
 <div
-  class="position-fixed bef bef-top-15per top-md-10per end-0"
+  class="position-fixed ank ank-top-15per top-md-10per end-0"
   *ngIf="
     identity &&
     identity.role == 'ROLE_ADMIN' &&
@@ -10,7 +10,7 @@
 >
   <button
     *ngIf="editSwitch == false"
-    class="btn bef bef-btn-linkM bef-text-bg1M mr-2"
+    class="btn ank ank-btn-linkM ank-text-bg1M mr-2"
     (click)="switchEdit()"
   >
     <svg
@@ -33,7 +33,7 @@
 
   <button
     *ngIf="editSwitch == true"
-    class="btn bef bef-btn-linkM bef-text-bg1M mr-2 font-weight-normal float-right"
+    class="btn ank ank-btn-linkM ank-text-bg1M mr-2 font-weight-normal float-right"
     (click)="switchEdit()"
   >
     X
@@ -62,7 +62,7 @@
 
 <img
   *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
-  class="bef bef-wmx-65per bef-hmx-500px mx-auto d-block obj-fit-cover"
+  class="ank ank-wmx-65per ank-hmx-500px mx-auto d-block obj-fit-cover"
   [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
   alt="{{ servicio.mainImg.title }}"
 />
@@ -70,7 +70,7 @@
 <!-- Description -->
 <div
   *ngIf="servicio.desc && servicio.desc !== ''"
-  class="bef bef-w-65per mx-auto my-5 text-center"
+  class="ank ank-w-65per mx-auto my-5 text-center"
   [innerHTML]="
     Linkify(this.valuefy(servicio.desc), '#000', '#4b8ff5') | safeHtml
   "
@@ -78,13 +78,13 @@
 
 <!-- Edit Main Section -->
 <section *ngIf="servicio && editSwitch === true">
-  <h3 class="bef bef-text-titleM text-center">Datos de la solución</h3>
+  <h3 class="ank ank-text-titleM text-center">Datos de la solución</h3>
 
   <!-- Title Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="title">Título</label>
+    <label class="ank ank-text-textM mb-1 d-block" for="title">Título</label>
     <input
-      class="w-100 bef bef-text-bg1M bef-btn-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-btn-textM border-0"
       type="text"
       name="title"
       #title="ngModel"
@@ -93,7 +93,7 @@
       required
     />
     <span
-      class="bef bef-text-titleM font-weight-bold"
+      class="ank ank-text-titleM font-weight-bold"
       *ngIf="!title.valid && title.touched"
     >
       El título es obligatorio.
@@ -102,11 +102,11 @@
 
   <!-- Description Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="desc"
+    <label class="ank ank-text-textM mb-1 d-block" for="desc"
       >Descripción</label
     >
     <textarea
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="desc"
       #desc="ngModel"
@@ -115,7 +115,7 @@
       required
     ></textarea>
     <span
-      class="bef bef-text-titleM font-weight-bold"
+      class="ank ank-text-titleM font-weight-bold"
       *ngIf="!desc.valid && desc.touched"
     >
       La descripción es obligatoria.
@@ -124,11 +124,11 @@
 
   <!-- Tags Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="tags"
+    <label class="ank ank-text-textM mb-1 d-block" for="tags"
       >Palabras clave</label
     >
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="tags"
       #tags="ngModel"
@@ -139,11 +139,11 @@
 
   <!-- UrlTitle Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="bef bef-text-textM mb-1 d-block" for="urltitle"
+    <label class="ank ank-text-textM mb-1 d-block" for="urltitle"
       >link-de-la-solucion-sin-acentos-ni-espacios)</label
     >
     <input
-      class="w-100 bef bef-text-bg1M bef-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
       name="urltitle"
       #urltitle="ngModel"
@@ -155,7 +155,7 @@
   <!-- Submit Button -->
   <button
     (click)="onSubmit()"
-    class="btn bef bef-btn-linkM bef-text-bg1M mx-auto d-block my-3 w-75"
+    class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-3 w-75"
   >
     <ng-container *ngIf="servicio._id === ''; else elseTemplate">
       Crear
@@ -168,12 +168,12 @@
     <hr class="w-100 d-block mx-auto my-5" />
 
     <!-- Photo Equip Member Upload -->
-    <h3 class="bef bef-text-titleM text-center">
+    <h3 class="ank ank-text-titleM text-center">
       Subida de la imagen de la solución
     </h3>
     <img
       *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
-      class="bef bef-wmx-75per d-block mx-auto bef-hmx-25vh my-3"
+      class="ank ank-wmx-75per d-block mx-auto ank-hmx-25vh my-3"
       [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
       alt="{{ servicio.mainImg.title }}"
     />

@@ -1,13 +1,13 @@
 import { Component, DoCheck, HostListener, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
+import { NgxAngoraService } from 'ngx-angora-css';
 
 // Services
 import { GlobalUser, GlobalMain } from './services/global';
 import { MainService } from './services/main.service';
 import { UserService } from './services/user.service';
 import { WebService } from './services/web.service';
-import { BefService } from './services/bef.service';
 import { SharedService } from './services/shared.service';
 
 // Models
@@ -30,7 +30,7 @@ export class App implements DoCheck, OnInit {
   public customConsoleCSS =
     'background-color: green; color: white; padding: 1em;';
 
-  // BEF
+  // ank
   public colors: any = {
     titleM: '#29303b',
     textM: '#29303b',
@@ -52,13 +52,15 @@ export class App implements DoCheck, OnInit {
 
   // Utility
   public windowWidth = 0;
+  private cssCreateTimer?: ReturnType<typeof setTimeout>;
+  private lastCssCreateAt = 0;
 
   constructor(
     private _mainService: MainService,
     private _userService: UserService,
 
     private _webService: WebService,
-    private _befService: BefService,
+    private _angora: NgxAngoraService,
     private _location: Location,
 
     private _sharedService: SharedService,
@@ -96,8 +98,8 @@ export class App implements DoCheck, OnInit {
       this.document + ' 58',
       this.customConsoleCSS
     );
-    //BEF
-    this._befService.pushColors(this.colors);
+    //ank
+    this._angora.pushColors(this.colors);
     (async () => {
       try {
         let main = await this._mainService.getMain().toPromise();
@@ -157,7 +159,7 @@ export class App implements DoCheck, OnInit {
             }
 
             this.main = newMain.main;
-            this._befService.cssCreate();
+            this.scheduleCssCreate(true);
             this._sharedService.emitChange({
               from: 'app',
               to: 'all',
@@ -201,7 +203,7 @@ export class App implements DoCheck, OnInit {
       property: 'onlyConsoleMessage',
       thing: 'Data from app',
     });
-    this._befService.cssCreate();
+    this.scheduleCssCreate(true);
   }
 
   ngDoCheck(): void {
@@ -212,7 +214,7 @@ export class App implements DoCheck, OnInit {
       property: 'main',
       thing: this.main,
     });
-    this._befService.cssCreate();
+    this.scheduleCssCreate();
   }
 
   async testing() {
@@ -222,5 +224,48 @@ export class App implements DoCheck, OnInit {
 
   backClicked() {
     this._location.back();
+  }
+
+  private scheduleCssCreate(force = false): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    if (force && this.cssCreateTimer) {
+      clearTimeout(this.cssCreateTimer);
+      this.cssCreateTimer = undefined;
+    }
+
+    if (this.cssCreateTimer) {
+      return;
+    }
+
+    const elapsed = Date.now() - this.lastCssCreateAt;
+    const wait = force ? 0 : Math.max(0, 250 - elapsed);
+
+    this.cssCreateTimer = setTimeout(() => {
+      this.cssCreateTimer = undefined;
+      this.lastCssCreateAt = Date.now();
+      this.ensureAngoraStylesheets();
+      this._angora.cssCreate(undefined, force);
+    }, wait);
+  }
+
+  private ensureAngoraStylesheets(): void {
+    const stylesheets = [
+      '/assets/css/angora-styles.css',
+      '/assets/css/angora-styles-responsive.css',
+    ];
+
+    stylesheets.forEach((href) => {
+      if (document.querySelector(`link[href="${href}"]`)) {
+        return;
+      }
+
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      document.head.appendChild(link);
+    });
   }
 }

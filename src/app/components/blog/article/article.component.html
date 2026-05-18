@@ -1,6 +1,6 @@
-<article class="article-detail bef bef-wmx-980px mx-auto px-3 py-4">
+<article class="article-detail ank ank-wmx-980px mx-auto px-3 py-4">
   <div
-    class="position-fixed bef bef-top-15per top-md-10per end-0 admin-actions"
+    class="admin-actions"
     *ngIf="
       identity &&
       identity.role === 'ROLE_ADMIN' &&
@@ -10,7 +10,7 @@
   >
     <button
       *ngIf="editSwitch === false"
-      class="btn bef bef-btn-linkM bef-text-bg1M mr-2"
+      class="admin-actions__button"
       type="button"
       (click)="switchEdit()"
       title="Editar artículo"
@@ -20,17 +20,17 @@
 
     <button
       *ngIf="editSwitch === true"
-      class="btn bef bef-btn-linkM bef-text-bg1M mr-2"
+      class="admin-actions__button"
       type="button"
       (click)="switchEdit()"
       title="Cerrar edición"
     >
-      X
+      Cerrar
     </button>
 
     <button
       *ngIf="articleRecordId(article)"
-      class="btn btn-warning mr-2"
+      class="admin-actions__button admin-actions__button--danger"
       type="button"
       (click)="deleteArticle(articleRecordId(article))"
       title="Borrar artículo"
@@ -43,7 +43,7 @@
 
   <ng-container *ngIf="!loading && editSwitch === false">
     <a
-      class="d-inline-block mb-3 text-decoration-none bef bef-text-linkM"
+      class="back-link text-decoration-none"
       href="/blog"
       [routerLink]="[isAdmin ? '/admin/blog' : '/blog']"
     >
@@ -52,7 +52,7 @@
 
     <header class="article-detail__header text-center mx-auto mb-4">
       <p class="article-detail__tags" *ngIf="article.tags">{{ article.tags }}</p>
-      <h2 class="mb-3" *ngIf="article.title">{{ article.title }}</h2>
+      <h1 class="article-detail__title" *ngIf="article.title">{{ article.title }}</h1>
       <p class="article-detail__intro" *ngIf="article.intro">
         {{ article.intro }}
       </p>
@@ -123,14 +123,17 @@
   </ng-container>
 
   <section *ngIf="!loading && editSwitch === true" class="article-editor mx-auto">
-    <h2 class="h3 text-center mb-4">
-      {{ articleRecordId(article) ? 'Editar artículo' : 'Crear artículo' }}
-    </h2>
+    <header class="editor-heading">
+      <p class="editor-heading__eyebrow">Editor de blog</p>
+      <h1 class="editor-heading__title">
+        {{ articleRecordId(article) ? 'Editar artículo' : 'Crear artículo' }}
+      </h1>
+    </header>
 
     <div class="d-block w-100 mx-auto my-3">
-      <label class="bef bef-text-textM mb-1 d-block" for="title">Título</label>
+      <label class="ank ank-text-textM mb-1 d-block" for="title">Título</label>
       <input
-        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-input"
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-input"
         type="text"
         id="title"
         name="title"
@@ -141,11 +144,11 @@
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
-      <label class="bef bef-text-textM mb-1 d-block" for="urltitle">
+      <label class="ank ank-text-textM mb-1 d-block" for="urltitle">
         link-del-articulo-sin-acentos-ni-espacios
       </label>
       <input
-        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-input"
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-input"
         type="text"
         id="urltitle"
         name="urltitle"
@@ -155,9 +158,9 @@
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
-      <label class="bef bef-text-textM mb-1 d-block" for="tags">Etiquetas</label>
+      <label class="ank ank-text-textM mb-1 d-block" for="tags">Etiquetas</label>
       <input
-        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-input"
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-input"
         type="text"
         id="tags"
         name="tags"
@@ -167,9 +170,9 @@
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
-      <label class="bef bef-text-textM mb-1 d-block" for="intro">Introducción</label>
+      <label class="ank ank-text-textM mb-1 d-block" for="intro">Introducción</label>
       <textarea
-        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-small-textarea"
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-small-textarea"
         id="intro"
         name="intro"
         [(ngModel)]="article.intro"
@@ -179,9 +182,9 @@
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
-      <label class="bef bef-text-textM mb-1 d-block" for="outro">Cierre</label>
+      <label class="ank ank-text-textM mb-1 d-block" for="outro">Cierre</label>
       <textarea
-        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-textarea"
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
         id="outro"
         name="outro"
         [(ngModel)]="article.outro"
@@ -190,7 +193,7 @@
     </div>
 
     <button
-      class="btn bef bef-btn-linkM bef-text-bg1M mx-auto d-block my-4 w-100"
+      class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-4 w-100"
       type="button"
       (click)="onSubmit()"
     >
@@ -198,7 +201,7 @@
     </button>
 
     <section *ngIf="articleRecordId(article)" class="article-upload mt-5">
-      <h3 class="h5 text-center mb-3">Imagen principal</h3>
+      <h3 class="editor-section-title">Imagen principal</h3>
       <img
         *ngIf="article.mainImg && fileUrl(article.mainImg) && isImage(article.mainImg)"
         class="article-upload__preview mx-auto mb-3"
@@ -218,7 +221,7 @@
     </section>
 
     <section *ngIf="articleRecordId(article)" class="article-sections-editor mt-5">
-      <h3 class="h5 text-center mb-3">Secciones del artículo</h3>
+      <h3 class="editor-section-title">Secciones del artículo</h3>
 
       <section
         *ngFor="let section of articleSections; index as i"
@@ -235,11 +238,11 @@
           </button>
         </div>
 
-        <label class="bef bef-text-textM mb-1 d-block" [for]="'section-title-' + i">
+        <label class="ank ank-text-textM mb-1 d-block" [for]="'section-title-' + i">
           Título
         </label>
         <input
-          class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-input"
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-input"
           type="text"
           [id]="'section-title-' + i"
           [name]="'section-title-' + i"
@@ -247,33 +250,33 @@
           placeholder="Título de la sección"
         />
 
-        <label class="bef bef-text-textM mb-1 mt-3 d-block" [for]="'section-order-' + i">
+        <label class="ank ank-text-textM mb-1 mt-3 d-block" [for]="'section-order-' + i">
           Orden
         </label>
         <input
-          class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-input"
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-input"
           type="number"
           [id]="'section-order-' + i"
           [name]="'section-order-' + i"
           [(ngModel)]="section.order"
         />
 
-        <label class="bef bef-text-textM mb-1 mt-3 d-block" [for]="'section-text-' + i">
+        <label class="ank ank-text-textM mb-1 mt-3 d-block" [for]="'section-text-' + i">
           Contenido
         </label>
         <textarea
-          class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-textarea"
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
           [id]="'section-text-' + i"
           [name]="'section-text-' + i"
           [(ngModel)]="section.text"
           placeholder="Contenido de la sección"
         ></textarea>
 
-        <label class="bef bef-text-textM mb-1 mt-3 d-block" [for]="'section-insertions-' + i">
+        <label class="ank ank-text-textM mb-1 mt-3 d-block" [for]="'section-insertions-' + i">
           Inserciones
         </label>
         <textarea
-          class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-small-textarea"
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-small-textarea"
           [id]="'section-insertions-' + i"
           [name]="'section-insertions-' + i"
           [ngModel]="insertionLines(section)"
@@ -282,7 +285,7 @@
         ></textarea>
 
         <button
-          class="btn bef bef-btn-linkM bef-text-bg1M mx-auto d-block my-4 w-100"
+          class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-4 w-100"
           type="button"
           (click)="saveSection(section)"
         >
@@ -321,13 +324,13 @@
       </section>
 
       <section class="section-editor section-editor--new">
-        <h4 class="h6 text-center mb-3">Nueva sección</h4>
+        <h4 class="section-editor__new-title">Nueva sección</h4>
 
-        <label class="bef bef-text-textM mb-1 d-block" for="new-section-title">
+        <label class="ank ank-text-textM mb-1 d-block" for="new-section-title">
           Título
         </label>
         <input
-          class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-input"
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-input"
           type="text"
           id="new-section-title"
           name="new-section-title"
@@ -335,33 +338,33 @@
           placeholder="Título de la sección"
         />
 
-        <label class="bef bef-text-textM mb-1 mt-3 d-block" for="new-section-order">
+        <label class="ank ank-text-textM mb-1 mt-3 d-block" for="new-section-order">
           Orden
         </label>
         <input
-          class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-input"
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-input"
           type="number"
           id="new-section-order"
           name="new-section-order"
           [(ngModel)]="sectionDraft.order"
         />
 
-        <label class="bef bef-text-textM mb-1 mt-3 d-block" for="new-section-text">
+        <label class="ank ank-text-textM mb-1 mt-3 d-block" for="new-section-text">
           Contenido
         </label>
         <textarea
-          class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-textarea"
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
           id="new-section-text"
           name="new-section-text"
           [(ngModel)]="sectionDraft.text"
           placeholder="Contenido de la sección"
         ></textarea>
 
-        <label class="bef bef-text-textM mb-1 mt-3 d-block" for="new-section-insertions">
+        <label class="ank ank-text-textM mb-1 mt-3 d-block" for="new-section-insertions">
           Inserciones
         </label>
         <textarea
-          class="w-100 bef bef-text-bg1M bef-bg-textM border-0 article-small-textarea"
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-small-textarea"
           id="new-section-insertions"
           name="new-section-insertions"
           [ngModel]="insertionLines(sectionDraft)"
@@ -370,7 +373,7 @@
         ></textarea>
 
         <button
-          class="btn bef bef-btn-linkM bef-text-bg1M mx-auto d-block my-4 w-100"
+          class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-4 w-100"
           type="button"
           (click)="saveSection(sectionDraft)"
         >

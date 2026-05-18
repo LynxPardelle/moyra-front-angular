@@ -1,9 +1,9 @@
-<h2 class="bef bef-text-titleM text-center my-3">Soluciones</h2>
+<h2 class="ank ank-text-titleM text-center my-3">Soluciones</h2>
 
 <a
   href="/admin/solucion"
   [routerLink]="['/admin/solucion']"
-  class="btn bef bef-btn-linkM bef-text-bg1M mx-auto my-3 d-block bef-w-300px"
+  class="btn ank ank-btn-linkM ank-text-bg1M mx-auto my-3 d-block ank-w-300px"
   *ngIf="
     identity &&
     identity.role == 'ROLE_ADMIN' &&
@@ -20,12 +20,12 @@
 >
   <div
     *ngFor="let servicio of servicios; index as i"
-    class="card my-3 mx-auto bef bef-hmn-500px bef-boxShadow-0__4px__4px__tdark__OPA__0_25 bef-rounded-15px overflow-hidden"
+    class="card my-3 mx-auto ank ank-hmn-500px ank-boxShadow-0__4px__4px__tdark__OPA__0_25 ank-rounded-15px overflow-hidden"
   >
     <div class="card-body d-flex flex-column justify-content-between  p-0">
       <img
         *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
-        class="card-img-top w-100 bef bef-h-200px overflow-hidden obj-fit-cover"
+        class="card-img-top w-100 ank ank-h-200px overflow-hidden obj-fit-cover"
         [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
         alt="{{ servicio.mainImg.title }}"
       />
@@ -58,7 +58,7 @@
         <ng-container *ngIf="isAdmin === false; else elseButtonAdminTemplate">
           <!-- SeeMore -->
           <a
-            class="btn py-1 px-3 m-0 position-relative bef bef-btn-linkM text-center bef-rounded-5px bef-text-light text-decoration-none"
+            class="btn py-1 px-3 m-0 position-relative ank ank-btn-linkM text-center ank-rounded-5px ank-text-light text-decoration-none"
             href="/solucion/{{ servicio.urltitle }}"
             [routerLink]="['/solucion', servicio.urltitle]"
           >
@@ -68,14 +68,14 @@
         <ng-template #elseButtonAdminTemplate>
           <button
             (click)="deleteServicio(servicio._id)"
-            class="btn bef bef-btn-linkM bef-text-bg1M py-1 px-3 m-0 text-center bef-rounded-5px"
+            class="btn ank ank-btn-linkM ank-text-bg1M py-1 px-3 m-0 text-center ank-rounded-5px"
           >
             Borrar
           </button>
 
           <!-- SeeMore -->
           <a
-            class="btn py-1 px-3 m-0 position-relative bef-btn-linkM text-center bef-rounded-5px bef-text-bg1M text-decoration-none"
+            class="btn py-1 px-3 m-0 position-relative ank-btn-linkM text-center ank-rounded-5px ank-text-bg1M text-decoration-none"
             href="/admin/solucion/{{ servicio.urltitle }}"
             [routerLink]="['/admin/solucion', servicio.urltitle]"
           >

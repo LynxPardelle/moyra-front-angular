@@ -1,34 +1,33 @@
-<section class="blog-page bef bef-wmx-1100px mx-auto px-3 py-4">
-  <div
-    *ngIf="
-      identity &&
-      identity.role === 'ROLE_ADMIN' &&
-      canChange === true &&
-      isAdmin === true
-    "
-    class="d-flex justify-content-end mb-3"
-  >
+<section class="blog-page ank ank-wmx-1100px mx-auto px-3 py-4">
+  <header class="blog-heading">
+    <div>
+      <p class="blog-heading__eyebrow">Blog legal</p>
+      <h1 class="blog-heading__title">Criterios para decidir con ventaja</h1>
+      <p class="blog-heading__copy">
+        Análisis legal y criterios prácticos para anticipar riesgos y tomar decisiones informadas.
+      </p>
+    </div>
+
     <a
-      class="btn bef bef-btn-linkM bef-text-bg1M text-decoration-none"
+      *ngIf="
+        identity &&
+        identity.role === 'ROLE_ADMIN' &&
+        canChange === true &&
+        isAdmin === true
+      "
+      class="blog-heading__action text-decoration-none"
       href="/admin/articulo"
       [routerLink]="['/admin/articulo']"
     >
       Crear nuevo artículo
     </a>
-  </div>
-
-  <header class="blog-heading text-center mx-auto mb-4">
-    <h2 class="h3 mb-2">Blog</h2>
-    <p class="m-0 bef bef-text-textM">
-      Análisis legal y criterios prácticos para anticipar riesgos y tomar decisiones informadas.
-    </p>
   </header>
 
-  <div *ngIf="loading" class="text-center my-5">Cargando artículos...</div>
+  <div *ngIf="loading" class="loading-state">Cargando artículos...</div>
 
   <div
     *ngIf="!loading && articles.length === 0"
-    class="empty-state text-center mx-auto my-5 p-4"
+    class="empty-state mx-auto my-5 p-4"
   >
     <h3 class="h5">Aún no hay artículos disponibles.</h3>
     <p class="m-0" *ngIf="isAdmin && canChange">
@@ -39,19 +38,20 @@
   <div *ngIf="!loading && articles.length > 0" class="article-grid">
     <article
       *ngFor="let article of articles"
-      class="article-card bef bef-boxShadow-0__4px__4px__trdark"
+      class="article-card ank ank-boxShadow-0__4px__4px__trdark"
     >
       <a
-        class="text-decoration-none"
+        class="article-card__link text-decoration-none"
         href="/articulo/{{ articleId(article) }}"
         [routerLink]="[isAdmin ? '/admin/articulo' : '/articulo', articleId(article)]"
       >
-        <img
-          *ngIf="article.mainImg && fileUrl(article.mainImg)"
-          class="article-card__image"
-          [src]="fileUrl(article.mainImg)"
-          [alt]="article.mainImg.title || article.title"
-        />
+        <div class="article-card__media" *ngIf="article.mainImg && fileUrl(article.mainImg)">
+          <img
+            class="article-card__image"
+            [src]="fileUrl(article.mainImg)"
+            [alt]="article.mainImg.title || article.title"
+          />
+        </div>
 
         <div class="article-card__body">
           <p class="article-card__tags" *ngIf="article.tags">{{ article.tags }}</p>
@@ -64,7 +64,7 @@
 
       <div class="article-card__actions">
         <a
-          class="btn py-1 px-3 bef bef-btn-linkM bef-text-bg1M text-decoration-none"
+          class="article-card__read text-decoration-none"
           href="/articulo/{{ articleId(article) }}"
           [routerLink]="[isAdmin ? '/admin/articulo' : '/articulo', articleId(article)]"
         >
