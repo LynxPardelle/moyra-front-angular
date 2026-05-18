@@ -12,6 +12,17 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
+app.use((req, _res, next) => {
+  // Dokploy/Traefik adds x-forwarded-* headers that Angular treats as untrusted for SSR.
+  delete req.headers['x-forwarded-for'];
+  delete req.headers['x-forwarded-host'];
+  delete req.headers['x-forwarded-port'];
+  delete req.headers['x-forwarded-prefix'];
+  delete req.headers['x-forwarded-proto'];
+  delete req.headers['x-forwarded-server'];
+  next();
+});
+
 /**
  * Example Express Rest API endpoints can be defined here.
  * Uncomment and define endpoints as necessary.
