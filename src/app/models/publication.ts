@@ -6,6 +6,9 @@ export class Publication {
     public youtube: string,
     public mainFile: any,
     public files: any[],
-    public create_at: Date
+    public urltitle: string,
+    public create_at: Date,
+    public _id: string = '',
+    public id: string = ''
   ) {}
 }

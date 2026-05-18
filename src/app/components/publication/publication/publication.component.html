@@ -1,125 +1,232 @@
-
-<!-- Buttons -->
-<div class="position-relative pt-5">
-  <div class="d-flex flex-column justify-content-evenly align-items-center justify-content-center m-3 position-fixed start-0 bef bef-top-25per bef-h-50vh">
-    <!-- Like -->
+<article class="publication-detail bef bef-wmx-980px mx-auto px-3 py-4">
+  <div
+    class="position-fixed bef bef-top-15per top-md-10per end-0 admin-actions"
+    *ngIf="
+      identity &&
+      identity.role === 'ROLE_ADMIN' &&
+      canChange === true &&
+      isAdmin === true
+    "
+  >
     <button
-      class="
-        btn
-        p-0
-        m-0
-        position-relative
-        like-btn
-        rounded-circle
-        text-center
-      "
+      *ngIf="editSwitch === false"
+      class="btn bef bef-btn-linkM bef-text-bg1M mr-2"
+      type="button"
+      (click)="switchEdit()"
+      title="Editar publicación"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        fill="currentColor"
-        class="bi bi-heart-fill position-absolute top-0 start-0"
-        viewBox="0 0 16 16"
-      >
-        <path
-          fill-rule="evenodd"
-          d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"
-        />
-      </svg>
-      <span> 23 </span>
+      Editar
     </button>
 
-    <!-- Twitter -->
-    <a href="" class="text-twitter">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="35"
-        height="35"
-        fill="currentColor"
-        class="bi bi-twitter"
-        viewBox="0 0 16 16"
-      >
-        <path
-          d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"
-        />
-      </svg>
-    </a>
+    <button
+      *ngIf="editSwitch === true"
+      class="btn bef bef-btn-linkM bef-text-bg1M mr-2"
+      type="button"
+      (click)="switchEdit()"
+      title="Cerrar edición"
+    >
+      X
+    </button>
 
-    <!-- Facebook -->
-    <a href="" class="text-facebook">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="35"
-        height="35"
-        fill="currentColor"
-        class="bi bi-facebook"
-        viewBox="0 0 16 16"
-      >
-        <path
-          d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"
-        />
-      </svg>
-    </a>
+    <button
+      *ngIf="publicationRecordId(publication)"
+      class="btn btn-warning mr-2"
+      type="button"
+      (click)="deletePublication(publicationRecordId(publication))"
+      title="Borrar publicación"
+    >
+      Borrar
+    </button>
   </div>
-</div>
 
-<h2 class="my-3 mx-auto text-center">Título de publicación</h2>
+  <div *ngIf="loading" class="text-center my-5">Cargando publicación...</div>
 
-<img
-  class="bef bef-w-65per mx-auto d-block"
-  src="{{ 'https://picsum.photos/1200/500' }}"
-  alt="{{ 'https://picsum.photos/1200/500' }}"
-/>
+  <ng-container *ngIf="!loading && editSwitch === false">
+    <a
+      class="d-inline-block mb-3 text-decoration-none bef bef-text-linkM"
+      href="/publications"
+      [routerLink]="[isAdmin ? '/admin/publications' : '/publications']"
+    >
+      Volver a publicaciones
+    </a>
 
-<!-- Description -->
-<div class="bef bef-w-65per mx-auto my-5 text-center">
-  <p>
-    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ipsa ipsum
-    dignissimos id assumenda atque nemo corporis distinctio repellendus quia
-    commodi laudantium ab voluptas, soluta nulla consequatur. Adipisci ipsa odit
-    accusantium.
-  </p>
+    <header class="publication-detail__header text-center mx-auto mb-4">
+      <h2 class="mb-3" *ngIf="publication.title">{{ publication.title }}</h2>
+    </header>
 
-  <p>
-    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ipsa ipsum
-    dignissimos id assumenda atque nemo corporis distinctio repellendus quia
-    commodi laudantium ab voluptas, soluta nulla consequatur. Adipisci ipsa odit
-    accusantium.
-  </p>
+    <img
+      *ngIf="
+        publication.mainFile &&
+        fileUrl(publication.mainFile) &&
+        isImage(publication.mainFile)
+      "
+      class="publication-detail__hero mx-auto mb-4"
+      [src]="fileUrl(publication.mainFile)"
+      [alt]="publication.mainFile.title || publication.title"
+    />
 
-  <p>
-    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ipsa ipsum
-    dignissimos id assumenda atque nemo corporis distinctio repellendus quia
-    commodi laudantium ab voluptas, soluta nulla consequatur. Adipisci ipsa odit
-    accusantium.
-  </p>
+    <div
+      *ngIf="publication.text"
+      class="publication-detail__content mx-auto my-4"
+      [innerHTML]="
+        Linkify(valuefy(publication.text), '#29303b', '#4b8ff5') | safeHtml
+      "
+    ></div>
 
-  <p>
-    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ipsa ipsum
-    dignissimos id assumenda atque nemo corporis distinctio repellendus quia
-    commodi laudantium ab voluptas, soluta nulla consequatur. Adipisci ipsa odit
-    accusantium.
-  </p>
+    <p *ngIf="publication.youtube" class="text-center my-4">
+      <a
+        class="btn bef bef-btn-linkM bef-text-bg1M"
+        [href]="publication.youtube"
+        target="_blank"
+        rel="noopener"
+      >
+        Ver video relacionado
+      </a>
+    </p>
 
-  <p>
-    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ipsa ipsum
-    dignissimos id assumenda atque nemo corporis distinctio repellendus quia
-    commodi laudantium ab voluptas, soluta nulla consequatur. Adipisci ipsa odit
-    accusantium.
-  </p>
+    <section
+      *ngIf="publication.files && publication.files.length > 0"
+      class="publication-files mx-auto mt-5"
+    >
+      <h3 class="h5 text-center mb-3">Archivos relacionados</h3>
+      <div class="publication-files__grid">
+        <a
+          *ngFor="let file of publication.files"
+          class="publication-file text-decoration-none"
+          [href]="fileUrl(file)"
+          target="_blank"
+          rel="noopener"
+        >
+          <img
+            *ngIf="isImage(file)"
+            class="publication-file__image"
+            [src]="fileUrl(file)"
+            [alt]="file.title || publication.title"
+          />
+          <span class="publication-file__title">
+            {{ file.title || file.location || 'Archivo' }}
+          </span>
+        </a>
+      </div>
+    </section>
+  </ng-container>
 
-  <p>
-    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ipsa ipsum
-    dignissimos id assumenda atque nemo corporis distinctio repellendus quia
-    commodi laudantium ab voluptas, soluta nulla consequatur. Adipisci ipsa odit
-    accusantium.
-  </p>
+  <section *ngIf="!loading && editSwitch === true" class="publication-editor mx-auto">
+    <h2 class="h3 text-center mb-4">
+      {{ publicationRecordId(publication) ? 'Editar publicación' : 'Crear publicación' }}
+    </h2>
 
-  <p>
-    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ipsa ipsum
-    dignissimos id assumenda atque nemo corporis distinctio repellendus quia
-    commodi laudantium ab voluptas, soluta nulla consequatur. Adipisci ipsa odit
-    accusantium.
-  </p>
-</div>
+    <div class="d-block w-100 mx-auto my-3">
+      <label class="bef bef-text-textM mb-1 d-block" for="title">Título</label>
+      <input
+        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 publication-input"
+        type="text"
+        id="title"
+        name="title"
+        [(ngModel)]="publication.title"
+        placeholder="Título de la publicación"
+        required
+      />
+    </div>
+
+    <div class="d-block w-100 mx-auto my-3">
+      <label class="bef bef-text-textM mb-1 d-block" for="urltitle">
+        link-de-la-publicacion-sin-acentos-ni-espacios
+      </label>
+      <input
+        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 publication-input"
+        type="text"
+        id="urltitle"
+        name="urltitle"
+        [(ngModel)]="publication.urltitle"
+        placeholder="link-de-la-publicacion"
+      />
+    </div>
+
+    <div class="d-block w-100 mx-auto my-3">
+      <label class="bef bef-text-textM mb-1 d-block" for="text">Contenido</label>
+      <textarea
+        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 publication-textarea"
+        id="text"
+        name="text"
+        [(ngModel)]="publication.text"
+        placeholder="Contenido de la publicación"
+        required
+      ></textarea>
+    </div>
+
+    <div class="d-block w-100 mx-auto my-3">
+      <label class="bef bef-text-textM mb-1 d-block" for="youtube">
+        Video relacionado
+      </label>
+      <input
+        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 publication-input"
+        type="url"
+        id="youtube"
+        name="youtube"
+        [(ngModel)]="publication.youtube"
+        placeholder="https://..."
+      />
+    </div>
+
+    <div class="d-block w-100 mx-auto my-3">
+      <label class="bef bef-text-textM mb-1 d-block" for="insertions">
+        Inserciones
+      </label>
+      <textarea
+        class="w-100 bef bef-text-bg1M bef-bg-textM border-0 publication-small-textarea"
+        id="insertions"
+        name="insertions"
+        [ngModel]="insertionLines()"
+        (ngModelChange)="updateInsertions($event)"
+        placeholder="Una inserción por línea"
+      ></textarea>
+    </div>
+
+    <button
+      class="btn bef bef-btn-linkM bef-text-bg1M mx-auto d-block my-4 w-100"
+      type="button"
+      (click)="onSubmit()"
+    >
+      {{ publicationRecordId(publication) ? 'Guardar publicación' : 'Crear publicación' }}
+    </button>
+
+    <section *ngIf="publicationRecordId(publication)" class="publication-upload mt-5">
+      <h3 class="h5 text-center mb-3">Imagen principal</h3>
+      <img
+        *ngIf="
+          publication.mainFile &&
+          fileUrl(publication.mainFile) &&
+          isImage(publication.mainFile)
+        "
+        class="publication-upload__preview mx-auto mb-3"
+        [src]="fileUrl(publication.mainFile)"
+        [alt]="publication.mainFile.title || publication.title"
+      />
+      <app-file-uploader
+        [type]="'publication'"
+        [typeMeta]="'one'"
+        [typeThingComRes]="'publication'"
+        [thing]="publication"
+        [thingInside]="false"
+        [id]="publicationRecordId(publication)"
+        (pre_loader)="pre_load()"
+        (recoverThing)="recoverThingFather()"
+      ></app-file-uploader>
+
+      <hr class="my-5" />
+
+      <h3 class="h5 text-center mb-3">Archivos relacionados</h3>
+      <app-file-uploader
+        [type]="'publication'"
+        [typeMeta]="'multi'"
+        [typeThingComRes]="'publication'"
+        [thing]="publication"
+        [thingInside]="false"
+        [id]="publicationRecordId(publication)"
+        (pre_loader)="pre_load()"
+        (recoverThing)="recoverThingFather()"
+      ></app-file-uploader>
+    </section>
+  </section>
+</article>

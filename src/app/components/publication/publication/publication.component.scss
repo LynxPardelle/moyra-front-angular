@@ -1,0 +1,92 @@
+.publication-detail {
+  max-width: 980px;
+}
+
+.admin-actions {
+  z-index: 20;
+}
+
+.publication-detail__header {
+  max-width: 760px;
+}
+
+.publication-detail__hero {
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  display: block;
+  max-height: 520px;
+  object-fit: cover;
+  width: min(100%, 860px);
+}
+
+.publication-detail__content {
+  color: #29303b;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  max-width: 760px;
+}
+
+.publication-editor {
+  max-width: 760px;
+}
+
+.publication-input {
+  border-radius: 6px;
+  min-height: 42px;
+  padding: 0.65rem 0.75rem;
+}
+
+.publication-textarea {
+  border-radius: 6px;
+  min-height: 260px;
+  padding: 0.75rem;
+}
+
+.publication-small-textarea {
+  border-radius: 6px;
+  min-height: 110px;
+  padding: 0.75rem;
+}
+
+.publication-files {
+  max-width: 860px;
+}
+
+.publication-files__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.publication-file {
+  border: 1px solid rgba(41, 48, 59, 0.15);
+  border-radius: 8px;
+  color: #29303b;
+  display: block;
+  overflow: hidden;
+}
+
+.publication-file__image {
+  aspect-ratio: 4 / 3;
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
+.publication-file__title {
+  display: block;
+  padding: 0.75rem;
+}
+
+.publication-upload {
+  border-top: 1px solid rgba(41, 48, 59, 0.15);
+  padding-top: 2rem;
+}
+
+.publication-upload__preview {
+  border-radius: 8px;
+  display: block;
+  max-height: 320px;
+  object-fit: cover;
+  width: min(100%, 620px);
+}
