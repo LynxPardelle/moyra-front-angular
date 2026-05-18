@@ -137,6 +137,7 @@ FROM dev-dependencies AS build
 # Set production environment
 ENV NODE_ENV=production
 ENV MOYRA_API_BASE_URL=https://api-cloud.moyra.org/api/v2
+ENV NG_ALLOWED_HOSTS=cloud.moyra.org,localhost,127.0.0.1
 ENV NG_CLI_ANALYTICS=false
 ENV CI=true
 
