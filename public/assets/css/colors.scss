@@ -1,3 +1,6 @@
+@use "sass:color";
+@use "sass:map";
+
 $titleM: #29303b !default;
 $textM: #29303b !default;
 $linkM: #4b8ff5 !default;
@@ -17,7 +20,7 @@ $trdark25: rgba(0,0,0,0.25) !default;
 
 $theme-colors: () !default;
 
-$theme-colors: map-merge(
+$theme-colors: map.merge(
   (
     "titleM": $titleM,
     "textM": $textM,
@@ -63,7 +66,7 @@ $theme-colors: map-merge(
   a#{$parent},
   button#{$parent} {
     @include hover-focus() {
-      background-color: darken($color, 10%) !important;
+      background-color: color.adjust($color, $lightness: -10%) !important;
     }
   }
 }

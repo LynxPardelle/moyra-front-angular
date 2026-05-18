@@ -1,4 +1,5 @@
-@import "./colors.scss";
+@use "sass:color";
+@use "./colors.scss" as *;
 // @import "./sizes.scss";
 // @import "./shadows.scss";
 
@@ -22,7 +23,7 @@ body {
   a {
     color: $linkM;
     &:hover {
-      color: darken($linkM, 10%);
+      color: color.adjust($linkM, $lightness: -10%);
     }
   }
 

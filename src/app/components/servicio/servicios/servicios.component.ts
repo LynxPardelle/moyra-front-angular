@@ -12,6 +12,7 @@ import { SharedService } from '../../../services/shared.service';
 // Models
 import { Servicio } from '../../../models/servicio';
 import { SafeHtmlPipe } from '../../../pipes/safe-html';
+import { renderTemplateExpressions } from '../../../utils/template-value';
 
 // Extras
 import Swal from 'sweetalert2';
@@ -278,80 +279,6 @@ export class ServiciosComponent implements OnInit {
 
   // Complex functions
   valuefy(text: string) {
-    let matches = text.match(
-      /{{+[-a-zA-Z0-9\[\]\(\)\"\'\<\>\=\+\-.]{2,256}[\S]}}/gi
-    );
-
-    if (matches) {
-      let i = 0;
-      let match: any;
-      for (match of matches) {
-        let oldMatch = match;
-        match = match.replace('{{', '');
-        match = match.replace('}}', '');
-
-        if (!match.includes('this.')) {
-          match = 'this.' + match;
-        }
-
-        let nmatches = match.match(
-          /this.[-a-zA-Z0-9\[\]\(\)\"\'\<\>\=\+\-]{2,256}.[-a-zA-Z0-9\[\]\(\)\"\'\<\>\=\+\-]{2,256}/gi
-        );
-
-        if (nmatches) {
-          match = match.split('.');
-
-          let i = 0;
-          let nmatch: any = '';
-          let error: boolean = false;
-          for (let m of match) {
-            if (i === 0) {
-              nmatch = m;
-            } else {
-              if (nmatch !== undefined) {
-                let nmatchEval = nmatch + '.' + m;
-                let matchEval = eval(nmatchEval);
-
-                if (matchEval !== undefined) {
-                  nmatch = nmatch + '.' + m;
-                } else {
-                  nmatch = undefined;
-                  error = true;
-                }
-              }
-            }
-            i++;
-
-            if (i >= match.length) {
-              if (error === false) {
-                let matchEval = eval(nmatch);
-
-                if (matchEval !== undefined && matchEval !== null) {
-                  text = text.replace(oldMatch, matchEval);
-                } else {
-                  text = text.replace(oldMatch, '');
-                }
-              } else {
-                text = text.replace(oldMatch, '');
-              }
-            }
-          }
-        } else {
-          let matchEval = eval(match);
-
-          if (matchEval !== undefined && matchEval !== null) {
-            text = text.replace(oldMatch, matchEval);
-          } else {
-            text = text.replace(oldMatch, '');
-          }
-        }
-
-        i++;
-      }
-
-      return text;
-    } else {
-      return text;
-    }
+    return renderTemplateExpressions(text, this as unknown as Record<string, unknown>);
   }
 }
