@@ -584,6 +584,10 @@ export class WebService {
   }
 
   consoleLog(thing: any, line: string = '', style: string = 'padding: 1em;') {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     this.identity = this._userService.getIdentity();
 
     /*

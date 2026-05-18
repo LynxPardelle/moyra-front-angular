@@ -15,7 +15,7 @@ export class AdminGuard implements CanActivate {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
       let identity = this._userService.getIdentity();
-      if(identity.role === 'ROLE_ADMIN'){
+      if(identity && identity.role === 'ROLE_ADMIN'){
         return true;
       } else {
         this._router.navigate(['/']);

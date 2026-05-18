@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 // Services
 import { GlobalUser, GlobalMain } from '../../../services/global';
@@ -8,9 +9,11 @@ import { SharedService } from '../../../services/shared.service';
 
 // Models
 import { Main } from '../../../models/main';
+import { SafeHtmlPipe } from '../../../pipes/safe-html';
 
 @Component({
   selector: 'app-error',
+  imports: [CommonModule, SafeHtmlPipe],
   templateUrl: './error.component.html',
   styleUrls: ['./error.component.scss'],
 })

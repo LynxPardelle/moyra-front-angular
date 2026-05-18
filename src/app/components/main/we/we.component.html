@@ -43,7 +43,7 @@
 <img
   *ngIf="main && main.mainImg && main.mainImg.location"
   class="w-100 bef bef-hmx-50vh obj-fit-cover"
-  src="{{ urlMain + 'get-file/' + main.mainImg.location }}"
+  [src]="main.mainImg.publicUrl || (urlMain + 'get-file/' + main.mainImg.location)"
   alt="{{ main.mainImg.title }}"
 />
 
@@ -275,7 +275,7 @@
       <img
         *ngIf="main && main.mainImg && main.mainImg.location"
         class="bef bef-wmx-75per d-block mx-auto bef-hmx-25vh my-3"
-        src="{{ urlMain + 'get-file/' + main.mainImg.location }}"
+        [src]="main.mainImg.publicUrl || (urlMain + 'get-file/' + main.mainImg.location)"
         alt="{{ main.mainImg.title }}"
       />
 
@@ -297,7 +297,7 @@
       <img
         *ngIf="main && main.logo && main.logo.location"
         class="bef bef-wmx-75per d-block mx-auto bef-hmx-25vh my-3"
-        src="{{ urlMain + 'get-file/' + main.logo.location }}"
+        [src]="main.logo.publicUrl || (urlMain + 'get-file/' + main.logo.location)"
         alt="{{ main.logo.title }}"
       />
 
@@ -383,7 +383,7 @@
       <img
         *ngIf="equip.photo && equip.photo.location"
         class="bef bef-w-75per bef-wmn-250px bef-wmx-500px bef-h-300px mx-auto d-block my-4 obj-fit-cover"
-        src="{{ urlMain + 'get-file/' + equip.photo.location }}"
+        [src]="equip.photo.publicUrl || (urlMain + 'get-file/' + equip.photo.location)"
         alt="{{ equip.photo.title }}"
       />
 
@@ -468,7 +468,7 @@
     <img
       *ngIf="equip && equip.photo && equip.photo.location"
       class="bef bef-wmx-75per d-block mx-auto bef-hmx-25vh my-3"
-      src="{{ urlMain + 'get-file/' + equip.photo.location }}"
+      [src]="equip.photo.publicUrl || (urlMain + 'get-file/' + equip.photo.location)"
       alt="{{ equip.photo.title }}"
     />
     <app-file-uploader

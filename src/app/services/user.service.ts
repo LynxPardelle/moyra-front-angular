@@ -1,7 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { GlobalUser } from './global';
+import {
+  ApiRuntime,
+  GlobalUser,
+  apiUrl,
+  jsonAuthHeaders,
+  storedToken,
+  toLegacyEntity,
+} from './global';
 
 @Injectable()
 export class UserService {
@@ -13,31 +20,25 @@ export class UserService {
     this.urlUser = GlobalUser.url;
   }
 
-  // Pruebas
   pruebas() {
     return 'Soy el servicio de user.';
   }
 
-  // Create
   createUser(user: any): Observable<any> {
-    let body = JSON.stringify(user);
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const body = JSON.stringify(user);
+    const headers = this.authHeaders();
 
     return this._http.post(this.urlUser + 'user', body, {
       headers: headers,
     });
   }
 
-  // Get
   getUsers(
     page: number = 0,
     ipp: number = 0,
     sort: string = '-create_at'
   ): Observable<any> {
-    var users = 'users/' + page + '/' + ipp + '/' + sort;
+    const users = 'users/' + page + '/' + ipp + '/' + sort;
 
     return this._http.get(this.urlUser + users);
   }
@@ -46,81 +47,78 @@ export class UserService {
     return this._http.get(this.urlUser + 'user/' + id);
   }
 
-  login(user_to_login: any, gettoken: any = null): Observable<any> {
+  login(userToLogin: any, gettoken: any = null): Observable<any> {
     if (gettoken != null) {
-      user_to_login.gettoken = gettoken;
+      userToLogin.gettoken = gettoken;
     }
 
-    let body = JSON.stringify(user_to_login);
+    const body = JSON.stringify(userToLogin);
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    const loginUrl = ApiRuntime.isV2
+      ? apiUrl('/auth/login')
+      : this.urlUser + 'login';
 
-    let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-
-    return this._http.post(this.urlUser + 'login', body, {
+    return this._http.post(loginUrl, body, {
       headers: headers,
     });
   }
 
-  // Put
   updateUser(id: string, user: any): Observable<any> {
-    let body = JSON.stringify(user);
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const body = JSON.stringify(user);
+    const headers = this.authHeaders();
 
     return this._http.put(this.urlUser + 'user/' + id, body, {
       headers: headers,
     });
   }
 
-  // Delete
   deleteUser(id: string): Observable<any> {
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const headers = this.authHeaders();
 
     return this._http.delete(this.urlUser + 'user/' + id, {
       headers: headers,
     });
   }
 
-  // LocalStorage
   getIdentity() {
-    let identity = localStorage.getItem('identity');
-    if (identity != null) {
-      identity = JSON.parse(identity);
-      if (identity != 'undefined') {
-        this.identity = identity;
-      } else {
-        this.identity = null;
-      }
+    const storedIdentity = readStorageValue('identity');
+    if (!storedIdentity) {
+      return null;
+    }
 
+    try {
+      const identity = JSON.parse(storedIdentity);
+      this.identity = identity && identity !== 'undefined'
+        ? toLegacyEntity(identity)
+        : null;
       return this.identity;
-    } else {
-      let identity = sessionStorage.getItem('identity');
-      if (identity != null) {
-        identity = JSON.parse(identity);
-        if (identity != 'undefined') {
-          this.identity = identity;
-        } else {
-          this.identity = null;
-        }
-
-        return this.identity;
-      } else {
-        return null;
-      }
+    } catch {
+      this.identity = null;
+      return null;
     }
   }
 
   getToken() {
-    this.token = localStorage.getItem('token');
-
-    if (!this.token) {
-      this.token = sessionStorage.getItem('token');
-    }
-
+    this.token = storedToken();
     return this.token;
   }
+
+  private authHeaders(): HttpHeaders {
+    return new HttpHeaders(jsonAuthHeaders(this.getToken()));
+  }
+}
+
+function readStorageValue(key: string): string | null {
+  if (typeof localStorage !== 'undefined') {
+    const value = localStorage.getItem(key);
+    if (value) {
+      return value;
+    }
+  }
+
+  if (typeof sessionStorage !== 'undefined') {
+    return sessionStorage.getItem(key);
+  }
+
+  return null;
 }

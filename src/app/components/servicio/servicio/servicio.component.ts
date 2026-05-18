@@ -1,4 +1,6 @@
 import { Component, OnInit, DoCheck, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 
 // Services
@@ -10,11 +12,14 @@ import { SharedService } from '../../../services/shared.service';
 
 // Models
 import { Servicio } from '../../../models/servicio';
+import { SafeHtmlPipe } from '../../../pipes/safe-html';
+import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
 
 // Extras
 import Swal from 'sweetalert2';
 @Component({
   selector: 'servicio',
+  imports: [CommonModule, FormsModule, SafeHtmlPipe, FileUploaderComponent],
   templateUrl: './servicio.component.html',
   styleUrls: ['./servicio.component.scss'],
 })

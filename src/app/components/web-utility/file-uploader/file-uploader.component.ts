@@ -6,6 +6,7 @@ import {
   TemplateRef,
   EventEmitter,
 } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
   HttpClient,
   HttpRequest,
@@ -14,9 +15,16 @@ import {
   HttpHeaderResponse,
   HttpEventType,
 } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 // Services
-import { Global } from '../../../services/global';
+import {
+  ApiRuntime,
+  Global,
+  apiUrl,
+  jsonAuthHeaders,
+  toLegacyFile,
+} from '../../../services/global';
 import { UserService } from '../../../services/user.service';
 import { WebService } from '../../../services/web.service';
 
@@ -31,6 +39,7 @@ import {
   UploadFile,
   humanizeBytes,
   UploaderOptions,
+  NgxUploaderModule,
 } from 'ngx-uploader';
 
 // Extras
@@ -38,6 +47,7 @@ import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-file-uploader',
+  imports: [CommonModule, NgxUploaderModule],
   templateUrl: './file-uploader.component.html',
   styleUrls: ['./file-uploader.component.scss'],
   providers: [WebService],
@@ -362,6 +372,11 @@ export class FileUploaderComponent implements OnInit {
   }
 
   startUpload() {
+    if (ApiRuntime.isV2) {
+      void this.startV2Upload();
+      return;
+    }
+
     this._webService.consoleLog(
       this.files,
       'file-uploader.component.ts 291',
@@ -391,6 +406,193 @@ export class FileUploaderComponent implements OnInit {
       'background-color: red; color: white; padding: 1em;'
     );
     this.uploadInput.emit(event);
+  }
+
+  private async startV2Upload() {
+    try {
+      this._webService.consoleLog(
+        this.files,
+        'file-uploader.component.ts v2 upload',
+        'background-color: red; color: white; padding: 1em;'
+      );
+
+      const uploadedFiles: any[] = [];
+      for (const queuedFile of this.files) {
+        const nativeFile = (queuedFile as any).nativeFile as File | undefined;
+        if (!nativeFile) {
+          throw new Error('No se encontró el archivo local para subir.');
+        }
+
+        const presign = await firstValueFrom(
+          this._http.post<any>(
+            apiUrl('/uploads/presign'),
+            {
+              category: this.uploadCategory(),
+              fileName: nativeFile.name,
+              contentType: nativeFile.type,
+              size: nativeFile.size,
+            },
+            {
+              headers: new HttpHeaders(
+                jsonAuthHeaders(this._userService.getToken())
+              ),
+            }
+          )
+        );
+
+        await firstValueFrom(
+          this._http.put(presign.upload.url, nativeFile, {
+            headers: new HttpHeaders(presign.upload.headers || {}),
+            responseType: 'text' as 'json',
+          })
+        );
+
+        uploadedFiles.push(toLegacyFile(presign.file));
+      }
+
+      await this.attachV2UploadedFiles(uploadedFiles);
+      this.emitV2UploadResult(uploadedFiles);
+      this.files = [];
+      this.fileProgress = [];
+      this.doneUploading = true;
+    } catch (err: any) {
+      this.files = [];
+      this.fileProgress = [];
+      this.doneUploading = true;
+      const message = err?.error?.message || err?.message || 'Error al subir archivo.';
+      this.messagesErrorFiles.push(message);
+      this._webService.consoleLog(
+        err,
+        'file-uploader.component.ts v2 upload error',
+        'background-color: red; color: white; padding: 1em;'
+      );
+    }
+  }
+
+  private async attachV2UploadedFiles(uploadedFiles: any[]) {
+    if (uploadedFiles.length === 0) {
+      return;
+    }
+
+    const fileIds = uploadedFiles
+      .map((file) => file.id || file._id)
+      .filter((id) => typeof id === 'string' && id !== '');
+    const firstFileId = fileIds[0];
+    const headers = new HttpHeaders(jsonAuthHeaders(this._userService.getToken()));
+
+    if (this.type === 'main' && this.typeThingComRes === 'main') {
+      await firstValueFrom(
+        this._http.put(
+          apiUrl('/main'),
+          { [this.id]: firstFileId },
+          { headers }
+        )
+      );
+      return;
+    }
+
+    if (this.type === 'main' && this.typeThingComRes === 'equip') {
+      await firstValueFrom(
+        this._http.put(apiUrl(`/team/${this.id}`), { photo: firstFileId }, { headers })
+      );
+      return;
+    }
+
+    if (this.type === 'servicio') {
+      await firstValueFrom(
+        this._http.put(
+          apiUrl(`/services/${this.id}`),
+          { mainImg: firstFileId },
+          { headers }
+        )
+      );
+      return;
+    }
+
+    if (this.type === 'article' && this.typeThingComRes === 'article') {
+      await firstValueFrom(
+        this._http.put(
+          apiUrl(`/articles/${this.id}`),
+          { mainImg: firstFileId },
+          { headers }
+        )
+      );
+      return;
+    }
+
+    if (this.type === 'publication') {
+      await firstValueFrom(
+        this._http.put(
+          apiUrl(`/publications/${this.id}`),
+          this.typeMeta === 'multi'
+            ? { files: this.mergeFileIds(fileIds) }
+            : { mainFile: firstFileId },
+          { headers }
+        )
+      );
+    }
+  }
+
+  private emitV2UploadResult(uploadedFiles: any[]) {
+    const recoverThing = {
+      type: this.type,
+      typeMeta: this.typeMeta,
+      typeThingComRes: this.typeThingComRes,
+      thing: this.thing,
+      id: this.id,
+    };
+
+    if (this.typeMeta === 'multi') {
+      const legacyResponse = {
+        status: 'success',
+        files: uploadedFiles,
+      };
+      this._webService.consoleLog(
+        legacyResponse,
+        'file-uploader.component.ts v2 multi result',
+        'background-color: red; color: white; padding: 1em;'
+      );
+    } else {
+      const legacyResponse = {
+        status: 'success',
+        file: uploadedFiles[0],
+      };
+      this._webService.consoleLog(
+        legacyResponse,
+        'file-uploader.component.ts v2 single result',
+        'background-color: red; color: white; padding: 1em;'
+      );
+    }
+
+    this.recoverThing.emit(recoverThing);
+  }
+
+  private uploadCategory(): string {
+    switch (this.type) {
+      case 'servicio':
+        return 'servicio';
+      case 'article':
+        return 'article';
+      case 'publication':
+        return 'publication';
+      default:
+        return 'main';
+    }
+  }
+
+  private mergeFileIds(fileIds: string[]): string[] {
+    const currentFiles = this.thing?.files;
+    if (!Array.isArray(currentFiles)) {
+      return fileIds;
+    }
+
+    const existingIds = currentFiles
+      .map((file: any) =>
+        typeof file === 'string' ? file : file?.id || file?._id || null
+      )
+      .filter((id: any) => typeof id === 'string' && id !== '');
+
+    return [...existingIds, ...fileIds];
   }
 
   cancelUpload(id: string): void {

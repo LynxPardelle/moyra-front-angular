@@ -1,5 +1,6 @@
 import { Component, OnInit, DoCheck, Input } from '@angular/core';
-import { Router, ActivatedRoute, Params } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { Router, ActivatedRoute, Params, RouterLink } from '@angular/router';
 
 // Services
 import { GlobalUser, GlobalServicio } from '../../../services/global';
@@ -10,11 +11,13 @@ import { SharedService } from '../../../services/shared.service';
 
 // Models
 import { Servicio } from '../../../models/servicio';
+import { SafeHtmlPipe } from '../../../pipes/safe-html';
 
 // Extras
 import Swal from 'sweetalert2';
 @Component({
   selector: 'servicios',
+  imports: [CommonModule, RouterLink, SafeHtmlPipe],
   templateUrl: './servicios.component.html',
   styleUrls: ['./servicios.component.scss'],
 })

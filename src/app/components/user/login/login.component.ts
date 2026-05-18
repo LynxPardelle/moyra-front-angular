@@ -3,6 +3,8 @@ import {
   OnInit,
   Input
 } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 
@@ -22,6 +24,7 @@ import Swal from 'sweetalert2';
 
 @Component({
   selector: 'login',
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
@@ -64,11 +67,6 @@ export class LoginComponent implements OnInit {
         this.customConsoleCSS
       );
       this.token = token.token;
-      this._webService.consoleLog(
-        this.token,
-        this.document + ' 63',
-        this.customConsoleCSS
-      );
 
       //LocalStorage del identity
       localStorage.setItem('identity', JSON.stringify(this.identity));

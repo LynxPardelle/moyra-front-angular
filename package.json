@@ -35,6 +35,7 @@
     "@angular/ssr": "^20.3.4",
     "express": "^5.1.0",
     "ngx-angora-css": "^1.5.0",
+    "ngx-bootstrap": "^20.0.2",
     "ngx-uploader": "^17.0.1",
     "rxjs": "~7.8.0",
     "sweetalert2": "^11.24.0",

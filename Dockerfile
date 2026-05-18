@@ -108,6 +108,7 @@ FROM dev-dependencies AS development
 
 # Set environment variables for development
 ENV NODE_ENV=development
+ENV MOYRA_API_BASE_URL=http://localhost:7204/api
 ENV NG_CLI_ANALYTICS=false
 ENV CI=true
 
@@ -135,6 +136,7 @@ FROM dev-dependencies AS build
 
 # Set production environment
 ENV NODE_ENV=production
+ENV MOYRA_API_BASE_URL=https://moyra.org/api
 ENV NG_CLI_ANALYTICS=false
 ENV CI=true
 

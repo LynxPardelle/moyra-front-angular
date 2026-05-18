@@ -1,7 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { GlobalArticle } from './global';
+import { Observable, map } from 'rxjs';
+import {
+  ApiRuntime,
+  GlobalArticle,
+  apiUrl,
+  jsonAuthHeaders,
+  storedToken,
+  toApiPayload,
+  toLegacyEntity,
+} from './global';
 
 @Injectable()
 export class ArticleService {
@@ -13,18 +21,24 @@ export class ArticleService {
     this.urlArticle = GlobalArticle.url;
   }
 
-  // Pruebas
   pruebas() {
     return 'Soy el servicio de article.';
   }
 
-  // Create
   createArticle(article: any): Observable<any> {
-    let body = JSON.stringify(article);
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const body = JSON.stringify(
+      toApiPayload(article, ['mainImg'], ['sections'])
+    );
+    const headers = this.authHeaders();
+
+    if (ApiRuntime.isV2) {
+      return this._http.post(apiUrl('/articles'), body, { headers }).pipe(
+        map((response: any) => ({
+          ...response,
+          article: toLegacyEntity(response.item),
+        }))
+      );
+    }
 
     return this._http.post(this.urlArticle + 'article', body, {
       headers: headers,
@@ -35,11 +49,21 @@ export class ArticleService {
     articleSection: any,
     articleId: string
   ): Observable<any> {
-    let body = JSON.stringify(articleSection);
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const body = JSON.stringify(
+      toApiPayload(articleSection, ['mainFile'], ['files', 'insertions'])
+    );
+    const headers = this.authHeaders();
+
+    if (ApiRuntime.isV2) {
+      return this._http
+        .post(apiUrl(`/articles/${articleId}/sections`), body, { headers })
+        .pipe(
+          map((response: any) => ({
+            ...response,
+            articleSection: toLegacyEntity(response.item),
+          }))
+        );
+    }
 
     return this._http.post(
       this.urlArticle + 'article-section' + articleId,
@@ -50,28 +74,57 @@ export class ArticleService {
     );
   }
 
-  // Get
   getArticles(
     page: number = 0,
     ipp: number = 0,
     sort: string = '-create_at'
   ): Observable<any> {
-    var articles = 'articles/' + page + '/' + ipp + '/' + sort;
+    if (ApiRuntime.isV2) {
+      return this._http.get(apiUrl('/articles')).pipe(
+        map((response: any) => {
+          const articles = toLegacyEntity(response.items || []);
+          return {
+            ...response,
+            total_items: articles.length,
+            pages: 1,
+            articles,
+          };
+        })
+      );
+    }
 
+    const articles = 'articles/' + page + '/' + ipp + '/' + sort;
     return this._http.get(this.urlArticle + articles);
   }
 
   getArticle(id: string): Observable<any> {
+    if (ApiRuntime.isV2) {
+      return this._http.get(apiUrl(`/articles/${id}`)).pipe(
+        map((response: any) => ({
+          ...response,
+          article: toLegacyEntity(response.item),
+        }))
+      );
+    }
+
     return this._http.get(this.urlArticle + 'article/' + id);
   }
 
-  // Put
   updateArticle(id: string, article: any): Observable<any> {
-    let body = JSON.stringify(article);
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const body = JSON.stringify(
+      toApiPayload(article, ['mainImg'], ['sections'])
+    );
+    const headers = this.authHeaders();
+
+    if (ApiRuntime.isV2) {
+      return this._http.put(apiUrl(`/articles/${id}`), body, { headers }).pipe(
+        map((response: any) => ({
+          ...response,
+          article: toLegacyEntity(response.item),
+          articleUpdated: toLegacyEntity(response.item),
+        }))
+      );
+    }
 
     return this._http.put(this.urlArticle + 'article/' + id, body, {
       headers: headers,
@@ -79,23 +132,35 @@ export class ArticleService {
   }
 
   updateArticleSection(id: string, articleSection: any): Observable<any> {
-    let body = JSON.stringify(articleSection);
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const articleId = articleSection.articleId || articleSection.article || id;
+    const body = JSON.stringify(
+      toApiPayload(articleSection, ['mainFile'], ['files', 'insertions'])
+    );
+    const headers = this.authHeaders();
+
+    if (ApiRuntime.isV2) {
+      return this._http
+        .put(apiUrl(`/articles/${articleId}/sections/${id}`), body, { headers })
+        .pipe(
+          map((response: any) => ({
+            ...response,
+            articleSection: toLegacyEntity(response.item),
+            articleSectionUpdated: toLegacyEntity(response.item),
+          }))
+        );
+    }
 
     return this._http.put(this.urlArticle + 'article-section/' + id, body, {
       headers: headers,
     });
   }
 
-  // Delete
   deleteArticle(id: string): Observable<any> {
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const headers = this.authHeaders();
+
+    if (ApiRuntime.isV2) {
+      return this._http.delete(apiUrl(`/articles/${id}`), { headers });
+    }
 
     return this._http.delete(this.urlArticle + 'article/' + id, {
       headers: headers,
@@ -103,24 +168,25 @@ export class ArticleService {
   }
 
   deleteArticleSection(id: string): Observable<any> {
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const headers = this.authHeaders();
+
+    if (ApiRuntime.isV2) {
+      return this._http.delete(apiUrl(`/articles/${id}/sections/${id}`), {
+        headers,
+      });
+    }
 
     return this._http.delete(this.urlArticle + 'article-section/' + id, {
       headers: headers,
     });
   }
 
-  // LocalStorage
   getToken() {
-    this.token = localStorage.getItem('token');
-
-    if (!this.token) {
-      this.token = sessionStorage.getItem('token');
-    }
-
+    this.token = storedToken();
     return this.token;
+  }
+
+  private authHeaders(): HttpHeaders {
+    return new HttpHeaders(jsonAuthHeaders(this.getToken()));
   }
 }

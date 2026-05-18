@@ -1,7 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { GlobalMain } from './global';
+import { Observable, map } from 'rxjs';
+import {
+  ApiRuntime,
+  GlobalMain,
+  apiUrl,
+  jsonAuthHeaders,
+  storedToken,
+  toApiPayload,
+  toLegacyEntity,
+} from './global';
 
 @Injectable()
 export class MainService {
@@ -13,15 +21,13 @@ export class MainService {
     this.urlMain = GlobalMain.url;
   }
 
-  // Pruebas
   pruebas() {
     return 'Soy el servicio de main.';
   }
 
-  // Create
   createMain(main: any): Observable<any> {
-    let body = JSON.stringify(main);
-    let headers = new HttpHeaders({
+    const body = JSON.stringify(main);
+    const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
 
@@ -31,37 +37,77 @@ export class MainService {
   }
 
   createEquip(equip: any): Observable<any> {
-    let body = JSON.stringify(equip);
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const body = JSON.stringify(toApiPayload(equip, ['photo']));
+    const headers = this.authHeaders();
+
+    if (ApiRuntime.isV2) {
+      return this._http.post(apiUrl('/team'), body, { headers }).pipe(
+        map((response: any) => ({
+          ...response,
+          equip: toLegacyEntity(response.item),
+        }))
+      );
+    }
 
     return this._http.post(this.urlMain + 'equip', body, {
       headers: headers,
     });
   }
 
-  // Get
   getEquips(): Observable<any> {
+    if (ApiRuntime.isV2) {
+      return this._http.get(apiUrl('/team')).pipe(
+        map((response: any) => ({
+          ...response,
+          equips: toLegacyEntity(response.items || []),
+        }))
+      );
+    }
+
     return this._http.get(this.urlMain + 'equips');
   }
 
   getMain(): Observable<any> {
+    if (ApiRuntime.isV2) {
+      return this._http.get(apiUrl('/main')).pipe(
+        map((response: any) => ({
+          ...response,
+          main: toLegacyEntity(response.main),
+        }))
+      );
+    }
+
     return this._http.get(this.urlMain + 'main');
   }
 
   getEquip(id: string): Observable<any> {
+    if (ApiRuntime.isV2) {
+      return this._http.get(apiUrl(`/team/${id}`)).pipe(
+        map((response: any) => ({
+          ...response,
+          equip: toLegacyEntity(response.item),
+        }))
+      );
+    }
+
     return this._http.get(this.urlMain + 'equip/' + id);
   }
 
-  // Put
   updateMain(main: any): Observable<any> {
-    let body = JSON.stringify(main);
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const body = JSON.stringify(
+      toApiPayload(main, ['logo', 'mainImg', 'seoImg'])
+    );
+    const headers = this.authHeaders();
+
+    if (ApiRuntime.isV2) {
+      return this._http.put(apiUrl('/main'), body, { headers }).pipe(
+        map((response: any) => ({
+          ...response,
+          main: toLegacyEntity(response.main),
+          mainUpdated: toLegacyEntity(response.main),
+        }))
+      );
+    }
 
     return this._http.put(this.urlMain + 'main', body, {
       headers: headers,
@@ -69,37 +115,42 @@ export class MainService {
   }
 
   updateEquip(id: string, equip: any): Observable<any> {
-    let body = JSON.stringify(equip);
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const body = JSON.stringify(toApiPayload(equip, ['photo']));
+    const headers = this.authHeaders();
+
+    if (ApiRuntime.isV2) {
+      return this._http.put(apiUrl(`/team/${id}`), body, { headers }).pipe(
+        map((response: any) => ({
+          ...response,
+          equip: toLegacyEntity(response.item),
+          equipUpdated: toLegacyEntity(response.item),
+        }))
+      );
+    }
 
     return this._http.put(this.urlMain + 'equip/' + id, body, {
       headers: headers,
     });
   }
 
-  // Delete
   deleteEquip(id: string): Observable<any> {
-    let headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: this.getToken(),
-    });
+    const headers = this.authHeaders();
+
+    if (ApiRuntime.isV2) {
+      return this._http.delete(apiUrl(`/team/${id}`), { headers });
+    }
 
     return this._http.delete(this.urlMain + 'equip/' + id, {
       headers: headers,
     });
   }
 
-  // LocalStorage
   getToken() {
-    this.token = localStorage.getItem('token');
-
-    if (!this.token) {
-      this.token = sessionStorage.getItem('token');
-    }
-
+    this.token = storedToken();
     return this.token;
+  }
+
+  private authHeaders(): HttpHeaders {
+    return new HttpHeaders(jsonAuthHeaders(this.getToken()));
   }
 }

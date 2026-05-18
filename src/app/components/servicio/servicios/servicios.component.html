@@ -26,7 +26,7 @@
       <img
         *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
         class="card-img-top w-100 bef bef-h-200px overflow-hidden obj-fit-cover"
-        src="{{ urlServicio + 'get-file/' + servicio.mainImg.location }}"
+        [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
         alt="{{ servicio.mainImg.title }}"
       />
       <div>

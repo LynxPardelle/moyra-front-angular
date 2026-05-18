@@ -67,6 +67,10 @@ export class BefService {
 
   cssCreate() {
     try {
+      if (typeof document === 'undefined') {
+        return;
+      }
+
       let sheets = [...document.styleSheets];
       let filetedSheet = [];
       for(let sheet of sheets) {
@@ -797,6 +801,10 @@ export class BefService {
 
   createCSSRules(rule: string) {
     try {
+      if (typeof document === 'undefined') {
+        return;
+      }
+
       let sheets: any[] = [...document.styleSheets];
       let sheet: any;
       let filetedSheet = [];
@@ -1034,7 +1042,7 @@ export class BefService {
     try {
       Object.keys(newColors).forEach((key) => {
         this.colors[key] = newColors[key].replace(
-          '!important' || '!default' || /\s+/g,
+          /!important|!default|\s+/g,
           ''
         );
       });

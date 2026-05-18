@@ -32,6 +32,7 @@ services:
       - angular_cache:/app/.angular
     environment:
       - NODE_ENV=development
+      - MOYRA_API_BASE_URL=${MOYRA_API_BASE_URL:-http://localhost:7204/api}
       - CHOKIDAR_USEPOLLING=true
       - NG_CLI_ANALYTICS=false
       - CI=true
@@ -64,6 +65,7 @@ services:
       - "${PROD_PORT:-4000}:4000"
     environment:
       - NODE_ENV=production
+      - MOYRA_API_BASE_URL=${MOYRA_API_BASE_URL:-https://moyra.org/api}
       - NG_CLI_ANALYTICS=false
     # Health check for production SSR container
     healthcheck:

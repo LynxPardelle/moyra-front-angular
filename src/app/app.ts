@@ -1,6 +1,6 @@
-import { Component, signal, DoCheck, OnInit, HostListener } from '@angular/core';
+import { Component, DoCheck, HostListener, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { Location } from '@angular/common';
+import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
 
 // Services
 import { GlobalUser, GlobalMain } from './services/global';
@@ -14,7 +14,7 @@ import { SharedService } from './services/shared.service';
 import { Main } from './models/main';
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink],
+  imports: [CommonModule, RouterOutlet, RouterLink],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -51,7 +51,7 @@ export class App implements DoCheck, OnInit {
   };
 
   // Utility
-  public windowWidth = window.innerWidth;
+  public windowWidth = 0;
 
   constructor(
     private _mainService: MainService,
@@ -61,8 +61,10 @@ export class App implements DoCheck, OnInit {
     private _befService: BefService,
     private _location: Location,
 
-    private _sharedService: SharedService
+    private _sharedService: SharedService,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {
+    this.windowWidth = isPlatformBrowser(this.platformId) ? window.innerWidth : 0;
     _sharedService.changeEmitted$.subscribe((sharedContent) => {
       if (
         typeof sharedContent === 'object' &&

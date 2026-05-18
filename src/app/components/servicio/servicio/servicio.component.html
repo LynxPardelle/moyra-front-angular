@@ -63,7 +63,7 @@
 <img
   *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
   class="bef bef-wmx-65per bef-hmx-500px mx-auto d-block obj-fit-cover"
-  src="{{ urlServicio + 'get-file/' + servicio.mainImg.location }}"
+  [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
   alt="{{ servicio.mainImg.title }}"
 />
 
@@ -174,7 +174,7 @@
     <img
       *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
       class="bef bef-wmx-75per d-block mx-auto bef-hmx-25vh my-3"
-      src="{{ urlServicio + 'get-file/' + servicio.mainImg.location }}"
+      [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
       alt="{{ servicio.mainImg.title }}"
     />
     <app-file-uploader
@@ -183,7 +183,7 @@
       [typeThingComRes]="'servicio'"
       [thing]="servicio.mainImg"
       [thingInside]="true"
-      [id]="servicio.urltitle"
+      [id]="servicio._id || servicio.urltitle"
       (pre_loader)="pre_load($event)"
       (recoverThing)="recoverThingFather($event)"
     ></app-file-uploader>
