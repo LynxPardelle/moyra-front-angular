@@ -14,6 +14,7 @@ import { UserService } from './user.service';
 
 //Extras
 import { parse } from 'tldts';
+import { environment } from '../../environments/environment';
 
 @Injectable()
 export class WebService {
@@ -62,7 +63,6 @@ export class WebService {
     let B = hexToB(hex);
 
     let rgb = R + ', ' + G + ', ' + B;
-    console.log(rgb);
 
     return rgb;
 
@@ -452,14 +452,10 @@ export class WebService {
   uploadFiles(files: File[], url: string): Observable<any> {
     let formData = new FormData();
 
-    console.log(files);
-
     let i = 0;
 
     for (let file of files) {
-      console.log(file);
       formData.append('file' + i, file);
-      console.log(formData);
       i++;
     }
 
@@ -584,43 +580,26 @@ export class WebService {
   }
 
   consoleLog(thing: any, line: string = '', style: string = 'padding: 1em;') {
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined' || environment.production) {
       return;
     }
 
-    this.identity = this._userService.getIdentity();
+    const safeThing = redactForConsole(thing);
 
-    /*
-    if (
-      this.identity &&
-      this.identity.role &&
-      this.identity.role === 'ROLE_ADMIN'
-      */
-    if (true) {
-      if (line && line !== '') {
-        console.log('%cline: ' + line + ' = ', style);
-      } else {
-        console.groupCollapsed('Trace');
-        console.trace();
-        console.groupEnd();
-      }
-      if (typeof thing !== 'object') {
-        console.log(`%c${thing}`, style);
-      } else {
-        console.dir(thing);
-      }
-    }
-
-    /*
     if (line && line !== '') {
-      console.log('%cline ' + line + ' = ', style);
-    }
-    if (typeof thing !== 'object') {
-      console.log(`%c${thing}`, style);
+      console.log('%cline: ' + line + ' = ', style);
     } else {
-      console.dir(`%c${thing}`, style);
+      console.groupCollapsed('Trace');
+      console.trace();
+      console.groupEnd();
     }
-    */
+
+    if (typeof safeThing !== 'object') {
+      console.log(`%c${safeThing}`, style);
+    } else {
+      console.dir(safeThing);
+    }
+
   }
 
   random(min: number = 0, max: number = 50) {
@@ -628,4 +607,54 @@ export class WebService {
 
     return Math.round(num);
   }
+}
+
+const SENSITIVE_LOG_FIELDS = new Set([
+  'authorization',
+  'jwt',
+  'jwt_secret',
+  'key',
+  'keyold',
+  'password',
+  'passwordold',
+  'secret',
+  'token',
+]);
+
+function redactForConsole(value: any, seen: WeakSet<object> = new WeakSet()): any {
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+
+  if (seen.has(value)) {
+    return '[Circular]';
+  }
+
+  if (typeof File !== 'undefined' && value instanceof File) {
+    return {
+      name: value.name,
+      size: value.size,
+      type: value.type,
+    };
+  }
+
+  if (typeof FormData !== 'undefined' && value instanceof FormData) {
+    return '[FormData]';
+  }
+
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactForConsole(item, seen));
+  }
+
+  return Object.entries(value).reduce((safeValue: Record<string, any>, [key, fieldValue]) => {
+    if (SENSITIVE_LOG_FIELDS.has(key.toLowerCase())) {
+      safeValue[key] = '[REDACTED]';
+      return safeValue;
+    }
+
+    safeValue[key] = redactForConsole(fieldValue, seen);
+    return safeValue;
+  }, {});
 }

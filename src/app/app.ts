@@ -146,7 +146,11 @@ export class App implements DoCheck, OnInit {
               )
               .toPromise();
 
-            console.log(newMain);
+            this._webService.consoleLog(
+              newMain,
+              this.document + ' 143',
+              this.customConsoleCSS
+            );
 
             if (!newMain || !newMain.main) {
               throw new Error('No se pudo crear el main.');
@@ -161,10 +165,18 @@ export class App implements DoCheck, OnInit {
               thing: this.main,
             });
           } catch (error: any) {
-            console.error(error);
+            this._webService.consoleLog(
+              error,
+              this.document + ' 168',
+              this.customConsoleCSS
+            );
           }
         } else {
-          console.error(e);
+          this._webService.consoleLog(
+            e,
+            this.document + ' 175',
+            this.customConsoleCSS
+          );
         }
       }
     })();

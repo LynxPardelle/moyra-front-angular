@@ -25,12 +25,13 @@ import { ArticleComponent } from '../components/blog/article/article.component';
 import { LoginComponent } from '../components/user/login/login.component';
 
 const routes: Routes = [
+  { path: 'login', component: LoginComponent },
   {
     path: '',
     component: AdminComponent,
     canActivate: [AdminGuard],
     children: [
-      { path: '', redirectTo: '', pathMatch: 'full' },
+      { path: '', redirectTo: 'we', pathMatch: 'full' },
 
       // Main
       { path: 'we', component: WeComponent },
@@ -58,9 +59,6 @@ const routes: Routes = [
       { path: 'blog/:search/:page', component: BlogComponent },
       { path: 'articulo', component: ArticleComponent },
       { path: 'articulo/:id', component: ArticleComponent },
-
-      // User
-      { path: 'login', component: LoginComponent },
 
       // Error
       { path: '**', component: ErrorComponent },
