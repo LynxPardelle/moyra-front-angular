@@ -1,12 +1,14 @@
 .article-detail {
   max-width: 980px;
+  padding-bottom: 3.5rem !important;
+  padding-top: 2rem !important;
 }
 
 .admin-actions {
   align-items: center;
   background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(41, 48, 59, 0.12);
   border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(41, 48, 59, 0.08);
   display: flex;
   gap: 0.65rem;
   justify-content: flex-end;
@@ -24,6 +26,7 @@
   color: #ffffff;
   font-weight: 600;
   line-height: 1.2;
+  min-height: 44px;
   padding: 0.6rem 0.9rem;
 }
 
@@ -53,9 +56,8 @@
 }
 
 .article-detail__header {
-  border-bottom: 1px solid rgba(41, 48, 59, 0.12);
   max-width: 760px;
-  padding-bottom: 1.5rem;
+  padding: 0.75rem 0 1.75rem;
 }
 
 .article-detail__tags {
@@ -95,6 +97,7 @@
   font-size: 1.05rem;
   line-height: 1.7;
   max-width: 760px;
+  padding-inline: 0.25rem;
 }
 
 .article-section {
@@ -132,8 +135,8 @@
 }
 
 .article-section-file {
-  border: 1px solid rgba(41, 48, 59, 0.15);
   border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(41, 48, 59, 0.08);
   color: #29303b;
   display: block;
   overflow: hidden;
@@ -153,16 +156,15 @@
 
 .article-editor {
   background: #ffffff;
-  border: 1px solid rgba(41, 48, 59, 0.12);
   border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(41, 48, 59, 0.08);
   max-width: 760px;
-  padding: 1.25rem;
+  padding: 1.5rem;
 }
 
 .editor-heading {
-  border-bottom: 1px solid rgba(41, 48, 59, 0.12);
   margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
+  padding-bottom: 0.5rem;
 }
 
 .editor-heading__eyebrow {
@@ -229,10 +231,10 @@
 
 .section-editor {
   background: #ffffff;
-  border: 1px solid rgba(41, 48, 59, 0.15);
   border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(41, 48, 59, 0.08);
   margin: 1.25rem 0;
-  padding: 1rem;
+  padding: 1.25rem;
 }
 
 .section-editor__header {

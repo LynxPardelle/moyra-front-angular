@@ -126,9 +126,12 @@ body {
   footer {
     background-color: rgba($trdark25, 0.9);
     a {
+      align-items: center;
       color: $bg1M;
-      width: 35px;
-      height: 35px;
+      display: inline-flex;
+      height: 44px;
+      justify-content: center;
+      width: 44px;
       &:hover {
         color: $bg1M;
       }
@@ -136,7 +139,7 @@ body {
       svg {
         width: 37px;
         height: 37px;
-        margin: -1px;
+        margin: 0;
       }
     }
 

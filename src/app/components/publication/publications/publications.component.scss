@@ -1,15 +1,17 @@
 .publications-page {
-  max-width: 1100px;
+  color: #29303b;
+  max-width: 1180px;
+  padding-bottom: 3.5rem !important;
+  padding-top: 2rem !important;
 }
 
 .publications-heading {
   align-items: end;
-  border-bottom: 1px solid rgba(41, 48, 59, 0.12);
   display: flex;
   gap: 1.5rem;
   justify-content: space-between;
-  margin: 0 auto 1.75rem;
-  padding-bottom: 1.25rem;
+  margin: 0 auto 2rem;
+  padding: 0.5rem 0 1.25rem;
 }
 
 .publications-heading__eyebrow {
@@ -23,7 +25,7 @@
 
 .publications-heading__title {
   color: #29303b;
-  font-size: 1.9rem;
+  font-size: clamp(2rem, 4vw, 3.15rem);
   line-height: 1.16;
   margin: 0;
 }
@@ -44,6 +46,7 @@
   font-weight: 600;
   justify-content: center;
   line-height: 1.2;
+  min-height: 44px;
   padding: 0.72rem 1rem;
 }
 
@@ -61,23 +64,23 @@
 
 .publication-grid {
   display: grid;
-  gap: 1.15rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .publication-card {
   background: #ffffff;
-  border: 1px solid rgba(41, 48, 59, 0.1);
   border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(41, 48, 59, 0.08);
   display: flex;
   flex-direction: column;
   min-height: 100%;
   overflow: hidden;
-  transition: border-color 160ms ease, transform 160ms ease;
+  transition: box-shadow 160ms ease, transform 160ms ease;
 }
 
 .publication-card:hover {
-  border-color: rgba(75, 143, 245, 0.38);
+  box-shadow: 0 14px 34px rgba(41, 48, 59, 0.12);
   transform: translateY(-2px);
 }
 
@@ -88,7 +91,6 @@
 
 .publication-card__media {
   background: #eef3f8;
-  border-bottom: 1px solid rgba(41, 48, 59, 0.1);
 }
 
 .publication-card__image {
@@ -100,7 +102,7 @@
 
 .publication-card__body {
   color: #29303b;
-  padding: 1.05rem;
+  padding: 1.35rem;
 }
 
 .publication-card__title {
@@ -118,20 +120,19 @@
 
 .publication-card__actions {
   align-items: center;
-  border-top: 1px solid rgba(41, 48, 59, 0.08);
   display: flex;
   gap: 0.75rem;
   justify-content: space-between;
   margin-top: auto;
-  padding: 1rem 1.05rem;
+  padding: 0 1.35rem 1.35rem;
 }
 
 .empty-state {
   background: #ffffff;
-  border: 1px solid rgba(41, 48, 59, 0.12);
-  border-left: 4px solid #4b8ff5;
   border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(41, 48, 59, 0.08);
   max-width: 520px;
+  padding: 1.5rem !important;
 }
 
 .empty-state h3 {
@@ -143,13 +144,20 @@
 }
 
 @media (max-width: 720px) {
+  .publications-page {
+    padding-inline: 0.75rem !important;
+    padding-top: 1rem !important;
+  }
+
   .publications-heading {
     align-items: stretch;
     flex-direction: column;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
   }
 
   .publications-heading__title {
-    font-size: 1.55rem;
+    font-size: 2rem;
   }
 
   .publications-heading__action,

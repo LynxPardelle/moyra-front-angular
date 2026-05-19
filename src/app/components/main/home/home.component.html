@@ -45,6 +45,37 @@
     </div>
   </section>
 
+  <section class="home-section">
+    <div class="home-section__heading">
+      <p class="home-section__eyebrow">Blog</p>
+      <h2>Análisis y criterios prácticos</h2>
+      <a href="/blog" [routerLink]="['/blog']">Ver blog</a>
+    </div>
+
+    <div class="home-grid" *ngIf="articles.length > 0; else noArticles">
+      <article class="home-card" *ngFor="let article of articles">
+        <div class="home-card__media" *ngIf="article.mainImg && fileUrl(article.mainImg)">
+          <img [src]="fileUrl(article.mainImg)" [alt]="article.mainImg.title || article.title" />
+        </div>
+        <div class="home-card__body">
+          <p class="home-card__tag" *ngIf="article.tags">{{ article.tags }}</p>
+          <h3>{{ article.title }}</h3>
+          <p>{{ excerpt(article.intro, 165) }}</p>
+          <a href="/articulo/{{ itemId(article) }}" [routerLink]="['/articulo', itemId(article)]">
+            Leer artículo
+          </a>
+        </div>
+      </article>
+    </div>
+
+    <ng-template #noArticles>
+      <div class="home-empty">
+        <h3>Artículos en preparación</h3>
+        <p>El blog ya está listo para publicar análisis y criterios desde el panel de administración.</p>
+      </div>
+    </ng-template>
+  </section>
+
   <section class="home-section home-section--split">
     <div class="home-section__heading">
       <p class="home-section__eyebrow">Contenido legal</p>
@@ -73,29 +104,5 @@
         <p>Esta sección ya queda lista para publicar recursos legales desde el panel de administración.</p>
       </div>
     </ng-template>
-  </section>
-
-  <section class="home-section" *ngIf="articles.length > 0">
-    <div class="home-section__heading">
-      <p class="home-section__eyebrow">Blog</p>
-      <h2>Análisis y criterios prácticos</h2>
-      <a href="/blog" [routerLink]="['/blog']">Ver blog</a>
-    </div>
-
-    <div class="home-grid">
-      <article class="home-card" *ngFor="let article of articles">
-        <div class="home-card__media" *ngIf="article.mainImg && fileUrl(article.mainImg)">
-          <img [src]="fileUrl(article.mainImg)" [alt]="article.mainImg.title || article.title" />
-        </div>
-        <div class="home-card__body">
-          <p class="home-card__tag" *ngIf="article.tags">{{ article.tags }}</p>
-          <h3>{{ article.title }}</h3>
-          <p>{{ excerpt(article.intro, 165) }}</p>
-          <a href="/articulo/{{ itemId(article) }}" [routerLink]="['/articulo', itemId(article)]">
-            Leer artículo
-          </a>
-        </div>
-      </article>
-    </div>
   </section>
 </section>

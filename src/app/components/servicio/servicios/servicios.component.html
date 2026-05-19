@@ -1,86 +1,82 @@
-<h2 class="ank ank-text-titleM text-center my-3">Soluciones</h2>
+<section class="services-page">
+  <header class="services-heading">
+    <div>
+      <p class="services-heading__eyebrow">Soluciones</p>
+      <h1 class="services-heading__title">Áreas de apoyo legal</h1>
+      <p class="services-heading__copy">
+        Servicios jurídicos estructurados para prevenir riesgos, ordenar decisiones y atender
+        procedimientos con claridad.
+      </p>
+    </div>
 
-<a
-  href="/admin/solucion"
-  [routerLink]="['/admin/solucion']"
-  class="btn ank ank-btn-linkM ank-text-bg1M mx-auto my-3 d-block ank-w-300px"
-  *ngIf="
-    canChange === true &&
-    isAdmin === true
-  "
->
-  Crear nuevo servicio
-</a>
+    <a
+      href="/admin/solucion"
+      [routerLink]="['/admin/solucion']"
+      class="services-heading__action"
+      *ngIf="canChange === true && isAdmin === true"
+    >
+      Crear nuevo servicio
+    </a>
+  </header>
 
-<!-- Cards -->
-<section
-  class="cards d-flex flex-wrap flex-column flex-md-row justify-content-evenly align-items-stretch"
->
-  <div
-    *ngFor="let servicio of servicios; index as i"
-    class="card my-3 mx-auto ank ank-hmn-500px ank-boxShadow-0__4px__4px__tdark__OPA__0_25 ank-rounded-15px overflow-hidden"
-  >
-    <div class="card-body d-flex flex-column justify-content-between  p-0">
-      <img
+  <div *ngIf="servicios.length === 0" class="services-empty">
+    <h3>Soluciones en preparación</h3>
+    <p>Esta sección ya está lista para publicar servicios desde el panel de administración.</p>
+  </div>
+
+  <section class="service-grid" *ngIf="servicios.length > 0">
+    <article *ngFor="let servicio of servicios" class="service-card">
+      <a
+        class="service-card__media"
         *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
-        class="card-img-top w-100 ank ank-h-200px overflow-hidden obj-fit-cover"
-        [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
-        alt="{{ servicio.mainImg.title }}"
-      />
-      <div>
+        href="/solucion/{{ servicio.urltitle }}"
+        [routerLink]="['/solucion', servicio.urltitle]"
+      >
+        <img
+          [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
+          [alt]="servicio.mainImg.title || servicio.title"
+        />
+      </a>
+
+      <div class="service-card__body">
         <a
           href="/solucion/{{ servicio.urltitle }}"
-          class="text-decoration-none"
+          class="service-card__title-link"
           [routerLink]="['/solucion', servicio.urltitle]"
         >
-          <h4 class="card-title m-3 text-center">{{ servicio.title }}</h4>
+          <h2 class="service-card__title">{{ servicio.title }}</h2>
         </a>
-        <hr class="mx-3" />
-      </div>
-      <div
-        *ngIf="servicio.desc && servicio.desc !== ''"
-        class="card-text mx-3"
-        [innerHTML]="
-          Linkify(this.valuefy(reduceFy(servicio.desc)), '#000', '#4b8ff5') | safeHtml
-        "
-      ></div>
 
-      <!-- Card Button -->
+        <div
+          *ngIf="servicio.desc && servicio.desc !== ''"
+          class="service-card__text"
+          [innerHTML]="Linkify(valuefy(reduceFy(servicio.desc)), '#29303b', '#4b8ff5') | safeHtml"
+        ></div>
+      </div>
+
       <div
-        class="d-flex justify-content-end align-items-center m-3"
+        class="service-card__actions"
         [ngClass]="{
-          'justify-content-end': isAdmin === false,
-          'justify-content-between': isAdmin === true
+          'service-card__actions--admin': isAdmin === true
         }"
       >
-        <ng-container *ngIf="isAdmin === false; else elseButtonAdminTemplate">
-          <!-- SeeMore -->
-          <a
-            class="btn py-1 px-3 m-0 position-relative ank ank-btn-linkM text-center ank-rounded-5px ank-text-light text-decoration-none"
-            href="/solucion/{{ servicio.urltitle }}"
-            [routerLink]="['/solucion', servicio.urltitle]"
-          >
-            Ver Más
-          </a>
-        </ng-container>
-        <ng-template #elseButtonAdminTemplate>
-          <button
-            (click)="deleteServicio(servicio._id)"
-            class="btn ank ank-btn-linkM ank-text-bg1M py-1 px-3 m-0 text-center ank-rounded-5px"
-          >
-            Borrar
-          </button>
+        <button
+          *ngIf="isAdmin === true"
+          (click)="deleteServicio(servicio._id)"
+          class="service-card__delete"
+          type="button"
+        >
+          Borrar
+        </button>
 
-          <!-- SeeMore -->
-          <a
-            class="btn py-1 px-3 m-0 position-relative ank-btn-linkM text-center ank-rounded-5px ank-text-bg1M text-decoration-none"
-            href="/admin/solucion/{{ servicio.urltitle }}"
-            [routerLink]="['/admin/solucion', servicio.urltitle]"
-          >
-            Ver Más
-          </a>
-        </ng-template>
+        <a
+          class="service-card__read"
+          [attr.href]="isAdmin ? '/admin/solucion/' + servicio.urltitle : '/solucion/' + servicio.urltitle"
+          [routerLink]="[isAdmin ? '/admin/solucion' : '/solucion', servicio.urltitle]"
+        >
+          Ver más
+        </a>
       </div>
-    </div>
-  </div>
+    </article>
+  </section>
 </section>
