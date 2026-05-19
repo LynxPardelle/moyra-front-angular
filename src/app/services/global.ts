@@ -9,7 +9,7 @@ type RuntimeGlobal = typeof globalThis & {
 };
 
 const STAGING_HOSTS = new Set(['cloud.moyra.org']);
-const STAGING_API_BASE_URL = 'https://zc0z336jeb.execute-api.us-east-1.amazonaws.com/api/v2';
+const STAGING_API_BASE_URL = 'https://api-cloud.moyra.org/api/v2';
 
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, '');
