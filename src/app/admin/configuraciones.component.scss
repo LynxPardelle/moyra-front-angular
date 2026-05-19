@@ -1,0 +1,89 @@
+.admin-config-page {
+  color: #29303b;
+  margin: 0 auto;
+  max-width: 980px;
+  padding: 1.5rem;
+}
+
+.admin-config-page__header {
+  margin-bottom: 1.5rem;
+}
+
+.admin-config-page__header p {
+  color: #4b8ff5;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+}
+
+.admin-config-page__header h1 {
+  font-size: 1.8rem;
+  margin: 0 0 0.35rem;
+}
+
+.admin-config-page__header span {
+  color: rgba(41, 48, 59, 0.72);
+}
+
+.admin-config-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-config-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.admin-config-card h2 {
+  font-size: 1.05rem;
+  margin: 0 0 1rem;
+}
+
+.admin-config-field {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.admin-config-field span {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.admin-config-field input,
+.admin-config-field textarea {
+  background: #f5f7fa;
+  border: 0;
+  border-radius: 6px;
+  color: #29303b;
+  min-height: 42px;
+  padding: 0.75rem;
+  width: 100%;
+}
+
+.admin-config-field textarea {
+  min-height: 120px;
+}
+
+.admin-config-field input:focus,
+.admin-config-field textarea:focus {
+  box-shadow: 0 0 0 3px rgba(75, 143, 245, 0.22);
+  outline: 0;
+}
+
+.admin-config-save {
+  background: #29303b;
+  border: 0;
+  border-radius: 6px;
+  color: #ffffff;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 0.75rem 1rem;
+}
+
+.admin-config-save:disabled {
+  opacity: 0.65;
+}

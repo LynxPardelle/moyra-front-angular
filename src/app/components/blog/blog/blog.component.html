@@ -1,10 +1,10 @@
 <section class="blog-page ank ank-wmx-1100px mx-auto px-3 py-4">
   <header class="blog-heading">
     <div>
-      <p class="blog-heading__eyebrow">Blog legal</p>
-      <h1 class="blog-heading__title">Criterios para decidir con ventaja</h1>
+      <p class="blog-heading__eyebrow">{{ text('blogEyebrow', 'Blog legal') }}</p>
+      <h1 class="blog-heading__title">{{ text('blogTitle', 'Criterios para decidir con ventaja') }}</h1>
       <p class="blog-heading__copy">
-        Análisis legal y criterios prácticos para anticipar riesgos y tomar decisiones informadas.
+        {{ text('blogCopy', 'Análisis legal y criterios prácticos para anticipar riesgos y tomar decisiones informadas.') }}
       </p>
     </div>
 
@@ -66,7 +66,7 @@
           href="/articulo/{{ articleId(article) }}"
           [routerLink]="[isAdmin ? '/admin/articulo' : '/articulo', articleId(article)]"
         >
-          Ver artículo
+          {{ isAdmin ? 'Editar artículo' : 'Ver artículo' }}
         </a>
 
         <button

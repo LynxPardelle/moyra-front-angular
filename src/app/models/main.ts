@@ -14,7 +14,8 @@ export class Main {
     public keyOld: string,
     public errorMessage: string,
     public seoTags: string,
-    public seoImg: any
+    public seoImg: any,
+    public pageTexts: Record<string, string> = {}
   ) {}
 }
 

@@ -1,10 +1,10 @@
 <section class="publications-page ank ank-wmx-1100px mx-auto px-3 py-4">
   <header class="publications-heading">
     <div>
-      <p class="publications-heading__eyebrow">Biblioteca legal</p>
-      <h1 class="publications-heading__title">Publicaciones y recursos</h1>
+      <p class="publications-heading__eyebrow">{{ text('publicationsEyebrow', 'Biblioteca legal') }}</p>
+      <h1 class="publications-heading__title">{{ text('publicationsTitle', 'Publicaciones y recursos') }}</h1>
       <p class="publications-heading__copy">
-        Recursos legales y criterios prácticos para apoyar decisiones con certeza jurídica.
+        {{ text('publicationsCopy', 'Recursos legales y criterios prácticos para apoyar decisiones con certeza jurídica.') }}
       </p>
     </div>
 
@@ -77,7 +77,7 @@
             publicationId(publication)
           ]"
         >
-          Ver publicación
+          {{ isAdmin ? 'Editar publicación' : 'Ver publicación' }}
         </a>
 
         <button

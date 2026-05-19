@@ -357,8 +357,61 @@ export class ArticleComponent implements OnInit {
     }
   }
 
+  async clearArticleImage() {
+    const articleId = this.articleRecordId(this.article);
+    if (!articleId) {
+      return;
+    }
+
+    const confirmed = await this.confirmFileDetach();
+    if (!confirmed) {
+      return;
+    }
+
+    this.article.mainImg = null;
+    await this._articleService.updateArticle(articleId, this.article).toPromise();
+    await this.loadArticle();
+    await Swal.fire({ title: 'La imagen principal se quitó del artículo', icon: 'success' });
+  }
+
+  async clearSectionMainFile(section: ArticleSection) {
+    const confirmed = await this.confirmFileDetach();
+    if (!confirmed) {
+      return;
+    }
+
+    section.mainFile = null;
+    await this.saveSection(section);
+  }
+
+  async removeSectionFile(section: ArticleSection, file: any) {
+    const confirmed = await this.confirmFileDetach();
+    if (!confirmed) {
+      return;
+    }
+
+    const fileId = file?.id || file?._id || file;
+    section.files = (section.files || []).filter((item: any) => {
+      return (item?.id || item?._id || item) !== fileId;
+    });
+    await this.saveSection(section);
+  }
+
   recoverThingFather() {
     void this.loadArticle();
+  }
+
+  private async confirmFileDetach(): Promise<boolean> {
+    const result = await Swal.fire({
+      title: '¿Quitar referencia?',
+      text: 'Esto no borra el archivo del bucket. Para borrarlo definitivamente usa Administración > Archivos.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Quitar',
+      cancelButtonText: 'Cancelar',
+    });
+
+    return result.isConfirmed;
   }
 
   async pre_load() {
@@ -414,8 +467,12 @@ export class ArticleComponent implements OnInit {
     return value?.text || text || '';
   }
 
-  valuefy(text: string) {
-    return renderTemplateExpressions(text || '', this as unknown as Record<string, unknown>);
+  valuefy(text: string, section?: ArticleSection) {
+    return renderTemplateExpressions(text || '', {
+      ...(this as unknown as Record<string, unknown>),
+      article: this.article,
+      section,
+    });
   }
 
   insertionLines(section: ArticleSection): string {

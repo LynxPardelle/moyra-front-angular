@@ -1,0 +1,33 @@
+<section class="admin-config-page">
+  <header class="admin-config-page__header">
+    <p>Administración</p>
+    <h1>Configuraciones</h1>
+    <span>Textos generales de páginas públicas.</span>
+  </header>
+
+  <div *ngIf="loading" class="admin-config-card">Cargando configuraciones...</div>
+
+  <form *ngIf="!loading" class="admin-config-form" (ngSubmit)="save()">
+    <section *ngFor="let group of groupedFields" class="admin-config-card">
+      <h2>{{ group.section }}</h2>
+
+      <label *ngFor="let field of group.fields" class="admin-config-field">
+        <span>{{ field.label }}</span>
+        <textarea
+          *ngIf="field.multiline; else inputField"
+          [(ngModel)]="pageTexts[field.key]"
+          [name]="field.key"
+          rows="4"
+        ></textarea>
+
+        <ng-template #inputField>
+          <input [(ngModel)]="pageTexts[field.key]" [name]="field.key" type="text" />
+        </ng-template>
+      </label>
+    </section>
+
+    <button class="admin-config-save" type="submit" [disabled]="saving">
+      {{ saving ? 'Guardando...' : 'Guardar configuraciones' }}
+    </button>
+  </form>
+</section>

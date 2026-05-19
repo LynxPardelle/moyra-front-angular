@@ -1,0 +1,131 @@
+.admin-files-page {
+  color: #29303b;
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 1.5rem;
+}
+
+.admin-files-page__header {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.admin-files-page__header p {
+  color: #4b8ff5;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+}
+
+.admin-files-page__header h1 {
+  font-size: 1.8rem;
+  margin: 0 0 0.35rem;
+}
+
+.admin-files-page__header span,
+.admin-files-muted {
+  color: rgba(41, 48, 59, 0.62);
+}
+
+.admin-files-page__header button,
+.admin-files-delete {
+  background: #29303b;
+  border: 0;
+  border-radius: 6px;
+  color: #ffffff;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 0.55rem 0.85rem;
+}
+
+.admin-files-delete {
+  background: #f0b429;
+  color: #29303b;
+}
+
+.admin-files-search {
+  display: block;
+  margin-bottom: 1rem;
+  max-width: 420px;
+}
+
+.admin-files-search span {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.admin-files-search input {
+  background: #ffffff;
+  border: 0;
+  border-radius: 6px;
+  min-height: 42px;
+  padding: 0.65rem 0.75rem;
+  width: 100%;
+}
+
+.admin-files-empty,
+.admin-files-table-wrap {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.admin-files-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-files-table {
+  border-collapse: collapse;
+  min-width: 900px;
+  width: 100%;
+}
+
+.admin-files-table th,
+.admin-files-table td {
+  border-bottom: 1px solid rgba(41, 48, 59, 0.1);
+  padding: 0.85rem 0.65rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-files-table th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.admin-files-table a {
+  color: #4b8ff5;
+  display: block;
+  font-weight: 700;
+}
+
+.admin-files-table small {
+  color: rgba(41, 48, 59, 0.62);
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.admin-files-usage {
+  background: #f5f7fa;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.82rem;
+  margin: 0 0.35rem 0.35rem 0;
+  padding: 0.3rem 0.55rem;
+}
+
+@media (max-width: 720px) {
+  .admin-files-page__header {
+    display: block;
+  }
+
+  .admin-files-page__header button {
+    margin-top: 1rem;
+    width: 100%;
+  }
+}

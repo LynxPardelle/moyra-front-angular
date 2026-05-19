@@ -239,8 +239,51 @@ export class PublicationComponent implements OnInit {
     }
   }
 
+  async clearMainFile() {
+    await this.updatePublicationFiles(() => {
+      this.publication.mainFile = null;
+    }, 'La imagen principal se quitó de la publicación.');
+  }
+
+  async removeRelatedFile(file: any) {
+    const fileId = file?.id || file?._id || file;
+    await this.updatePublicationFiles(() => {
+      this.publication.files = (this.publication.files || []).filter((item: any) => {
+        return (item?.id || item?._id || item) !== fileId;
+      });
+    }, 'El archivo se quitó de la publicación.');
+  }
+
   recoverThingFather() {
     void this.loadPublication();
+  }
+
+  private async updatePublicationFiles(update: () => void, successTitle: string) {
+    const publicationId = this.publicationRecordId(this.publication);
+    if (!publicationId) {
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: '¿Quitar referencia?',
+      text: 'Esto no borra el archivo del bucket. Para borrarlo definitivamente usa Administración > Archivos.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Quitar',
+      cancelButtonText: 'Cancelar',
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    update();
+    await this._publicationService.updatePublication(publicationId, this.publication).toPromise();
+    await this.loadPublication();
+    await Swal.fire({
+      title: successTitle,
+      icon: 'success',
+    });
   }
 
   async pre_load() {
@@ -293,7 +336,10 @@ export class PublicationComponent implements OnInit {
   }
 
   valuefy(text: string) {
-    return renderTemplateExpressions(text || '', this as unknown as Record<string, unknown>);
+    return renderTemplateExpressions(text || '', {
+      ...(this as unknown as Record<string, unknown>),
+      publication: this.publication,
+    });
   }
 
   insertionLines(): string {

@@ -207,6 +207,14 @@
         [src]="fileUrl(publication.mainFile)"
         [alt]="publication.mainFile.title || publication.title"
       />
+      <button
+        *ngIf="publication.mainFile"
+        class="file-reference-remove"
+        type="button"
+        (click)="clearMainFile()"
+      >
+        Quitar imagen principal
+      </button>
       <app-file-uploader
         [type]="'publication'"
         [typeMeta]="'one'"
@@ -221,6 +229,12 @@
       <hr class="my-5" />
 
       <h3 class="editor-section-title">Archivos relacionados</h3>
+      <div *ngIf="publication.files && publication.files.length > 0" class="file-reference-list">
+        <div *ngFor="let file of publication.files" class="file-reference-item">
+          <span>{{ file.title || file.location || 'Archivo' }}</span>
+          <button type="button" (click)="removeRelatedFile(file)">Quitar</button>
+        </div>
+      </div>
       <app-file-uploader
         [type]="'publication'"
         [typeMeta]="'multi'"

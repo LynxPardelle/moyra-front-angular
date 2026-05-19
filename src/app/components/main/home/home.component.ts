@@ -69,6 +69,11 @@ export class HomeComponent implements OnInit {
     return this.fileUrl(this.main?.mainImg || this.main?.seoImg || this.main?.logo);
   }
 
+  text(key: string, fallback: string): string {
+    const value = this.main?.pageTexts?.[key];
+    return typeof value === 'string' && value.trim() ? value : fallback;
+  }
+
   excerpt(text: string, length = 180): string {
     const cleanText = stripHtml(text || '').replace(/\s+/g, ' ').trim();
     if (cleanText.length <= length) {

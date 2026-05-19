@@ -85,7 +85,7 @@
         <div
           *ngIf="section.text"
           class="article-section__content"
-          [innerHTML]="Linkify(valuefy(section.text), '#29303b', '#4b8ff5') | safeHtml"
+          [innerHTML]="Linkify(valuefy(section.text, section), '#29303b', '#4b8ff5') | safeHtml"
         ></div>
 
         <div
@@ -206,6 +206,14 @@
         [src]="fileUrl(article.mainImg)"
         [alt]="article.mainImg.title || article.title"
       />
+      <button
+        *ngIf="article.mainImg"
+        class="file-reference-remove"
+        type="button"
+        (click)="clearArticleImage()"
+      >
+        Quitar imagen principal
+      </button>
       <app-file-uploader
         [type]="'article'"
         [typeMeta]="'one'"
@@ -298,6 +306,14 @@
             [src]="fileUrl(section.mainFile)"
             [alt]="section.mainFile.title || section.title"
           />
+          <button
+            *ngIf="section.mainFile"
+            class="file-reference-remove"
+            type="button"
+            (click)="clearSectionMainFile(section)"
+          >
+            Quitar imagen de la sección
+          </button>
           <app-file-uploader
             [type]="'article'"
             [typeMeta]="'one'"
@@ -309,6 +325,12 @@
           ></app-file-uploader>
 
           <h5 class="h6 text-center my-3">Archivos relacionados</h5>
+          <div *ngIf="section.files && section.files.length > 0" class="file-reference-list">
+            <div *ngFor="let file of section.files" class="file-reference-item">
+              <span>{{ file.title || file.location || 'Archivo' }}</span>
+              <button type="button" (click)="removeSectionFile(section, file)">Quitar</button>
+            </div>
+          </div>
           <app-file-uploader
             [type]="'article'"
             [typeMeta]="'multi'"

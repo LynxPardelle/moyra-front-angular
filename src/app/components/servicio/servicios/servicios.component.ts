@@ -4,6 +4,7 @@ import { Router, ActivatedRoute, Params, RouterLink } from '@angular/router';
 
 // Services
 import { GlobalServicio, isAdminIdentity } from '../../../services/global';
+import { MainService } from '../../../services/main.service';
 import { ServicioService } from '../../../services/servicio.service';
 import { UserService } from '../../../services/user.service';
 import { WebService } from '../../../services/web.service';
@@ -23,6 +24,7 @@ import Swal from 'sweetalert2';
   styleUrls: ['./servicios.component.scss'],
 })
 export class ServiciosComponent implements OnInit {
+  public main: any = null;
   public servicios: Servicio[] = [];
   public identity: any;
 
@@ -39,6 +41,7 @@ export class ServiciosComponent implements OnInit {
   public customConsoleCSS =
     'background-color: #db8642; color: black; padding: 1em;';
   constructor(
+    private _mainService: MainService,
     private _servicioService: ServicioService,
     private _userService: UserService,
 
@@ -54,14 +57,9 @@ export class ServiciosComponent implements OnInit {
         (sharedContent.to === 'servicios' || sharedContent.to === 'all')
       ) {
         switch (sharedContent.property) {
-          /* case 'main':
+          case 'main':
             this.main = sharedContent.thing;
-            this._webService.consoleLog(
-              sharedContent.thing,
-              this.document + ' 39',
-              this.customConsoleCSS
-            );
-            break; */
+            break;
           case 'onlyConsoleMessage':
             this._webService.consoleLog(
               sharedContent.thing,
@@ -90,6 +88,7 @@ export class ServiciosComponent implements OnInit {
 
     (async () => {
       try {
+        await this.getMainTexts();
         await this.getServicios();
         await this.checkRoute();
       } catch (err: any) {
@@ -151,6 +150,24 @@ export class ServiciosComponent implements OnInit {
         this.customConsoleCSS
       );
     }
+  }
+
+  async getMainTexts() {
+    try {
+      const response = await this._mainService.getMain().toPromise();
+      this.main = response?.main || this.main;
+    } catch (err: any) {
+      this._webService.consoleLog(
+        err,
+        this.document + ' getMainTexts',
+        this.customConsoleCSS
+      );
+    }
+  }
+
+  text(key: string, fallback: string): string {
+    const value = this.main?.pageTexts?.[key];
+    return typeof value === 'string' && value.trim() ? value : fallback;
   }
 
   async deleteServicio(servicioId: string) {

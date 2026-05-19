@@ -6,6 +6,7 @@ import { Meta, Title } from '@angular/platform-browser';
 // Services
 import { ArticleService } from '../../../services/article.service';
 import { GlobalArticle, isAdminIdentity } from '../../../services/global';
+import { MainService } from '../../../services/main.service';
 import { UserService } from '../../../services/user.service';
 import { WebService } from '../../../services/web.service';
 
@@ -23,6 +24,7 @@ import Swal from 'sweetalert2';
 })
 export class BlogComponent implements OnInit {
   public articles: Article[] = [];
+  public main: any = null;
   public identity: any;
   public isAdmin = false;
   public canChange = false;
@@ -31,6 +33,7 @@ export class BlogComponent implements OnInit {
 
   constructor(
     private _articleService: ArticleService,
+    private _mainService: MainService,
     private _userService: UserService,
     private _webService: WebService,
     private _router: Router,
@@ -44,7 +47,21 @@ export class BlogComponent implements OnInit {
   ngOnInit(): void {
     this.isAdmin = this._router.routerState.snapshot.url.includes('admin');
     this.setSeo();
+    void this.loadMainTexts();
     void this.getArticles();
+  }
+
+  async loadMainTexts(): Promise<void> {
+    try {
+      const response = await this._mainService.getMain().toPromise();
+      this.main = response?.main || null;
+    } catch (err: any) {
+      this._webService.consoleLog(
+        err,
+        'blog.component.ts loadMainTexts',
+        'background-color: #244f7a; color: white; padding: 1em;'
+      );
+    }
   }
 
   async getArticles() {
@@ -127,6 +144,11 @@ export class BlogComponent implements OnInit {
     }
 
     return cleanText.slice(0, length - 1).trimEnd() + '...';
+  }
+
+  text(key: string, fallback: string): string {
+    const value = this.main?.pageTexts?.[key];
+    return typeof value === 'string' && value.trim() ? value : fallback;
   }
 
   private setSeo() {

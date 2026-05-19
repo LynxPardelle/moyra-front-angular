@@ -1,18 +1,18 @@
 <section class="home-page">
   <header class="home-hero">
     <div class="home-hero__content">
-      <p class="home-hero__eyebrow">Firma legal en México</p>
-      <h1 class="home-hero__title">Montaño & Reyes Arrazola S.C.</h1>
+      <p class="home-hero__eyebrow">{{ text('homeHeroEyebrow', 'Firma legal en México') }}</p>
+      <h1 class="home-hero__title">{{ text('homeHeroTitle', 'Montaño & Reyes Arrazola S.C.') }}</h1>
       <p class="home-hero__copy">
         {{ excerpt(main?.desc || 'Asesoría jurídica clara para prevenir riesgos, resolver conflictos y tomar decisiones con respaldo legal.', 230) }}
       </p>
 
       <div class="home-hero__actions">
         <a class="home-button home-button--primary" href="/soluciones" [routerLink]="['/soluciones']">
-          Ver soluciones
+          {{ text('homeHeroServicesCta', 'Ver soluciones') }}
         </a>
         <a class="home-button home-button--secondary" href="/publications" [routerLink]="['/publications']">
-          Publicaciones
+          {{ text('homeHeroPublicationsCta', 'Publicaciones') }}
         </a>
       </div>
     </div>
@@ -24,8 +24,8 @@
 
   <section class="home-section" *ngIf="services.length > 0">
     <div class="home-section__heading">
-      <p class="home-section__eyebrow">Soluciones</p>
-      <h2>Áreas de apoyo legal</h2>
+      <p class="home-section__eyebrow">{{ text('homeServicesEyebrow', 'Soluciones') }}</p>
+      <h2>{{ text('homeServicesTitle', 'Áreas de apoyo legal') }}</h2>
       <a href="/soluciones" [routerLink]="['/soluciones']">Ver todas</a>
     </div>
 
@@ -45,14 +45,14 @@
     </div>
   </section>
 
-  <section class="home-section">
+  <section class="home-section" *ngIf="articles.length > 0">
     <div class="home-section__heading">
-      <p class="home-section__eyebrow">Blog</p>
-      <h2>Análisis y criterios prácticos</h2>
+      <p class="home-section__eyebrow">{{ text('homeBlogEyebrow', 'Blog') }}</p>
+      <h2>{{ text('homeBlogTitle', 'Análisis y criterios prácticos') }}</h2>
       <a href="/blog" [routerLink]="['/blog']">Ver blog</a>
     </div>
 
-    <div class="home-grid" *ngIf="articles.length > 0; else noArticles">
+    <div class="home-grid">
       <article class="home-card" *ngFor="let article of articles">
         <div class="home-card__media" *ngIf="article.mainImg && fileUrl(article.mainImg)">
           <img [src]="fileUrl(article.mainImg)" [alt]="article.mainImg.title || article.title" />
@@ -68,22 +68,16 @@
       </article>
     </div>
 
-    <ng-template #noArticles>
-      <div class="home-empty">
-        <h3>Artículos en preparación</h3>
-        <p>El blog ya está listo para publicar análisis y criterios desde el panel de administración.</p>
-      </div>
-    </ng-template>
   </section>
 
-  <section class="home-section home-section--split">
+  <section class="home-section home-section--split" *ngIf="publications.length > 0">
     <div class="home-section__heading">
-      <p class="home-section__eyebrow">Contenido legal</p>
-      <h2>Publicaciones recientes</h2>
+      <p class="home-section__eyebrow">{{ text('homePublicationsEyebrow', 'Contenido legal') }}</p>
+      <h2>{{ text('homePublicationsTitle', 'Publicaciones recientes') }}</h2>
       <a href="/publications" [routerLink]="['/publications']">Biblioteca legal</a>
     </div>
 
-    <div class="home-grid" *ngIf="publications.length > 0; else noPublications">
+    <div class="home-grid">
       <article class="home-card home-card--publication" *ngFor="let publication of publications">
         <div class="home-card__media" *ngIf="publication.mainFile && fileUrl(publication.mainFile)">
           <img [src]="fileUrl(publication.mainFile)" [alt]="publication.mainFile.title || publication.title" />
@@ -98,11 +92,5 @@
       </article>
     </div>
 
-    <ng-template #noPublications>
-      <div class="home-empty">
-        <h3>Publicaciones en preparación</h3>
-        <p>Esta sección ya queda lista para publicar recursos legales desde el panel de administración.</p>
-      </div>
-    </ng-template>
   </section>
 </section>

@@ -8,6 +8,8 @@ import { ErrorComponent } from '../components/main/error/error.component';
 /* Admin */
 import { AdminComponent } from './admin.component';
 import { AdminGuard } from './admin.guard';
+import { ArchivosComponent } from './archivos.component';
+import { ConfiguracionesComponent } from './configuraciones.component';
 
 /* PublicationComponents */
 import { PublicationsComponent } from '../components/publication/publications/publications.component';
@@ -35,6 +37,8 @@ const routes: Routes = [
 
       // Main
       { path: 'we', component: WeComponent },
+      { path: 'configuraciones', component: ConfiguracionesComponent },
+      { path: 'archivos', component: ArchivosComponent },
 
       // Publication
       { path: 'publications', component: PublicationsComponent },

@@ -5,6 +5,7 @@ import { Meta, Title } from '@angular/platform-browser';
 
 // Services
 import { GlobalPublication, isAdminIdentity } from '../../../services/global';
+import { MainService } from '../../../services/main.service';
 import { PublicationService } from '../../../services/publication.service';
 import { UserService } from '../../../services/user.service';
 import { WebService } from '../../../services/web.service';
@@ -23,6 +24,7 @@ import Swal from 'sweetalert2';
 })
 export class PublicationsComponent implements OnInit {
   public publications: Publication[] = [];
+  public main: any = null;
   public identity: any;
   public isAdmin = false;
   public canChange = false;
@@ -30,6 +32,7 @@ export class PublicationsComponent implements OnInit {
   public urlPublication: string = GlobalPublication.url;
 
   constructor(
+    private _mainService: MainService,
     private _publicationService: PublicationService,
     private _userService: UserService,
     private _webService: WebService,
@@ -44,7 +47,21 @@ export class PublicationsComponent implements OnInit {
   ngOnInit(): void {
     this.isAdmin = this._router.routerState.snapshot.url.includes('admin');
     this.setSeo();
+    void this.loadMainTexts();
     void this.getPublications();
+  }
+
+  async loadMainTexts(): Promise<void> {
+    try {
+      const response = await this._mainService.getMain().toPromise();
+      this.main = response?.main || null;
+    } catch (err: any) {
+      this._webService.consoleLog(
+        err,
+        'publications.component.ts loadMainTexts',
+        'background-color: #244f7a; color: white; padding: 1em;'
+      );
+    }
   }
 
   async getPublications() {
@@ -127,6 +144,11 @@ export class PublicationsComponent implements OnInit {
     }
 
     return cleanText.slice(0, length - 1).trimEnd() + '...';
+  }
+
+  text(key: string, fallback: string): string {
+    const value = this.main?.pageTexts?.[key];
+    return typeof value === 'string' && value.trim() ? value : fallback;
   }
 
   private setSeo() {
