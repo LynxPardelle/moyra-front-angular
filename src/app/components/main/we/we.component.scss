@@ -1,0 +1,15 @@
+.we-hero-image {
+  display: block;
+  height: min(50vh, 560px);
+  margin: 0 auto;
+  max-width: 1180px;
+  object-fit: cover;
+  width: calc(100% - 2rem);
+}
+
+@media (max-width: 768px) {
+  .we-hero-image {
+    height: 280px;
+    width: calc(100% - 1.5rem);
+  }
+}
