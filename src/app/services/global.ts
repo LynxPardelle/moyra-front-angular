@@ -8,8 +8,12 @@ type RuntimeGlobal = typeof globalThis & {
   process?: RuntimeProcess;
 };
 
-const STAGING_HOSTS = new Set(['cloud.moyra.org']);
-const STAGING_API_BASE_URL = 'https://api-cloud.moyra.org/api/v2';
+const API_BASE_URL_BY_HOST: Record<string, string> = {
+  'cloud.moyra.org': 'https://api-cloud.moyra.org/api/v2',
+  'test.moyra.org': 'https://api.test.moyra.org/api/v2',
+  'moyra.org': 'https://api.moyra.org/api/v2',
+  'www.moyra.org': 'https://api.moyra.org/api/v2',
+};
 
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, '');
@@ -44,8 +48,8 @@ function resolveApiBaseUrl(): string {
   }
 
   const host = browserHost();
-  if (host && STAGING_HOSTS.has(host)) {
-    return STAGING_API_BASE_URL;
+  if (host && API_BASE_URL_BY_HOST[host]) {
+    return API_BASE_URL_BY_HOST[host];
   }
 
   return trimTrailingSlash(environment.apiBaseUrl);
