@@ -82,6 +82,27 @@ export const GlobalUser = {
   url: legacyScopedUrl('user'),
 };
 
+export function roleFromIdentity(identity: any): string {
+  if (!identity || typeof identity !== 'object') {
+    return 'ROLE_USER';
+  }
+
+  const groups = identity['cognito:groups'] || identity.groups;
+  if (Array.isArray(groups) && groups.includes('ROLE_ADMIN')) {
+    return 'ROLE_ADMIN';
+  }
+
+  if (typeof groups === 'string' && groups.split(',').includes('ROLE_ADMIN')) {
+    return 'ROLE_ADMIN';
+  }
+
+  return identity.role || identity['custom:legacyRole'] || 'ROLE_USER';
+}
+
+export function isAdminIdentity(identity: any): boolean {
+  return roleFromIdentity(identity) === 'ROLE_ADMIN';
+}
+
 export function apiUrl(path: string): string {
   return `${web}/${trimSlashes(path)}`;
 }

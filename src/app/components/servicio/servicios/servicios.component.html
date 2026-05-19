@@ -5,8 +5,6 @@
   [routerLink]="['/admin/solucion']"
   class="btn ank ank-btn-linkM ank-text-bg1M mx-auto my-3 d-block ank-w-300px"
   *ngIf="
-    identity &&
-    identity.role == 'ROLE_ADMIN' &&
     canChange === true &&
     isAdmin === true
   "

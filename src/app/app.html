@@ -21,9 +21,9 @@
   >
     <!--   class="w-max-75 d-block mx-auto h-max-25vh my-3" -->
     <img
-      *ngIf="main && main.logo && main.logo.location"
-      src="{{ urlMain + 'get-file/' + main.logo.location }}"
-      alt="{{ main.logo.title }}"
+      [src]="headerLogoUrl()"
+      [alt]="headerLogoAlt()"
+      (error)="useFallbackLogo($event)"
     />
   </a>
 
@@ -119,7 +119,7 @@
             Nosotros
           </a>
         </li>
-        <!-- <li class="text-center my-4 h3">
+        <li class="text-center my-4 h3">
           <a
             class="d-block mx-auto ank ank-text-linkM text-decoration-none"
             href="/publications"
@@ -138,9 +138,9 @@
           >
             Blog
           </a>
-        </li> -->
+        </li>
         <li
-          *ngIf="identity && identity.role === 'ROLE_ADMIN'"
+          *ngIf="isAdminUser()"
           class="text-center my-4 h3"
         >
           <a

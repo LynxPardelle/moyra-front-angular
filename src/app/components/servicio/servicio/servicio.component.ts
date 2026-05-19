@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 
 // Services
-import { GlobalUser, GlobalServicio } from '../../../services/global';
+import { GlobalServicio, isAdminIdentity } from '../../../services/global';
 import { ServicioService } from '../../../services/servicio.service';
 import { UserService } from '../../../services/user.service';
 import { WebService } from '../../../services/web.service';
@@ -87,7 +87,7 @@ export class ServicioComponent implements OnInit {
 
     // Identity
     this.identity = this._userService.getIdentity();
-    if (this.identity && this.identity.role === 'ROLE_ADMIN') {
+    if (isAdminIdentity(this.identity)) {
       this.canChange = true;
     }
   }

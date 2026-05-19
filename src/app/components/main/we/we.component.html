@@ -2,8 +2,6 @@
 <div
   class="position-fixed ank ank-top-15per ank-top-md-10per end-0"
   *ngIf="
-    identity &&
-    identity.role == 'ROLE_ADMIN' &&
     canChange === true &&
     isAdmin === true
   "
@@ -330,8 +328,6 @@
       <div
         class="position-absolute ank ank-top-15per ank-top-md-10per end-0"
         *ngIf="
-          identity &&
-          identity.role == 'ROLE_ADMIN' &&
           canChange === true &&
           isAdmin === true &&
           editSwitch === true

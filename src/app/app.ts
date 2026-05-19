@@ -4,7 +4,7 @@ import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
 import { NgxAngoraService } from 'ngx-angora-css';
 
 // Services
-import { GlobalUser, GlobalMain } from './services/global';
+import { ApiRuntime, GlobalMain, isAdminIdentity } from './services/global';
 import { MainService } from './services/main.service';
 import { UserService } from './services/user.service';
 import { WebService } from './services/web.service';
@@ -52,8 +52,10 @@ export class App implements DoCheck, OnInit {
 
   // Utility
   public windowWidth = 0;
+  public readonly fallbackLogoUrl = '/assets/images/M&RALowQuality.png';
   private cssCreateTimer?: ReturnType<typeof setTimeout>;
   private lastCssCreateAt = 0;
+  private stylesheetsReady?: Promise<void>;
 
   constructor(
     private _mainService: MainService,
@@ -226,6 +228,36 @@ export class App implements DoCheck, OnInit {
     this._location.back();
   }
 
+  isAdminUser(): boolean {
+    return isAdminIdentity(this.identity);
+  }
+
+  headerLogoUrl(): string {
+    const logo = this.main?.logo;
+    if (!logo) {
+      return this.fallbackLogoUrl;
+    }
+
+    return (
+      logo.publicUrl ||
+      this.absoluteApiFileUrl(logo.url) ||
+      (logo.location
+        ? `${ApiRuntime.url}/files/main/${encodeURIComponent(logo.location)}`
+        : this.fallbackLogoUrl)
+    );
+  }
+
+  headerLogoAlt(): string {
+    return this.main?.logo?.title || 'Montaño & Reyes Arrazola S.C.';
+  }
+
+  useFallbackLogo(event: Event): void {
+    const image = event.target as HTMLImageElement | null;
+    if (image && image.src !== this.fallbackLogoUrl) {
+      image.src = this.fallbackLogoUrl;
+    }
+  }
+
   private scheduleCssCreate(force = false): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
@@ -246,26 +278,67 @@ export class App implements DoCheck, OnInit {
     this.cssCreateTimer = setTimeout(() => {
       this.cssCreateTimer = undefined;
       this.lastCssCreateAt = Date.now();
-      this.ensureAngoraStylesheets();
-      this._angora.cssCreate(undefined, force);
+      void this.runCssCreate(force);
     }, wait);
   }
 
-  private ensureAngoraStylesheets(): void {
+  private async runCssCreate(force = false): Promise<void> {
+    await this.ensureAngoraStylesheets();
+    this._angora.cssCreate(undefined, force);
+  }
+
+  private ensureAngoraStylesheets(): Promise<void> {
+    if (this.stylesheetsReady) {
+      return this.stylesheetsReady;
+    }
+
     const stylesheets = [
-      '/assets/css/angora-styles.css',
-      '/assets/css/angora-styles-responsive.css',
+      'assets/css/angora-styles.css',
+      'assets/css/angora-styles-responsive.css',
     ];
 
-    stylesheets.forEach((href) => {
-      if (document.querySelector(`link[href="${href}"]`)) {
-        return;
-      }
+    this.stylesheetsReady = Promise.all(
+      stylesheets.map((href) => this.ensureStylesheetLoaded(href))
+    ).then(() => undefined);
 
-      const link = document.createElement('link');
+    return this.stylesheetsReady;
+  }
+
+  private ensureStylesheetLoaded(href: string): Promise<void> {
+    const selector = `link[href$="${href}"]`;
+    const existingLink = document.querySelector<HTMLLinkElement>(selector);
+    const link = existingLink || document.createElement('link');
+
+    if (!existingLink) {
       link.rel = 'stylesheet';
       link.href = href;
       document.head.appendChild(link);
+    }
+
+    if (link.sheet) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      const finish = () => resolve();
+      link.addEventListener('load', finish, { once: true });
+      link.addEventListener('error', finish, { once: true });
+      setTimeout(finish, 1500);
     });
+  }
+
+  private absoluteApiFileUrl(pathOrUrl: string | null | undefined): string {
+    if (!pathOrUrl) {
+      return '';
+    }
+
+    if (/^https?:\/\//i.test(pathOrUrl)) {
+      return pathOrUrl;
+    }
+
+    const apiOrigin = ApiRuntime.url.replace(/\/api\/v2$/, '');
+    return pathOrUrl.startsWith('/')
+      ? `${apiOrigin}${pathOrUrl}`
+      : `${ApiRuntime.url}/${pathOrUrl.replace(/^\/+/, '')}`;
   }
 }

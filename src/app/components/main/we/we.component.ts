@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 
 // Services
-import { GlobalUser, GlobalMain } from '../../../services/global';
+import { GlobalMain, isAdminIdentity } from '../../../services/global';
 import { MainService } from '../../../services/main.service';
 import { UserService } from '../../../services/user.service';
 import { WebService } from '../../../services/web.service';
@@ -79,7 +79,7 @@ export class WeComponent implements OnInit, DoCheck {
 
     // Identity
     this.identity = this._userService.getIdentity();
-    if (this.identity && this.identity.role === 'ROLE_ADMIN') {
+    if (isAdminIdentity(this.identity)) {
       this.canChange = true;
     }
   }

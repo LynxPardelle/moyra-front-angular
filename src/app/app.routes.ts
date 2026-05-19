@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 /* MainComponents */
+import { HomeComponent } from './components/main/home/home.component';
 import { WeComponent } from './components/main/we/we.component';
 import { ErrorComponent } from './components/main/error/error.component';
 
@@ -24,8 +25,8 @@ import { ArticleComponent } from './components/blog/article/article.component';
 import { LoginComponent } from './components/user/login/login.component';
 
 export const routes: Routes = [
-  { path: '', component: WeComponent },
-  { path: 'inicio', component: WeComponent },
+  { path: '', component: HomeComponent },
+  { path: 'inicio', component: HomeComponent },
 
   // Admin
   {

@@ -48,11 +48,12 @@ export class UserService {
   }
 
   login(userToLogin: any, gettoken: any = null): Observable<any> {
-    if (gettoken != null) {
-      userToLogin.gettoken = gettoken;
-    }
-
-    const body = JSON.stringify(userToLogin);
+    const credentials = {
+      email: userToLogin.email,
+      password: userToLogin.password,
+      ...(gettoken != null ? { gettoken } : {}),
+    };
+    const body = JSON.stringify(credentials);
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     const loginUrl = ApiRuntime.isV2
       ? apiUrl('/auth/login')

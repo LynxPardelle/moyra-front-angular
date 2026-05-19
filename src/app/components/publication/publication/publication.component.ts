@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 
 // Services
-import { GlobalPublication } from '../../../services/global';
+import { GlobalPublication, isAdminIdentity } from '../../../services/global';
 import { PublicationService } from '../../../services/publication.service';
 import { UserService } from '../../../services/user.service';
 import { WebService } from '../../../services/web.service';
@@ -56,7 +56,7 @@ export class PublicationComponent implements OnInit {
     private _meta: Meta
   ) {
     this.identity = this._userService.getIdentity();
-    this.canChange = Boolean(this.identity && this.identity.role === 'ROLE_ADMIN');
+    this.canChange = isAdminIdentity(this.identity);
   }
 
   ngOnInit(): void {
