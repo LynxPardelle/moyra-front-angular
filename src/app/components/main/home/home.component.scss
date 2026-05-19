@@ -7,6 +7,8 @@
 
 .home-hero {
   align-items: center;
+  border: 0;
+  box-shadow: none;
   display: grid;
   gap: 2rem;
   grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
