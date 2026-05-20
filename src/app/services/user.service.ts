@@ -64,6 +64,24 @@ export class UserService {
     });
   }
 
+  completeNewPasswordChallenge(
+    email: string,
+    session: string,
+    newPassword: string
+  ): Observable<any> {
+    const body = JSON.stringify({
+      email,
+      challengeName: 'NEW_PASSWORD_REQUIRED',
+      session,
+      newPassword,
+    });
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    return this._http.post(apiUrl('/auth/login'), body, {
+      headers: headers,
+    });
+  }
+
   updateUser(id: string, user: any): Observable<any> {
     const body = JSON.stringify(user);
     const headers = this.authHeaders();

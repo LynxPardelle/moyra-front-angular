@@ -51,17 +51,19 @@ export class LoginComponent implements OnInit {
 
   async onSubmit() {
     try {
-      let user = await this._userService.login(this.user).toPromise();
-      if (!user || !user.user) {
+      let auth = await this.loginWithCognitoChallengeSupport();
+      if (!auth || !auth.user) {
         throw new Error('No se encontró el usuario.');
       }
 
-      let token = await this._userService.login(this.user, true).toPromise();
-      if (!token || !token.token) {
+      let token = auth.token
+        ? { token: auth.token }
+        : await this._userService.login(this.user, true).toPromise();
+      if (!token?.token) {
         throw new Error('No se pudo conseguir el token.');
       }
 
-      this.identity = user.user;
+      this.identity = auth.user;
       this.token = token.token;
 
       //LocalStorage del identity
@@ -101,6 +103,54 @@ export class LoginComponent implements OnInit {
           confirmButton: 'bg-titleM',
         }
       });
+    }
+  }
+
+  private async loginWithCognitoChallengeSupport(): Promise<any> {
+    try {
+      return await this._userService.login(this.user).toPromise();
+    } catch (e: any) {
+      if (
+        e?.status !== 409 ||
+        e?.error?.challengeName !== 'NEW_PASSWORD_REQUIRED' ||
+        !e?.error?.session
+      ) {
+        throw e;
+      }
+
+      const result = await Swal.fire({
+        title: 'Crea tu contraseña',
+        html: 'Tu usuario de AWS Cognito requiere una contraseña permanente.',
+        input: 'password',
+        inputPlaceholder: 'Nueva contraseña',
+        inputAttributes: {
+          autocomplete: 'new-password',
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        customClass: {
+          popup: 'bg-bg1M',
+          title: 'text-bg-whatsApp',
+          closeButton: 'bg-whatsApp',
+          confirmButton: 'bg-whatsApp',
+        },
+        preConfirm: (value) => {
+          if (!value || value.length < 10) {
+            Swal.showValidationMessage('La contraseña debe tener al menos 10 caracteres.');
+            return false;
+          }
+          return value;
+        },
+      });
+
+      if (!result.isConfirmed || !result.value) {
+        throw new Error('No se completó el cambio de contraseña.');
+      }
+
+      return await this._userService
+        .completeNewPasswordChallenge(this.user.email, e.error.session, result.value)
+        .toPromise();
     }
   }
 }
