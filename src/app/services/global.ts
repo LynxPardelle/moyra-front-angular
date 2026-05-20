@@ -9,8 +9,8 @@ type RuntimeGlobal = typeof globalThis & {
 };
 
 const API_BASE_URL_BY_HOST: Record<string, string> = {
-  'cloud.moyra.org': 'https://api-cloud.moyra.org/api/v2',
   'test.moyra.org': 'https://api.test.moyra.org/api/v2',
+  'dev.moyra.org': 'https://bna63emr73.execute-api.us-east-1.amazonaws.com/api/v2',
   'moyra.org': 'https://api.moyra.org/api/v2',
   'www.moyra.org': 'https://api.moyra.org/api/v2',
 };
