@@ -100,6 +100,14 @@ export function roleFromIdentity(identity: any): string {
     return 'ROLE_ADMIN';
   }
 
+  if (identity['custom:legacyRole'] === 'ROLE_ADMIN') {
+    return 'ROLE_ADMIN';
+  }
+
+  if (ApiRuntime.isV2) {
+    return 'ROLE_USER';
+  }
+
   return identity.role || identity['custom:legacyRole'] || 'ROLE_USER';
 }
 

@@ -14,6 +14,7 @@ import { MainService } from '../../../services/main.service';
 import { UserService } from '../../../services/user.service';
 import { WebService } from '../../../services/web.service';
 import { SharedService } from '../../../services/shared.service';
+import { isAdminIdentity } from '../../../services/global';
 
 // Models
 import { Main } from '../../../models/main';
@@ -61,11 +62,6 @@ export class LoginComponent implements OnInit {
       }
 
       this.identity = user.user;
-      this._webService.consoleLog(
-        this.identity,
-        this.document + ' 57',
-        this.customConsoleCSS
-      );
       this.token = token.token;
 
       //LocalStorage del identity
@@ -74,7 +70,7 @@ export class LoginComponent implements OnInit {
       //LocalStorage del token
       localStorage.setItem('token', this.token);
 
-      this._router.navigate(['/inicio']);
+      this._router.navigate([isAdminIdentity(this.identity) ? '/admin' : '/inicio']);
 
       //Alerta
       Swal.fire({
@@ -89,18 +85,14 @@ export class LoginComponent implements OnInit {
         }
       });
     } catch (e: any) {
-      this._webService.consoleLog(
-        e,
-        this.document + ' 59',
-        this.customConsoleCSS
-      );
+      const message = e?.error?.message || 'Revisa tus credenciales.';
 
       //Alerta
       Swal.fire({
         title: 'Usuario no logueado',
         html:
           'El usuario no se ha logueado correctamente. <br/> ' +
-          e.error.message,
+          message,
         icon: 'error',
         customClass: {
           popup: 'bg-bg1M',
