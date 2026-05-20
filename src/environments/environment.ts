@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://localhost:7204/api',
+  apiBaseUrl: 'https://bna63emr73.execute-api.us-east-1.amazonaws.com/api/v2',
 };
 
 /*
