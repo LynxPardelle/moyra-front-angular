@@ -24,6 +24,7 @@ This file is for durable agent memory only. Dated implementation history belongs
 - `POST /api/v2/auth/logout` clears the refresh cookie.
 - Refresh/logout must reject untrusted browser origins through `ALLOWED_CORS_ORIGINS`.
 - Secure external iframes are allowed only through validated insertion fields, not arbitrary rich HTML.
+- AI usage dashboards should avoid background Cost Explorer polling. Use cached AWS cost snapshots and lazy refresh only when `/admin/uso` is opened after the configured interval expires.
 
 ## Deployment Baseline
 

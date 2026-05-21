@@ -91,7 +91,40 @@ Recommended backend source:
 - AI cost: first-party usage records written by `POST /api/v2/ai/assist`.
 - AWS service cost: AWS Cost Explorer API, cached server-side to avoid frequent paid requests.
 
-Cost Explorer API requests have their own cost. The dashboard should cache Cost Explorer results for at least 6 hours per environment/date-range query, unless an admin explicitly refreshes. The UI must show that manual refresh may incur an AWS Cost Explorer API request charge.
+Cost Explorer API requests have their own cost. The dashboard must use lazy refresh, not scheduled polling, for the first release:
+
+- When an admin opens `/admin/uso`, the backend checks the cached AWS cost snapshot for the selected environment/date range.
+- If the cache is still fresh, return cached data and make no Cost Explorer API call.
+- If the cache is stale, make one refresh attempt, store the new snapshot, and return it.
+- If refresh fails, return the last cached snapshot with a clear stale-data warning.
+- If nobody opens the dashboard, there should be no Cost Explorer API calls.
+- Manual refresh remains available, but must show a warning that it can incur a Cost Explorer API request charge.
+
+The default cache interval should be 6 hours, and admins should be able to change it from the dashboard. Allowed intervals:
+
+- 6 hours
+- 12 hours
+- 1 day
+- 3 days
+- 7 days
+- 15 days
+- 1 month
+
+The selected interval should be stored as dashboard configuration, not hard-coded. The backend should enforce the allowlist so arbitrary small intervals cannot be submitted from the browser.
+
+Expected maximum Cost Explorer API cost for one uncached primary-billing-view request per refresh:
+
+| Refresh interval | Maximum refreshes if dashboard is opened every time cache expires | Approx. monthly Cost Explorer API cost |
+| --- | ---: | ---: |
+| 6 hours | 120/month | USD 1.20 |
+| 12 hours | 60/month | USD 0.60 |
+| 1 day | 30/month | USD 0.30 |
+| 3 days | 10/month | USD 0.10 |
+| 7 days | 5/month | USD 0.05 |
+| 15 days | 2/month | USD 0.02 |
+| 1 month | 1/month | USD 0.01 |
+
+These estimates assume one Cost Explorer API request per refresh using the primary billing view. Pagination, multiple date-range queries, or custom billing views can multiply the cost.
 
 ## Supported Surfaces
 
@@ -350,8 +383,10 @@ Additional admin-only endpoints:
 
 - `GET /api/v2/ai/models`: returns allowed model catalog, prices, descriptions, and default model.
 - `GET /api/v2/ai/usage?from=YYYY-MM-DD&to=YYYY-MM-DD`: returns AI usage/cost aggregates from usage records.
-- `GET /api/v2/costs/aws?from=YYYY-MM-DD&to=YYYY-MM-DD`: returns cached AWS service cost aggregates from Cost Explorer when enabled.
+- `GET /api/v2/costs/aws?from=YYYY-MM-DD&to=YYYY-MM-DD`: returns cached AWS service cost aggregates and lazily refreshes only when the configured cache interval has expired.
 - `POST /api/v2/costs/aws/refresh`: refreshes AWS cost data manually. This should be admin-only and rate-limited because Cost Explorer API requests are billable.
+- `GET /api/v2/costs/settings`: returns dashboard cost settings, including the AWS cost refresh interval.
+- `PUT /api/v2/costs/settings`: updates dashboard cost settings using an allowlist of refresh intervals.
 
 ## Provider Choice
 
@@ -416,6 +451,10 @@ Phase 2 Option 1 must include:
 - Optional environment variable `AI_MONTHLY_SOFT_LIMIT_USD` for warning-only tracking.
 - Optional environment variable `AI_WEB_RESEARCH_ENABLED=false` kill switch.
 - Cost Explorer dashboard data cached for at least 6 hours.
+- Default AWS cost refresh interval set to 6 hours.
+- Admin-configurable AWS cost refresh interval with allowed values only: 6 hours, 12 hours, 1 day, 3 days, 7 days, 15 days, 1 month.
+- No background AWS Cost Explorer polling in the first release.
+- Lazy AWS cost refresh only when `/admin/uso` is opened and the cached snapshot is older than the selected interval.
 - Manual AWS cost refresh rate-limited.
 
 Usage tracking should store:
@@ -557,6 +596,10 @@ Backend tests:
 - Return model catalog.
 - Aggregate AI usage by date range.
 - Cache AWS Cost Explorer responses.
+- Skip AWS Cost Explorer calls when cached data is fresh.
+- Lazily refresh AWS Cost Explorer data when cache is stale and the dashboard is opened.
+- Return stale cached AWS cost data when refresh fails.
+- Validate cost dashboard refresh interval allowlist.
 - Rate-limit manual AWS cost refresh.
 - Handle provider failure safely.
 
@@ -569,6 +612,9 @@ Frontend tests:
 - Session cost meter increments after mocked responses.
 - Web research toggle shows cost warning and includes flag in request.
 - Usage dashboard renders AI cost, web research cost, and AWS service cost states.
+- Usage dashboard shows the selected AWS cost refresh interval.
+- Usage dashboard allows switching AWS cost refresh interval among allowed values.
+- Usage dashboard explains that AWS Cost Explorer data is cached and not real-time.
 - Errors render clearly.
 - Editors keep existing save behavior unchanged.
 
