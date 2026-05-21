@@ -2,14 +2,16 @@ import { Component, HostListener, Inject, OnDestroy, OnInit, PLATFORM_ID } from 
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
 import { NgxAngoraService } from 'ngx-angora-css';
-import { Subscription, filter } from 'rxjs';
+import { Subscription, catchError, filter, map, of, switchMap } from 'rxjs';
 
 // Services
 import { ApiRuntime, GlobalMain } from './services/global';
 import { MainService } from './services/main.service';
+import { UserService } from './services/user.service';
 import { WebService } from './services/web.service';
 import { SharedService } from './services/shared.service';
 import { AuthFacade } from './store/auth/auth.facade';
+import { createAuthSession } from './store/auth/auth.storage';
 
 // Models
 import { Main } from './models/main';
@@ -58,6 +60,7 @@ export class App implements OnDestroy, OnInit {
   private lastCssCreateAt = 0;
   private stylesheetsReady?: Promise<void>;
   private routeEventsSubscription?: Subscription;
+  private refreshSessionSubscription?: Subscription;
 
   constructor(
     private _mainService: MainService,
@@ -68,6 +71,7 @@ export class App implements OnDestroy, OnInit {
     private _router: Router,
 
     private _sharedService: SharedService,
+    private _userService: UserService,
     private _authFacade: AuthFacade,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
@@ -210,6 +214,7 @@ export class App implements OnDestroy, OnInit {
       thing: 'Data from app',
     });
     this.scheduleCssCreate(true);
+    this.refreshSessionFromCookie();
   }
 
   @HostListener('window:storage', ['$event'])
@@ -221,6 +226,7 @@ export class App implements OnDestroy, OnInit {
 
   ngOnDestroy(): void {
     this.routeEventsSubscription?.unsubscribe();
+    this.refreshSessionSubscription?.unsubscribe();
     if (this.cssCreateTimer) {
       clearTimeout(this.cssCreateTimer);
     }
@@ -237,6 +243,31 @@ export class App implements OnDestroy, OnInit {
 
   isAdminUser(): boolean {
     return this._authFacade.isAdmin();
+  }
+
+  private refreshSessionFromCookie(): void {
+    if (!isPlatformBrowser(this.platformId) || !ApiRuntime.isV2) {
+      return;
+    }
+
+    this.refreshSessionSubscription = this._authFacade.authStateOnceAfterHydration$()
+      .pipe(
+        switchMap((state) => {
+          if (state.isAuthenticated) {
+            return of(null);
+          }
+
+          return this._userService.refreshSession().pipe(
+            map((response: any) => createAuthSession(response?.user, response?.token)),
+            catchError(() => of(null))
+          );
+        })
+      )
+      .subscribe((session) => {
+        if (session) {
+          this._authFacade.setCredentials(session.identity, session.token);
+        }
+      });
   }
 
   headerLogoUrl(): string {

@@ -10,7 +10,9 @@ import {
 } from './global';
 import { readStoredAuthSession } from '../store/auth/auth.storage';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root',
+})
 export class UserService {
   public urlUser: string;
   public identity: any;
@@ -64,7 +66,38 @@ export class UserService {
 
     return this._http.post(loginUrl, body, {
       headers: headers,
+      withCredentials: ApiRuntime.isV2,
     });
+  }
+
+  refreshSession(): Observable<any> {
+    if (!ApiRuntime.isV2) {
+      return this._http.post(this.urlUser + 'refresh', {});
+    }
+
+    return this._http.post(
+      apiUrl('/auth/refresh'),
+      {},
+      {
+        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+        withCredentials: true,
+      }
+    );
+  }
+
+  logoutSession(): Observable<any> {
+    if (!ApiRuntime.isV2) {
+      return this._http.post(this.urlUser + 'logout', {});
+    }
+
+    return this._http.post(
+      apiUrl('/auth/logout'),
+      {},
+      {
+        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+        withCredentials: true,
+      }
+    );
   }
 
   completeNewPasswordChallenge(
@@ -82,6 +115,7 @@ export class UserService {
 
     return this._http.post(apiUrl('/auth/login'), body, {
       headers: headers,
+      withCredentials: true,
     });
   }
 

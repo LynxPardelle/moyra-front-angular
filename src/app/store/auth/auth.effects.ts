@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { map, tap } from 'rxjs';
+import { catchError, map, of, switchMap, tap } from 'rxjs';
+import { UserService } from '../../services/user.service';
 import { AuthActions } from './auth.actions';
 import {
   clearStoredAuthSession,
@@ -11,6 +12,7 @@ import {
 @Injectable()
 export class AuthEffects {
   private readonly actions$ = inject(Actions);
+  private readonly userService = inject(UserService);
 
   readonly hydrate$ = createEffect(() =>
     this.actions$.pipe(
@@ -39,5 +41,17 @@ export class AuthEffects {
         })
       ),
     { dispatch: false }
+  );
+
+  readonly revokeServerSession$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.logoutRequested),
+      switchMap(() =>
+        this.userService.logoutSession().pipe(
+          map(() => AuthActions.loggedOut()),
+          catchError(() => of(AuthActions.loggedOut()))
+        )
+      )
+    )
   );
 }

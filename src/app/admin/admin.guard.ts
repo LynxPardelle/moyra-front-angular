@@ -7,10 +7,12 @@ import {
   RouterStateSnapshot,
   UrlTree,
 } from '@angular/router';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, of, switchMap } from 'rxjs';
 import { AuthFacade } from '../store/auth/auth.facade';
 import { AuthUiStore } from '../store/auth/auth-ui.store';
-import { consumeAuthStorageFailureReason } from '../store/auth/auth.storage';
+import { AuthSession, consumeAuthStorageFailureReason, createAuthSession } from '../store/auth/auth.storage';
+import { ApiRuntime } from '../services/global';
+import { UserService } from '../services/user.service';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +22,8 @@ export class AdminGuard implements CanActivate, CanActivateChild {
 
   constructor(
     private _router: Router,
-    private _authFacade: AuthFacade
+    private _authFacade: AuthFacade,
+    private _userService: UserService
   ) {}
 
   canActivate(
@@ -38,21 +41,53 @@ export class AdminGuard implements CanActivate, CanActivateChild {
 
   private authorize(url: string): Observable<boolean | UrlTree> {
     return this._authFacade.authStateOnceAfterHydration$().pipe(
-      map((authState) => {
+      switchMap((authState) => {
         if (authState.isAuthenticated && authState.isAdmin) {
           this._authUiStore.clearDeniedAdminUrl();
-          return true;
+          return of(true);
         }
 
-        this._authUiStore.markDeniedAdminUrl(url);
         const authReason = consumeAuthStorageFailureReason();
-        return this._router.createUrlTree(['/login'], {
-          queryParams: {
-            returnUrl: url,
-            ...(authReason ? { auth: authReason } : {}),
-          },
-        });
+        return this.tryRefreshSession().pipe(
+          map((session) => {
+            if (session?.role === 'ROLE_ADMIN') {
+              this._authUiStore.clearDeniedAdminUrl();
+              return true;
+            }
+
+            return this.deniedAdminTree(url, authReason);
+          })
+        );
       })
     );
+  }
+
+  private tryRefreshSession(): Observable<AuthSession | null> {
+    if (!ApiRuntime.isV2) {
+      return of(null);
+    }
+
+    return this._userService.refreshSession().pipe(
+      map((response: any) => {
+        const session = createAuthSession(response?.user, response?.token);
+        if (!session) {
+          return null;
+        }
+
+        this._authFacade.setCredentials(session.identity, session.token);
+        return session;
+      }),
+      catchError(() => of(null))
+    );
+  }
+
+  private deniedAdminTree(url: string, authReason: string | null): UrlTree {
+    this._authUiStore.markDeniedAdminUrl(url);
+    return this._router.createUrlTree(['/login'], {
+      queryParams: {
+        returnUrl: url,
+        ...(authReason ? { auth: authReason } : {}),
+      },
+    });
   }
 }
