@@ -2,7 +2,7 @@
 
 Date: 2026-05-21 CT
 Status: Proposed for review
-Scope: Phase 2, Option 1 implementation first; Options 2 and 3 documented as future releases.
+Scope: Phase 2, Option 1 implementation first; cost/usage dashboard and opt-in web research included; Options 2 and 3 documented as future releases.
 
 ## Summary
 
@@ -10,7 +10,7 @@ Phase 1 is considered complete: blog, publications, solutions, configuration edi
 
 Phase 2 will start with a polished AI editorial assistant for admins. The assistant will help attorneys improve SEO and content quality across Blog, Publicaciones, Soluciones, and Configuraciones. The first release must be cost-controlled, safe, and useful after a few weeks of real usage data. It will not publish automatically. It will generate suggestions that the attorney can review, edit, and explicitly apply.
 
-The implementation should avoid OpenSearch and any broad retrieval architecture in this first increment.
+This phase also includes an admin usage/cost dashboard. The dashboard must show AI usage, estimated AI spend, model pricing, optional web research spend, and high-level AWS service cost visibility. The implementation should still avoid OpenSearch and any broad retrieval architecture in this first increment.
 
 ## Goals
 
@@ -19,23 +19,79 @@ The implementation should avoid OpenSearch and any broad retrieval architecture 
 - Generate practical suggestions: SEO titles, meta descriptions, slugs, summaries, outlines, FAQs, headings, calls to action, and social snippets.
 - Keep output editable and auditable.
 - Track usage and estimated cost per request so real usage can be reviewed after two weeks.
+- Show per-session token and cost estimates while the admin uses the assistant.
+- Let admins choose from allowed models and see model cost/characteristic summaries before generating.
+- Offer internet research as an explicit opt-in that warns about incremental cost and records that spend separately.
+- Provide an admin dashboard for AI usage, estimated AI cost, web research usage, and AWS service cost visibility.
 - Keep infrastructure modest and reversible.
 
 ## Non-Goals
 
 - No autonomous publishing.
 - No legal advice engine.
-- No competitor scraping in Phase 2 Option 1.
+- No automated competitor scraping in Phase 2 Option 1.
 - No OpenSearch, vector database, or full RAG system in the first release.
 - No generated citations to laws, cases, or authorities unless the user provides the source text in the prompt context.
 - No image generation.
 - No public-facing chatbot.
+- No automatic internet research. Web research is available only when an admin explicitly enables it for a request.
 
 ## Primary Users
 
 - Admin attorney: writes and edits site content.
 - Admin reviewer: validates generated copy before saving.
 - Developer/operator: reviews usage, errors, and costs.
+
+## Cost and Usage Dashboard
+
+Add an admin-only dashboard route:
+
+`/admin/uso`
+
+The dashboard should show three layers of cost visibility.
+
+### AI Usage
+
+Show:
+
+- total AI requests for selected date range
+- requests by surface: Blog, Publicaciones, Soluciones, Configuraciones
+- requests by action
+- requests by model
+- total input tokens
+- total output tokens
+- estimated model cost
+- average cost per request
+- failed requests and provider errors
+- top admins by request count using a safe user identifier
+
+### Web Research Usage
+
+Show separately:
+
+- number of requests with web research enabled
+- estimated web search calls
+- estimated web search cost
+- model tokens used with web research enabled
+- total estimated cost for AI + web research
+- warning banner when web research usage is a meaningful share of total cost
+
+### AWS Service Cost Visibility
+
+Show:
+
+- current month AWS cost grouped by service when available
+- previous month comparison
+- services relevant to Moyra: Lambda, API Gateway, DynamoDB, S3, Secrets Manager, CloudWatch, Cognito, ACM/custom domain related line items when AWS exposes them
+- last refreshed timestamp
+- note that AWS Cost Explorer data can lag and is not a real-time meter
+
+Recommended backend source:
+
+- AI cost: first-party usage records written by `POST /api/v2/ai/assist`.
+- AWS service cost: AWS Cost Explorer API, cached server-side to avoid frequent paid requests.
+
+Cost Explorer API requests have their own cost. The dashboard should cache Cost Explorer results for at least 6 hours per environment/date-range query, unless an admin explicitly refreshes. The UI must show that manual refresh may incur an AWS Cost Explorer API request charge.
 
 ## Supported Surfaces
 
@@ -111,18 +167,34 @@ Panel sections:
 3. Instruction field
    - Optional user instruction, for example "más formal", "enfocado en empresas", "más claro para clientes".
 
-4. Generate button
+4. Model selector
+   - Shows allowed models.
+   - Shows per-1M-token input/output pricing.
+   - Shows a short description for each model, for example "balanced quality/cost" or "lower cost for short rewrites".
+   - Defaults to the environment-configured recommended model.
+   - Does not expose arbitrary model ids typed by the user.
+
+5. Web research toggle
+   - Default off.
+   - Label should make cost impact explicit: "Investigar en internet (incrementa costo)".
+   - When enabled, show a concise warning that external web research may add search-call cost and more tokens.
+   - Backend must record web research usage separately.
+
+6. Generate button
    - Disabled while loading.
    - Shows estimated request size when feasible.
+   - Shows current session spend estimate before and after generation.
 
-5. Suggestion result
+7. Suggestion result
    - Structured sections, not one large blob.
    - Copy buttons per section.
    - Apply buttons for specific fields, such as SEO title, SEO description, slug, tags, intro, outro, FAQ, or body.
    - Applying a suggestion updates local form state only. Existing save behavior remains unchanged.
 
-6. Cost hint
+8. Cost hint
    - Show a simple post-request estimate such as "Uso estimado: 3.2k input / 0.8k output tokens".
+   - Show session total for the current editor tab: "Esta sesión: 8.1k tokens, USD 0.03 estimados".
+   - If web research was enabled, split the estimate: "Modelo: USD 0.02; investigación web: USD 0.01".
    - Exact provider invoice can differ; this is for practical monitoring.
 
 ## Assistant Actions
@@ -186,6 +258,25 @@ Output:
 - WhatsApp short copy
 - X/Twitter short copy
 
+### Research With Web
+
+Input: current topic/title/current draft and optional admin instruction.
+
+Output:
+
+- research summary
+- practical SEO angles
+- source links returned by the provider/search tool
+- suggested outline updates
+- warnings when source quality is weak
+
+Rules:
+
+- This action is available only when the admin enables web research.
+- It must show cost warning before the request.
+- It must not generate legal citations as authoritative unless sources are explicitly provided and the output names uncertainty.
+- It must record web search calls and web-search estimated cost separately from model token cost.
+
 ## Backend Architecture
 
 The serverless API should expose one admin-only endpoint:
@@ -197,7 +288,11 @@ Request:
 ```json
 {
   "surface": "blog | publication | service | configuration",
-  "action": "seo-pack | improve-readability | outline | faq | social-snippets",
+  "action": "seo-pack | improve-readability | outline | faq | social-snippets | research-with-web",
+  "model": "gpt-5.4-mini",
+  "webResearch": {
+    "enabled": false
+  },
   "language": "es-MX",
   "tone": "legal-claro",
   "instruction": "optional user instruction",
@@ -226,6 +321,9 @@ Response:
     "model": "string",
     "inputTokens": 0,
     "outputTokens": 0,
+    "webSearchCalls": 0,
+    "modelEstimatedUsd": 0,
+    "webSearchEstimatedUsd": 0,
     "estimatedUsd": 0
   },
   "result": {
@@ -240,12 +338,20 @@ The backend should:
 
 - Require Cognito admin auth.
 - Validate `surface` and `action` against allowlists.
+- Validate requested `model` against an environment-configured model allowlist.
 - Sanitize incoming HTML to plain text before sending it to the model.
 - Truncate very large content to a configured max token/character budget.
 - Retrieve the provider API key from Secrets Manager or SSM SecureString.
 - Log request metadata, not full content.
 - Store usage records in DynamoDB for cost review.
 - Return structured JSON only.
+
+Additional admin-only endpoints:
+
+- `GET /api/v2/ai/models`: returns allowed model catalog, prices, descriptions, and default model.
+- `GET /api/v2/ai/usage?from=YYYY-MM-DD&to=YYYY-MM-DD`: returns AI usage/cost aggregates from usage records.
+- `GET /api/v2/costs/aws?from=YYYY-MM-DD&to=YYYY-MM-DD`: returns cached AWS service cost aggregates from Cost Explorer when enabled.
+- `POST /api/v2/costs/aws/refresh`: refreshes AWS cost data manually. This should be admin-only and rate-limited because Cost Explorer API requests are billable.
 
 ## Provider Choice
 
@@ -262,6 +368,7 @@ Provider abstraction should be minimal:
 
 - A backend helper like `generateAiSuggestion(input)`.
 - Environment variables for provider and model.
+- A small model catalog returned by the backend.
 - No multi-provider UI in the first release.
 
 Initial model recommendation:
@@ -270,6 +377,17 @@ Initial model recommendation:
 - Cheap mode for simple tasks: `gpt-5.4-nano`.
 - The implementation should make the model configurable by environment variable.
 
+Model catalog fields:
+
+- model id
+- display name
+- short description
+- recommended use
+- input price per 1M tokens
+- output price per 1M tokens
+- whether web research is supported
+- enabled/disabled flag
+
 ## Current Pricing References
 
 Pricing must be reviewed again before implementation and before production launch.
@@ -277,7 +395,8 @@ Pricing must be reviewed again before implementation and before production launc
 Current official references checked on 2026-05-21:
 
 - OpenAI `gpt-5.4-mini`: USD 0.75 input / USD 4.50 output per 1M tokens. `gpt-5.4-nano`: USD 0.20 input / USD 1.25 output per 1M tokens. Source: https://developers.openai.com/api/docs/pricing
-- OpenAI web search: USD 10.00 per 1k calls. Not included in Phase 2 Option 1. Source: https://developers.openai.com/api/docs/pricing
+- OpenAI web search: USD 10.00 per 1k calls. Included in Phase 2 Option 1 only as an explicit admin opt-in. Source: https://developers.openai.com/api/docs/pricing
+- AWS Cost Explorer API: USD 0.01 per request using the primary billing view; custom billing views can cost USD 0.01 per source. Source: https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/
 - Gemini 2.5 Flash: USD 0.30 input / USD 2.50 output per 1M tokens. Source: https://ai.google.dev/gemini-api/docs/pricing
 - AWS Secrets Manager: USD 0.40 per secret per month and USD 0.05 per 10,000 API calls in the pricing example. Source: https://aws.amazon.com/secrets-manager/pricing/
 - API Gateway and DynamoDB costs remain marginal for this feature at expected admin-only usage. Sources: https://aws.amazon.com/api-gateway/pricing/ and https://aws.amazon.com/dynamodb/pricing/
@@ -291,10 +410,13 @@ Phase 2 Option 1 must include:
 - Per-request max output tokens.
 - Admin-only access.
 - No public unauthenticated AI endpoint.
-- No web search in first release.
+- Web research default off and explicit opt-in per request.
 - No automatic retry loops that can multiply token usage.
 - Optional environment variable `AI_ASSISTANT_ENABLED=false` kill switch.
 - Optional environment variable `AI_MONTHLY_SOFT_LIMIT_USD` for warning-only tracking.
+- Optional environment variable `AI_WEB_RESEARCH_ENABLED=false` kill switch.
+- Cost Explorer dashboard data cached for at least 6 hours.
+- Manual AWS cost refresh rate-limited.
 
 Usage tracking should store:
 
@@ -306,11 +428,44 @@ Usage tracking should store:
 - model
 - input token count
 - output token count
+- web research enabled
+- web search call count
+- model estimated cost
+- web search estimated cost
 - estimated cost
 - success/failure
 - request id
 
 Do not store full prompt bodies by default.
+
+## Model Selection and Cost Meter
+
+The assistant panel must include a model selector and session cost meter.
+
+Model selector requirements:
+
+- Uses backend model catalog.
+- Shows default recommendation.
+- Shows model descriptions in plain language.
+- Shows input and output cost per 1M tokens.
+- Shows whether web research is supported.
+- Prevents selecting disabled models.
+
+Session cost meter requirements:
+
+- Starts at zero when the editor page loads.
+- Adds each assistant response usage to a session total.
+- Separates model token cost from web research cost.
+- Shows total tokens and estimated USD for the current page session.
+- Resets when the page reloads.
+- Does not replace persistent usage records in the backend dashboard.
+
+Dashboard cost meter requirements:
+
+- Aggregates persisted usage across date ranges.
+- Shows model and web research spend separately.
+- Shows cost by surface and action.
+- Offers CSV export in a future release, not required for first implementation.
 
 ## Legal and Content Safety
 
@@ -327,6 +482,7 @@ Prompt rules:
 - If source material is insufficient, return a warning instead of fabricating specifics.
 - Keep content in Spanish for Mexico unless the admin explicitly requests another language.
 - Avoid making promises of legal outcomes.
+- When web research is enabled, summarize sources and include links, but warn if source reliability is unclear.
 
 ## Data Handling
 
@@ -335,6 +491,8 @@ Sent to provider:
 - Current editor content needed for the selected action.
 - Page type and action.
 - Optional admin instruction.
+- Selected model.
+- Web research flag.
 
 Not sent to provider:
 
@@ -356,6 +514,8 @@ Add reusable frontend units:
 
 - `AiAssistantPanelComponent`
 - `AiAssistantService`
+- `AiUsageDashboardComponent`
+- model catalog and usage summary types
 - Type definitions for request/response/action metadata
 
 Integrate into:
@@ -364,6 +524,7 @@ Integrate into:
 - `PublicationComponent`
 - `ServicioComponent`
 - `ConfiguracionesComponent`
+- Admin navigation link for `/admin/uso`
 
 The first implementation should avoid broad refactors. Each editor should pass a small adapter object into the assistant panel and receive structured suggestions back.
 
@@ -376,6 +537,8 @@ User-visible errors should be practical:
 - Rate/cost limit: "Se alcanzó el límite temporal del asistente IA."
 - Provider failure: "No se pudo generar la sugerencia. Intenta de nuevo."
 - Invalid response: "La IA respondió en un formato no válido. Intenta de nuevo."
+- Cost data unavailable: "No se pudo cargar el costo de servicios. Intenta actualizar más tarde."
+- Web research warning: "La investigación en internet puede aumentar el costo por búsquedas y tokens adicionales."
 
 Backend errors should not leak provider keys, raw prompts, stack traces, or full model responses.
 
@@ -390,6 +553,11 @@ Backend tests:
 - Return structured response from a mocked provider.
 - Store usage record without full prompt body.
 - Estimate cost from mocked usage.
+- Estimate separate web research cost from mocked search usage.
+- Return model catalog.
+- Aggregate AI usage by date range.
+- Cache AWS Cost Explorer responses.
+- Rate-limit manual AWS cost refresh.
 - Handle provider failure safely.
 
 Frontend tests:
@@ -397,6 +565,10 @@ Frontend tests:
 - Panel renders actions for each surface.
 - Generate button disables while loading.
 - Suggestions can be copied/applied to specific fields.
+- Model selector renders prices/descriptions and prevents disabled models.
+- Session cost meter increments after mocked responses.
+- Web research toggle shows cost warning and includes flag in request.
+- Usage dashboard renders AI cost, web research cost, and AWS service cost states.
 - Errors render clearly.
 - Editors keep existing save behavior unchanged.
 
@@ -406,8 +578,11 @@ Browser audit:
 - Test `/admin/publication`.
 - Test `/admin/soluciones`.
 - Test `/admin/configuraciones`.
+- Test `/admin/uso`.
 - Confirm no console errors.
 - Confirm suggestions apply only locally until saved.
+- Confirm model switch changes visible estimated pricing.
+- Confirm web research warning appears before generation.
 
 Release audit:
 
@@ -425,6 +600,9 @@ After two weeks, review:
 - Average estimated cost per request.
 - Total estimated cost.
 - Number of suggestions applied.
+- Tokens and estimated cost by model.
+- Web research request count and estimated web research cost.
+- AWS Cost Explorer refresh count and estimated Cost Explorer API cost.
 - Common failures.
 - Admin qualitative feedback.
 - Whether generated SEO metadata is consistently usable without heavy rewriting.
