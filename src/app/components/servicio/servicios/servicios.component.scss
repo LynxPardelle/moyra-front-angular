@@ -2,7 +2,7 @@
   color: #29303b;
   margin: 0 auto;
   max-width: 1180px;
-  padding: 2rem 1rem 3.5rem;
+  padding: 1.25rem 1rem 2.5rem;
 }
 
 .services-heading {
@@ -44,7 +44,8 @@
 .service-card__delete {
   align-items: center;
   border: 0;
-  border-radius: 6px;
+  border-radius: 0;
+  box-shadow: 0 14px 28px rgba(17, 20, 26, 0.18);
   display: inline-flex;
   font-weight: 700;
   justify-content: center;
@@ -52,28 +53,35 @@
   min-height: 44px;
   padding: 0.72rem 1rem;
   text-decoration: none;
+  transition: background 160ms ease, box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
 .services-heading__action,
 .service-card__read {
   background: #29303b;
   color: #ffffff;
+  flex: 1;
 }
 
 .services-heading__action:hover,
 .service-card__read:hover {
   background: #4b8ff5;
+  box-shadow: 0 18px 34px rgba(75, 143, 245, 0.28);
   color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .service-card__delete {
   background: #f0b429;
   color: #29303b;
+  flex: 1;
 }
 
 .service-card__delete:hover {
   background: #d99a10;
+  box-shadow: 0 18px 34px rgba(240, 180, 41, 0.24);
   color: #29303b;
+  transform: translateY(-1px);
 }
 
 .service-grid {
@@ -83,9 +91,13 @@
 }
 
 .service-card {
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 10px 28px rgba(41, 48, 59, 0.08);
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.56);
+  border-radius: 0;
+  box-shadow:
+    0 26px 62px rgba(17, 20, 26, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.58) inset;
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -94,7 +106,9 @@
 }
 
 .service-card:hover {
-  box-shadow: 0 14px 34px rgba(41, 48, 59, 0.12);
+  box-shadow:
+    0 34px 76px rgba(17, 20, 26, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.62) inset;
   transform: translateY(-2px);
 }
 
@@ -143,7 +157,7 @@
 }
 
 .service-card__actions {
-  align-items: center;
+  align-items: stretch;
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
@@ -156,9 +170,12 @@
 }
 
 .services-empty {
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 10px 28px rgba(41, 48, 59, 0.08);
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.56);
+  border-radius: 0;
+  box-shadow:
+    0 26px 62px rgba(17, 20, 26, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.58) inset;
   max-width: 560px;
   padding: 1.5rem;
 }
@@ -191,13 +208,7 @@
   }
 
   .services-heading__action,
-  .service-card__read,
-  .service-card__delete {
-    width: 100%;
-  }
-
   .service-card__actions {
-    align-items: stretch;
     flex-direction: column;
   }
 }

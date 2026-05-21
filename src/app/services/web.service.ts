@@ -153,7 +153,7 @@ export class WebService {
 
       for (let i = 0; i < matches.length; i++) {
         if (matches[i] == matches[0]) {
-          textsplits = '<div style="color: ' + textcolor + ' !important;" >';
+          textsplits = '<div class="moyra-rich-text">';
         }
 
         let harshN = this.Harshify(16);
@@ -203,7 +203,7 @@ export class WebService {
                     '<a href="' +
                       harshes[i] +
                       '1' +
-                      '" target="_blank" title="' +
+                      '" target="_blank" rel="noopener noreferrer" title="' +
                       harshes[i] +
                       '2' +
                       '" >' +
@@ -213,7 +213,7 @@ export class WebService {
                       '" alt="' +
                       harshes[i] +
                       '4' +
-                      '" width="90%" style="display: block; margin: 0 auto;" />' +
+                      '" class="moyra-rich-image" />' +
                       '</a>'
                   );
               } else if (iIMG >= imagestypes.length) {
@@ -237,15 +237,13 @@ export class WebService {
               if (index == 0) {
                 textsplits =
                   textsplits +
-                  '<a style="color: ' +
-                  linkcolor +
-                  ' !important;" href="' +
+                  '<a class="moyra-rich-link" href="' +
                   harshes[0] +
                   '1' +
                   '" title="' +
                   harshes[0] +
                   '2' +
-                  '" target="_blank">' +
+                  '" target="_blank" rel="noopener noreferrer">' +
                   harshes[0] +
                   '3' +
                   '</a>' +
@@ -254,15 +252,13 @@ export class WebService {
                 textsplits =
                   textsplits +
                   textsplit[0] +
-                  '<a style="color: ' +
-                  linkcolor +
-                  ' !important;" href="' +
+                  '<a class="moyra-rich-link" href="' +
                   harshes[0] +
                   '1' +
                   '" title="' +
                   harshes[0] +
                   '2' +
-                  '" target="_blank">' +
+                  '" target="_blank" rel="noopener noreferrer">' +
                   harshes[0] +
                   '3' +
                   '</a>';
@@ -278,15 +274,13 @@ export class WebService {
 
               textsplits =
                 textsplit[0] +
-                '<a style="color: ' +
-                linkcolor +
-                ' !important;" href="' +
+                '<a class="moyra-rich-link" href="' +
                 harshes[i] +
                 '1' +
                 '" title="' +
                 harshes[i] +
                 '2' +
-                '" target="_blank">' +
+                '" target="_blank" rel="noopener noreferrer">' +
                 harshes[i] +
                 '3' +
                 '</a>';
@@ -314,14 +308,14 @@ export class WebService {
       }
 
       for (let i = 0; i < harshes.length; i++) {
-        text = text.replace(harshes[i] + '1', matches[i]);
+        text = text.replace(harshes[i] + '1', this.toLinkHref(matches[i]));
         text = text.replace(harshes[i] + '2', matches[i]);
         text = text.replace(harshes[i] + '3', matches[i]);
         text = text.replace(harshes[i] + '4', matches[i]);
       }
     } else {
       text =
-        '<div style="color: ' + textcolor + ' !important;" >' + text + '</div>';
+        '<div class="moyra-rich-text">' + text + '</div>';
     }
 
     if (customEmojis != null) {
@@ -329,6 +323,19 @@ export class WebService {
     }
 
     return { text, matches: realMatches };
+  }
+
+  toLinkHref(value: string): string {
+    const cleanValue = String(value || '').trim();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanValue)) {
+      return `mailto:${cleanValue}`;
+    }
+
+    if (/^https?:\/\//i.test(cleanValue)) {
+      return cleanValue;
+    }
+
+    return `https://${cleanValue}`;
   }
 
   CheckForDomainsuffix(string: string) {
@@ -580,7 +587,11 @@ export class WebService {
   }
 
   consoleLog(thing: any, line: string = '', style: string = 'padding: 1em;') {
-    if (typeof window === 'undefined' || environment.production) {
+    if (
+      typeof window === 'undefined' ||
+      environment.production ||
+      !isDebugConsoleEnabled()
+    ) {
       return;
     }
 
@@ -606,6 +617,17 @@ export class WebService {
     let num = Math.random() * (max - min) + min;
 
     return Math.round(num);
+  }
+}
+
+function isDebugConsoleEnabled(): boolean {
+  try {
+    return (
+      window.localStorage.getItem('moyraDebugConsole') === 'true' ||
+      new URLSearchParams(window.location.search).get('debugConsole') === 'true'
+    );
+  } catch {
+    return false;
   }
 }
 

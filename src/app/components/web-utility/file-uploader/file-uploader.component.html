@@ -68,7 +68,7 @@
               [ngClass]="{ 'is-drop-over': dragOver }"
               style="height: 200px"
             >
-              <h3>Drag &amp; Drop</h3>
+              <h3>Arrastra archivos aquí</h3>
             </div>
             <div
               *ngIf="typeMeta === 'one'"
@@ -86,9 +86,13 @@
               [ngClass]="{ 'is-drop-over': dragOver }"
               style="height: 200px"
             >
-              <h3>Drag &amp; Drop</h3>
+              <h3>Arrastra el archivo aquí</h3>
             </div>
           </div>
+
+          <p class="file-upload-help">
+            {{ acceptedFileSummary }}
+          </p>
 
           <label
             class="
@@ -102,12 +106,12 @@
               mx-auto
               my-5
               position-relative
-              rounded-pill
             "
           >
             <input
               *ngIf="typeMeta === 'multi'"
               type="file"
+              [attr.accept]="acceptedFileTypes"
               ngFileSelect
               [options]="optionsMulti"
               (uploadOutput)="onUploadOutput($event)"
@@ -117,13 +121,14 @@
             <input
               *ngIf="typeMeta === 'one'"
               type="file"
+              [attr.accept]="acceptedFileTypes"
               ngFileSelect
               [options]="optionsOne"
               (uploadOutput)="onUploadOutput($event)"
               [uploadInput]="uploadInput"
               multiple
             />
-            o escoge el archivo
+            o escoge archivo
           </label>
         </div>
 
@@ -152,7 +157,7 @@
                       fileProg.progress.data.percentage &&
                       fileProg.name == file.name
                     "
-                    class="d-block m-auto w-100 border rounded border-white"
+                    class="d-block m-auto w-100 border border-white"
                     [ngStyle]="{
                       background: toLinearGradientProgress(
                         '#88eff9',
@@ -198,7 +203,6 @@
             text-center text-bg1M
             d-block
             mx-auto
-            rounded-pill
           "
           (click)="startUpload()"
         >

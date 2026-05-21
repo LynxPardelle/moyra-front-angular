@@ -14,7 +14,8 @@ import { MainService } from '../../../services/main.service';
 import { UserService } from '../../../services/user.service';
 import { WebService } from '../../../services/web.service';
 import { SharedService } from '../../../services/shared.service';
-import { isAdminIdentity } from '../../../services/global';
+import { AuthFacade } from '../../../store/auth/auth.facade';
+import { createAuthSession } from '../../../store/auth/auth.storage';
 
 // Models
 import { Main } from '../../../models/main';
@@ -44,7 +45,8 @@ export class LoginComponent implements OnInit {
 
     private _route: ActivatedRoute,
     private _router: Router,
-    private _webService: WebService
+    private _webService: WebService,
+    private _authFacade: AuthFacade
   ) {}
 
   ngOnInit(): void {}
@@ -65,14 +67,20 @@ export class LoginComponent implements OnInit {
 
       this.identity = auth.user;
       this.token = token.token;
+      const authSession = createAuthSession(this.identity, this.token);
+      if (!authSession) {
+        throw new Error('No se pudo validar la sesión recibida.');
+      }
 
-      //LocalStorage del identity
-      localStorage.setItem('identity', JSON.stringify(this.identity));
-
-      //LocalStorage del token
-      localStorage.setItem('token', this.token);
-
-      this._router.navigate([isAdminIdentity(this.identity) ? '/admin' : '/inicio']);
+      this._authFacade.setCredentials(authSession.identity, authSession.token);
+      const returnUrl = this._route.snapshot.queryParamMap.get('returnUrl');
+      const adminTarget =
+        returnUrl && returnUrl.startsWith('/admin') ? returnUrl : '/admin';
+      if (authSession.role === 'ROLE_ADMIN') {
+        this._router.navigateByUrl(adminTarget);
+      } else {
+        this._router.navigate(['/inicio']);
+      }
 
       //Alerta
       Swal.fire({

@@ -1,16 +1,8 @@
 <header
   class="
     site-header
-    d-flex
     ank
     ank-bg-bg1M
-    justify-content-evenly
-    px-2
-    pt-3
-    align-items-start
-    position-fixed
-    top-0
-    ank-z-5
     w-100
   "
 >
@@ -18,7 +10,8 @@
   <a
     href="/"
     [routerLink]="['/']"
-    class="rounded-circle text-center iconMontano overflow-hidden"
+    class="site-brand-mark text-center iconMontano overflow-hidden"
+    aria-label="Ir a inicio"
   >
     <!--   class="w-max-75 d-block mx-auto h-max-25vh my-3" -->
     <img
@@ -32,7 +25,7 @@
   <a
     href="/"
     [routerLink]="['/']"
-    class="ank ank-w-65per mx-auto titleMontano text-decoration-none"
+    class="site-brand-title titleMontano text-decoration-none"
   >
     <h1 class="text-center h2">
       Montaño &
@@ -45,13 +38,24 @@
     <h2 class="text-center">Estudio Legal</h2>
   </a>
 
+  <nav class="site-nav" aria-label="Navegación principal">
+    <a href="/" [routerLink]="['/']">Inicio</a>
+    <a href="/soluciones" [routerLink]="['/soluciones']">Soluciones</a>
+    <a href="/we" [routerLink]="['/we']">Nosotros</a>
+    <a href="/publications" [routerLink]="['/publications']">Publicaciones</a>
+    <a href="/blog" [routerLink]="['/blog']">Blog</a>
+    <a *ngIf="!isAdminUser()" href="/login" [routerLink]="['/login']">Acceso</a>
+    <a *ngIf="isAdminUser()" href="/admin" [routerLink]="['/admin']">Panel</a>
+  </nav>
+
   <!-- Menu -->
   <button
-    class="btn menuIconContainer rounded-circle p-0 m-0"
+    class="btn menuIconContainer p-0 m-0"
     type="button"
     data-bs-toggle="offcanvas"
     data-bs-target="#offcanvasMenu"
     aria-controls="offcanvasMenu"
+    aria-label="Abrir menú"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -141,6 +145,19 @@
           </a>
         </li>
         <li
+          *ngIf="!isAdminUser()"
+          class="text-center my-4 h3"
+        >
+          <a
+            class="d-block mx-auto ank ank-text-linkM text-decoration-none"
+            href="/login"
+            [routerLink]="['/login']"
+            data-bs-dismiss="offcanvas"
+          >
+            Acceso
+          </a>
+        </li>
+        <li
           *ngIf="isAdminUser()"
           class="text-center my-4 h3"
         >
@@ -157,20 +174,19 @@
     </div>
   </div>
 </header>
-<main class="my-5 py-4 mx-auto ank ank-bg-gray__OPA__0_25 ank-hmn-100vh">
+<main class="site-main mx-auto ank ank-bg-gray__OPA__0_25 ank-hmn-100vh">
   <!-- CONTENT -->
   <router-outlet></router-outlet>
 </main>
 
 <footer
   class="
+    site-footer
     d-flex
     justify-content-evenly
     px-2
     py-3
     align-items-center
-    position-fixed
-    bottom-0
     w-100
     ank
     ank-z-10
@@ -183,6 +199,8 @@
     title="{{ main.FB }}"
     *ngIf="main && main.FB"
     target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Abrir Facebook"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -203,6 +221,8 @@
     title="https://wa.me/+521{{ main.whatsApp }}"
     *ngIf="main && main.whatsApp"
     target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Abrir WhatsApp"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -223,6 +243,7 @@
     title="{{ main.twitter }}"
     *ngIf="main && main.twitter"
     target="_blank"
+    rel="noopener noreferrer"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -242,7 +263,7 @@
     href="mailto:{{ main.mail }}"
     title="mailto:{{ main.mail }}"
     *ngIf="main && main.mail"
-    target="_blank"
+    aria-label="Enviar correo"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -263,6 +284,8 @@
     title="{{ main.linkedIn }}"
     *ngIf="main && main.linkedIn"
     target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Abrir LinkedIn"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -282,7 +305,7 @@
     href="tel:{{ main.phoneNumber }}"
     title="tel:{{ main.phoneNumber }}"
     *ngIf="main && main.phoneNumber"
-    target="_blank"
+    aria-label="Llamar por teléfono"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"

@@ -1,27 +1,53 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
-import { Observable } from 'rxjs';
-
-/* Services */
-import { UserService } from '../services/user.service';
-import { isAdminIdentity } from '../services/global';
+import { Injectable, inject } from '@angular/core';
+import {
+  ActivatedRouteSnapshot,
+  CanActivate,
+  CanActivateChild,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+} from '@angular/router';
+import { Observable, map } from 'rxjs';
+import { AuthFacade } from '../store/auth/auth.facade';
+import { AuthUiStore } from '../store/auth/auth-ui.store';
 
 @Injectable({
   providedIn: 'root'
 })
-export class AdminGuard implements CanActivate {
-  constructor(private _router: Router, private _userService: UserService) {}
+export class AdminGuard implements CanActivate, CanActivateChild {
+  private readonly _authUiStore = inject(AuthUiStore);
+
+  constructor(
+    private _router: Router,
+    private _authFacade: AuthFacade
+  ) {}
 
   canActivate(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
-      let identity = this._userService.getIdentity();
-      if(isAdminIdentity(identity)){
-        return true;
-      } else {
-        this._router.navigate(['/']);
-        return false;
-      }
+      return this.authorize(state.url);
   }
 
+  canActivateChild(
+    childRoute: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    return this.authorize(state.url);
+  }
+
+  private authorize(url: string): Observable<boolean | UrlTree> {
+    return this._authFacade.authStateOnceAfterHydration$().pipe(
+      map((authState) => {
+        if (authState.isAuthenticated && authState.isAdmin) {
+          this._authUiStore.clearDeniedAdminUrl();
+          return true;
+        }
+
+        this._authUiStore.markDeniedAdminUrl(url);
+        return this._router.createUrlTree(['/login'], {
+          queryParams: { returnUrl: url },
+        });
+      })
+    );
+  }
 }

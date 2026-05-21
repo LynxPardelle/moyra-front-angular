@@ -7,8 +7,8 @@ import {
   apiUrl,
   jsonAuthHeaders,
   storedToken,
-  toLegacyEntity,
 } from './global';
+import { readStoredAuthSession } from '../store/auth/auth.storage';
 
 @Injectable()
 export class UserService {
@@ -27,8 +27,11 @@ export class UserService {
   createUser(user: any): Observable<any> {
     const body = JSON.stringify(user);
     const headers = this.authHeaders();
+    const createUserUrl = ApiRuntime.isV2
+      ? apiUrl('/users')
+      : this.urlUser + 'user';
 
-    return this._http.post(this.urlUser + 'user', body, {
+    return this._http.post(createUserUrl, body, {
       headers: headers,
     });
   }
@@ -100,21 +103,8 @@ export class UserService {
   }
 
   getIdentity() {
-    const storedIdentity = readStorageValue('identity');
-    if (!storedIdentity) {
-      return null;
-    }
-
-    try {
-      const identity = JSON.parse(storedIdentity);
-      this.identity = identity && identity !== 'undefined'
-        ? toLegacyEntity(identity)
-        : null;
-      return this.identity;
-    } catch {
-      this.identity = null;
-      return null;
-    }
+    this.identity = readStoredAuthSession()?.identity || null;
+    return this.identity;
   }
 
   getToken() {
@@ -125,19 +115,4 @@ export class UserService {
   private authHeaders(): HttpHeaders {
     return new HttpHeaders(jsonAuthHeaders(this.getToken()));
   }
-}
-
-function readStorageValue(key: string): string | null {
-  if (typeof localStorage !== 'undefined') {
-    const value = localStorage.getItem(key);
-    if (value) {
-      return value;
-    }
-  }
-
-  if (typeof sessionStorage !== 'undefined') {
-    return sessionStorage.getItem(key);
-  }
-
-  return null;
 }

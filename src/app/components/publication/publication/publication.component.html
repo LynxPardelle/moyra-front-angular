@@ -55,35 +55,53 @@
       </h1>
     </header>
 
-    <img
+    <button
       *ngIf="
         publication.mainFile &&
         fileUrl(publication.mainFile) &&
         isImage(publication.mainFile)
       "
-      class="publication-detail__hero mx-auto mb-4"
-      [src]="fileUrl(publication.mainFile)"
-      [alt]="publication.mainFile.title || publication.title"
-    />
+      class="publication-detail__hero-button mx-auto mb-4"
+      type="button"
+      (click)="openImagePreview(publication.mainFile)"
+    >
+      <img
+        class="publication-detail__hero"
+        [src]="fileUrl(publication.mainFile)"
+        [alt]="publication.mainFile.title || publication.title"
+      />
+      <span>Ver imagen completa</span>
+    </button>
 
     <div
       *ngIf="publication.text"
-      class="publication-detail__content mx-auto my-4"
-      [innerHTML]="
-        Linkify(valuefy(publication.text), '#29303b', '#4b8ff5') | safeHtml
-      "
+      class="publication-detail__content publication-rich-content mx-auto my-4"
+      [innerHTML]="richContent(publication.text) | safeRichHtml"
     ></div>
 
-    <p *ngIf="publication.youtube" class="text-center my-4">
-      <a
-        class="btn ank ank-btn-linkM ank-text-bg1M"
-        [href]="publication.youtube"
-        target="_blank"
-        rel="noopener"
-      >
-        Ver video relacionado
-      </a>
-    </p>
+    <section *ngIf="embeds.length > 0" class="content-embeds mx-auto my-4">
+      <h2>Inserciones relacionadas</h2>
+      <article *ngFor="let embed of embeds; trackBy: trackEmbedItem" class="content-embed">
+        <iframe
+          *ngIf="embed.kind !== 'link'; else relatedLink"
+          [class.content-embed__frame--external]="embed.kind === 'iframe'"
+          [src]="embed.embedUrl | safeEmbedUrl"
+          [title]="embed.title"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+          allowfullscreen
+          sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+          loading="eager"
+          referrerpolicy="strict-origin-when-cross-origin"
+          [style.height.px]="embed.height"
+        ></iframe>
+        <ng-template #relatedLink>
+          <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
+            <span>{{ embed.title }}</span>
+            <small>{{ embed.url }}</small>
+          </a>
+        </ng-template>
+      </article>
+    </section>
 
     <section
       *ngIf="publication.files && publication.files.length > 0"
@@ -91,23 +109,48 @@
     >
       <h3 class="h5 text-center mb-3">Archivos relacionados</h3>
       <div class="publication-files__grid">
-        <a
-          *ngFor="let file of publication.files"
-          class="publication-file text-decoration-none"
-          [href]="fileUrl(file)"
-          target="_blank"
-          rel="noopener"
-        >
-          <img
-            *ngIf="isImage(file)"
-            class="publication-file__image"
-            [src]="fileUrl(file)"
-            [alt]="file.title || publication.title"
-          />
-          <span class="publication-file__title">
-            {{ file.title || file.location || 'Archivo' }}
-          </span>
-        </a>
+        <ng-container *ngFor="let file of publication.files">
+          <button
+            *ngIf="isImage(file); else documentFile"
+            class="publication-file text-decoration-none"
+            type="button"
+            (click)="openImagePreview(file)"
+          >
+            <span class="publication-file__preview publication-file__preview--image">
+              <img
+                class="publication-file__image"
+                [src]="fileUrl(file)"
+                [alt]="file.title || publication.title"
+              />
+              <span [class]="fileKindIconClass(file)" aria-hidden="true">
+                <span>{{ fileKindIconText(file) }}</span>
+              </span>
+            </span>
+            <span class="publication-file__title">
+              {{ file.title || file.location || 'Archivo' }}
+            </span>
+            <small>{{ fileKindLabel(file) }}</small>
+          </button>
+          <ng-template #documentFile>
+            <a
+              class="publication-file text-decoration-none"
+              [href]="fileUrl(file)"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="publication-file__preview publication-file__preview--document">
+                <span [class]="fileKindIconClass(file)" aria-hidden="true">
+                  <span>{{ fileKindIconText(file) }}</span>
+                </span>
+              </span>
+              <span class="publication-file__title">
+                {{ file.title || file.location || 'Archivo' }}
+              </span>
+              <small>{{ fileKindLabel(file) }}</small>
+              <span class="publication-file__open">Abrir archivo</span>
+            </a>
+          </ng-template>
+        </ng-container>
       </div>
     </section>
   </ng-container>
@@ -120,6 +163,36 @@
       </h1>
     </header>
 
+    <div class="content-editor__workflow" aria-label="Estado de la publicación">
+      <article
+        *ngFor="let step of editorSteps()"
+        class="content-editor__step"
+        [class.content-editor__step--complete]="step.complete"
+      >
+        <strong>{{ step.label }}</strong>
+        <span>{{ step.detail }}</span>
+      </article>
+    </div>
+
+    <section class="content-editor__dashboard">
+      <article class="content-editor__metric">
+        <span>Lectura estimada</span>
+        <strong>{{ readingMinutes() }} min</strong>
+      </article>
+      <article class="content-editor__metric">
+        <span>Contenido</span>
+        <strong>{{ contentWordCount() }} palabras</strong>
+      </article>
+      <article class="content-editor__metric">
+        <span>SEO</span>
+        <strong>{{ seoScore() }}%</strong>
+      </article>
+      <article class="content-editor__metric">
+        <span>Archivos</span>
+        <strong>{{ publicationFileSummary() }}</strong>
+      </article>
+    </section>
+
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="title">Título</label>
       <input
@@ -127,7 +200,8 @@
         type="text"
         id="title"
         name="title"
-        [(ngModel)]="publication.title"
+        [ngModel]="publication.title"
+        (ngModelChange)="updateTitle($event)"
         placeholder="Título de la publicación"
         required
       />
@@ -142,41 +216,56 @@
         type="text"
         id="urltitle"
         name="urltitle"
-        [(ngModel)]="publication.urltitle"
+        [ngModel]="publication.urltitle"
+        (ngModelChange)="updateSlug($event)"
         placeholder="link-de-la-publicacion"
       />
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
-      <label class="ank ank-text-textM mb-1 d-block" for="text">Contenido</label>
-      <textarea
-        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 publication-textarea"
-        id="text"
-        name="text"
-        [(ngModel)]="publication.text"
-        placeholder="Contenido de la publicación"
-        required
-      ></textarea>
+      @defer (when editSwitch) {
+        <app-rich-text-editor
+          label="Contenido"
+          help="Editor para textos largos: usa negritas, listas, citas y enlaces sin escribir HTML."
+          placeholder="Contenido de la publicación"
+          [(value)]="publication.text"
+        ></app-rich-text-editor>
+      } @placeholder {
+        <textarea
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 publication-textarea"
+          id="text"
+          name="text"
+          [(ngModel)]="publication.text"
+          placeholder="Contenido de la publicación"
+          required
+        ></textarea>
+      }
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="youtube">
-        Video relacionado
+        Video de YouTube
       </label>
+      <small class="editor-help">Pega el link de YouTube. Se mostrará como video dentro de la publicación.</small>
       <input
         class="w-100 ank ank-text-bg1M ank-bg-textM border-0 publication-input"
         type="url"
         id="youtube"
         name="youtube"
-        [(ngModel)]="publication.youtube"
+        [ngModel]="publication.youtube"
+        (ngModelChange)="updateYoutube($event)"
         placeholder="https://..."
       />
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="insertions">
-        Inserciones
+        Inserciones y enlaces relacionados
       </label>
+      <small class="editor-help">
+        Una inserción por línea. Puedes pegar links de YouTube, códigos iframe de Google Forms
+        o proveedores permitidos. Otros links se mostrarán como tarjetas.
+      </small>
       <textarea
         class="w-100 ank ank-text-bg1M ank-bg-textM border-0 publication-small-textarea"
         id="insertions"
@@ -185,15 +274,111 @@
         (ngModelChange)="updateInsertions($event)"
         placeholder="Una inserción por línea"
       ></textarea>
+
+      <section *ngIf="embeds.length > 0" class="content-editor__embed-preview">
+        <h5>Vista previa de inserciones</h5>
+        <article
+          *ngFor="let embed of embeds; trackBy: trackEmbedItem"
+          class="content-editor__embed-item"
+        >
+          <iframe
+            *ngIf="embed.kind !== 'link'; else publicationEditorLink"
+            [src]="embed.embedUrl | safeEmbedUrl"
+            [title]="embed.title"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+            allowfullscreen
+            sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+            loading="lazy"
+            referrerpolicy="strict-origin-when-cross-origin"
+            [style.height.px]="embed.height"
+          ></iframe>
+          <ng-template #publicationEditorLink>
+            <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
+              <span>{{ embed.title }}</span>
+              <small>{{ embed.url }}</small>
+            </a>
+          </ng-template>
+        </article>
+      </section>
     </div>
+
+    <section class="seo-editor">
+      <div class="seo-editor__heading">
+        <h2>SEO y vista previa al compartir</h2>
+        <p>Textos que suelen usar Google, Facebook, WhatsApp, X y LinkedIn cuando se comparte esta publicación.</p>
+      </div>
+
+      <label>
+        <span>Título SEO</span>
+        <input
+          class="publication-input"
+          type="text"
+          name="seoTitle"
+          [(ngModel)]="publication.seoTitle"
+          [placeholder]="effectiveSeoTitle()"
+        />
+      </label>
+
+      <label>
+        <span>Descripción SEO</span>
+        <textarea
+          class="publication-small-textarea"
+          name="seoDescription"
+          [(ngModel)]="publication.seoDescription"
+          [placeholder]="effectiveSeoDescription()"
+        ></textarea>
+      </label>
+
+      <label>
+        <span>Palabras clave</span>
+        <input
+          class="publication-input"
+          type="text"
+          name="seoKeywords"
+          [(ngModel)]="publication.seoKeywords"
+          [placeholder]="effectiveSeoKeywords()"
+        />
+      </label>
+
+      <div class="share-preview">
+        <small>{{ shareUrl() }}</small>
+        <strong>{{ effectiveSeoTitle() }}</strong>
+        <p>{{ effectiveSeoDescription() }}</p>
+        <img
+          *ngIf="publication.mainFile && fileUrl(publication.mainFile) && isImage(publication.mainFile)"
+          [src]="fileUrl(publication.mainFile)"
+          [alt]="publication.mainFile.title || publication.title"
+        />
+      </div>
+      <div class="content-editor__checks">
+        <article
+          *ngFor="let check of seoChecks()"
+          [class.content-editor__check--complete]="check.complete"
+        >
+          <span>{{ check.complete ? 'Listo' : 'Revisar' }}</span>
+          <div>
+            <strong>{{ check.label }}</strong>
+            <small>{{ check.detail }}</small>
+          </div>
+        </article>
+      </div>
+    </section>
 
     <button
       class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-4 w-100"
       type="button"
       (click)="onSubmit()"
     >
-      {{ publicationRecordId(publication) ? 'Guardar publicación' : 'Crear publicación' }}
+      {{ publicationRecordId(publication) ? 'Guardar cambios de la publicación' : 'Crear borrador y habilitar multimedia' }}
     </button>
+
+    <section *ngIf="!publicationRecordId(publication)" class="content-editor__asset-gate">
+      <h3>Multimedia, archivos e inserciones</h3>
+      <p>
+        Guarda el borrador con título, liga y contenido para habilitar imagen principal,
+        archivos relacionados, videos, formularios e inserciones seguras.
+      </p>
+    </section>
 
     <section *ngIf="publicationRecordId(publication)" class="publication-upload mt-5">
       <h3 class="editor-section-title">Imagen principal</h3>
@@ -206,6 +391,7 @@
         class="publication-upload__preview mx-auto mb-3"
         [src]="fileUrl(publication.mainFile)"
         [alt]="publication.mainFile.title || publication.title"
+        (click)="openImagePreview(publication.mainFile)"
       />
       <button
         *ngIf="publication.mainFile"
@@ -231,7 +417,16 @@
       <h3 class="editor-section-title">Archivos relacionados</h3>
       <div *ngIf="publication.files && publication.files.length > 0" class="file-reference-list">
         <div *ngFor="let file of publication.files" class="file-reference-item">
-          <span>{{ file.title || file.location || 'Archivo' }}</span>
+          <span>
+            <span [class]="fileKindIconClass(file)" aria-hidden="true">
+              <span>{{ fileKindIconText(file) }}</span>
+            </span>
+            {{ file.title || file.location || 'Archivo' }}
+            <small>{{ fileKindLabel(file) }}</small>
+          </span>
+          <button *ngIf="isImage(file)" type="button" (click)="openImagePreview(file)">
+            Ver
+          </button>
           <button type="button" (click)="removeRelatedFile(file)">Quitar</button>
         </div>
       </div>
@@ -247,4 +442,23 @@
       ></app-file-uploader>
     </section>
   </section>
+
+  <div
+    *ngIf="previewImage"
+    class="image-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Vista ampliada de imagen"
+    (click)="closeImagePreview()"
+  >
+    <div class="image-modal__content" (click)="$event.stopPropagation()">
+      <button type="button" class="image-modal__close" (click)="closeImagePreview()">
+        Cerrar
+      </button>
+      <img [src]="fileUrl(previewImage)" [alt]="previewImage.title || publication.title" />
+      <a [href]="fileUrl(previewImage)" target="_blank" rel="noopener noreferrer">
+        Abrir en otra pestaña
+      </a>
+    </div>
+  </div>
 </article>

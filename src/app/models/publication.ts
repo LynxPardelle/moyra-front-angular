@@ -9,6 +9,9 @@ export class Publication {
     public urltitle: string,
     public create_at: Date,
     public _id: string = '',
-    public id: string = ''
+    public id: string = '',
+    public seoTitle: string = '',
+    public seoDescription: string = '',
+    public seoKeywords: string = ''
   ) {}
 }

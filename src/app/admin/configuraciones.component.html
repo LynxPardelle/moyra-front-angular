@@ -9,19 +9,29 @@
 
   <form *ngIf="!loading" class="admin-config-form" (ngSubmit)="save()">
     <section *ngFor="let group of groupedFields" class="admin-config-card">
-      <h2>{{ group.section }}</h2>
+      <div class="admin-config-card__heading">
+        <h2>{{ group.section }}</h2>
+        <p *ngIf="group.description">{{ group.description }}</p>
+      </div>
 
       <label *ngFor="let field of group.fields" class="admin-config-field">
-        <span>{{ field.label }}</span>
+        <span class="admin-config-field__label">{{ field.label }}</span>
+        <small>{{ field.description }}</small>
         <textarea
           *ngIf="field.multiline; else inputField"
           [(ngModel)]="pageTexts[field.key]"
           [name]="field.key"
+          [placeholder]="field.defaultValue"
           rows="4"
         ></textarea>
 
         <ng-template #inputField>
-          <input [(ngModel)]="pageTexts[field.key]" [name]="field.key" type="text" />
+          <input
+            [(ngModel)]="pageTexts[field.key]"
+            [name]="field.key"
+            [placeholder]="field.defaultValue"
+            type="text"
+          />
         </ng-template>
       </label>
     </section>

@@ -11,8 +11,8 @@
         <a class="home-button home-button--primary" href="/soluciones" [routerLink]="['/soluciones']">
           {{ text('homeHeroServicesCta', 'Ver soluciones') }}
         </a>
-        <a class="home-button home-button--secondary" href="/publications" [routerLink]="['/publications']">
-          {{ text('homeHeroPublicationsCta', 'Publicaciones') }}
+        <a class="home-button home-button--secondary" href="/we" [routerLink]="['/we']">
+          {{ text('homeHeroAboutCta', 'Nosotros') }}
         </a>
       </div>
     </div>
@@ -77,20 +77,13 @@
       <a href="/publications" [routerLink]="['/publications']">Biblioteca legal</a>
     </div>
 
-    <div class="home-grid">
-      <article class="home-card home-card--publication" *ngFor="let publication of publications">
-        <div class="home-card__media" *ngIf="publication.mainFile && fileUrl(publication.mainFile)">
-          <img [src]="fileUrl(publication.mainFile)" [alt]="publication.mainFile.title || publication.title" />
-        </div>
-        <div class="home-card__body">
-          <h3>{{ publication.title }}</h3>
-          <p>{{ excerpt(publication.text, 165) }}</p>
-          <a href="/publication/{{ itemId(publication) }}" [routerLink]="['/publication', itemId(publication)]">
-            Leer publicación
-          </a>
-        </div>
-      </article>
-    </div>
+    <publications
+      [embedded]="true"
+      [maxItems]="3"
+      [publicationsInput]="publications"
+      [showEmptyState]="false"
+      [showHeading]="false"
+    ></publications>
 
   </section>
 </section>

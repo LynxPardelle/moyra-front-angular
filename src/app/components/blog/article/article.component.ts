@@ -12,16 +12,37 @@ import { WebService } from '../../../services/web.service';
 
 // Models
 import { Article, ArticleSection } from '../../../models/article';
-import { SafeHtmlPipe } from '../../../pipes/safe-html';
+import { SafeEmbedUrlPipe } from '../../../pipes/safe-embed-url';
+import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { renderTemplateExpressions } from '../../../utils/template-value';
+import { buildEmbedItems, EmbedItem, embedTrackKey } from '../../../utils/embeds';
+import {
+  FileKindBadge,
+  fileKindBadges,
+  fileKindIconClass,
+  fileKindIconText,
+  fileKindLabel,
+  fileKindSummary,
+  isImageFile,
+} from '../../../utils/file-kind';
+import { hasHtmlMarkup } from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
+import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
 
 // Extras
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-article',
-  imports: [CommonModule, FormsModule, RouterLink, SafeHtmlPipe, FileUploaderComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    SafeRichHtmlPipe,
+    SafeEmbedUrlPipe,
+    FileUploaderComponent,
+    RichTextEditorComponent,
+  ],
   templateUrl: './article.component.html',
   styleUrls: ['./article.component.scss'],
 })
@@ -35,7 +56,10 @@ export class ArticleComponent implements OnInit {
   public editSwitch = false;
   public loading = true;
   public urlArticle: string = GlobalArticle.url;
+  public previewImage: any = null;
 
+  private generatedSlug = '';
+  private slugTouched = false;
   private readonly consoleStyle =
     'background-color: #244f7a; color: white; padding: 1em;';
 
@@ -68,6 +92,8 @@ export class ArticleComponent implements OnInit {
           this.editSwitch = true;
           this.articleSections = [];
           this.sectionDraft = emptySection();
+          this.generatedSlug = '';
+          this.slugTouched = false;
           this.setSeo();
           return;
         }
@@ -82,6 +108,8 @@ export class ArticleComponent implements OnInit {
       }
 
       this.article = normalizeArticle(response.article);
+      this.generatedSlug = this.article.urltitle || '';
+      this.slugTouched = true;
       await this.loadSections();
       this.setSeo();
     } catch (err: any) {
@@ -125,6 +153,9 @@ export class ArticleComponent implements OnInit {
       this.article.intro = String(this.article.intro || '').trim();
       this.article.outro = String(this.article.outro || '').trim();
       this.article.tags = String(this.article.tags || '').trim();
+      this.article.seoTitle = String(this.article.seoTitle || '').trim();
+      this.article.seoDescription = String(this.article.seoDescription || '').trim();
+      this.article.seoKeywords = String(this.article.seoKeywords || '').trim();
       this.article.urltitle = normalizeSlug(this.article.urltitle || this.article.title);
       this.article.sections = this.articleSections
         .map((section: any) => this.articleSectionRecordId(section))
@@ -161,6 +192,8 @@ export class ArticleComponent implements OnInit {
       }
 
       this.article = normalizeArticle(savedArticle);
+      this.generatedSlug = this.article.urltitle || '';
+      this.slugTouched = true;
       await this.loadSections();
       this.editSwitch = false;
       this.setSeo();
@@ -436,6 +469,21 @@ export class ArticleComponent implements OnInit {
     return article?.urltitle || article?.slug || article?._id || article?.id || '';
   }
 
+  updateTitle(value: string): void {
+    this.article.title = value;
+    if (this.articleRecordId(this.article) || this.slugTouched) {
+      return;
+    }
+
+    this.generatedSlug = normalizeSlug(value);
+    this.article.urltitle = this.generatedSlug;
+  }
+
+  updateSlug(value: string): void {
+    this.slugTouched = true;
+    this.article.urltitle = normalizeSlug(value);
+  }
+
   articleRecordId(article: any): string {
     return article?._id || article?.id || '';
   }
@@ -453,9 +501,17 @@ export class ArticleComponent implements OnInit {
   }
 
   isImage(file: any): boolean {
-    return ['gif', 'jpeg', 'jpg', 'png', 'webp'].includes(
-      String(file?.type || '').toLowerCase()
-    );
+    return isImageFile(file);
+  }
+
+  openImagePreview(file: any): void {
+    if (file && this.isImage(file) && this.fileUrl(file)) {
+      this.previewImage = file;
+    }
+  }
+
+  closeImagePreview(): void {
+    this.previewImage = null;
   }
 
   Linkify(
@@ -475,6 +531,29 @@ export class ArticleComponent implements OnInit {
     });
   }
 
+  richContent(text: string, section?: ArticleSection): string {
+    const content = this.valuefy(text, section);
+    return hasHtmlMarkup(content)
+      ? content
+      : this.Linkify(content, '#29303b', '#4b8ff5');
+  }
+
+  sectionEmbedItems(section: ArticleSection): EmbedItem[] {
+    return buildEmbedItems(Array.isArray(section.insertions) ? section.insertions : []);
+  }
+
+  allEmbedItems(): EmbedItem[] {
+    return this.articleSections.flatMap((section) => this.sectionEmbedItems(section));
+  }
+
+  trackEmbedItem(index: number, embed: EmbedItem): string {
+    return embedTrackKey(embed, index);
+  }
+
+  trackFileBadge(index: number, badge: FileKindBadge): string {
+    return badge.kind || badge.icon || String(index);
+  }
+
   insertionLines(section: ArticleSection): string {
     return Array.isArray(section.insertions) ? section.insertions.join('\n') : '';
   }
@@ -484,6 +563,157 @@ export class ArticleComponent implements OnInit {
       .split('\n')
       .map((line) => line.trim())
       .filter(Boolean);
+  }
+
+  fileKindLabel(file: any): string {
+    return fileKindLabel(file);
+  }
+
+  fileKindIconText(file: any): string {
+    return fileKindIconText(file);
+  }
+
+  fileKindIconClass(file: any): string {
+    return fileKindIconClass(file);
+  }
+
+  articleFiles(): any[] {
+    return [
+      this.article?.mainImg,
+      ...this.articleSections.flatMap((section) => [
+        section?.mainFile,
+        ...(Array.isArray(section?.files) ? section.files : []),
+      ]),
+    ].filter(Boolean);
+  }
+
+  articleFileSummary(): string {
+    return fileKindSummary(this.articleFiles());
+  }
+
+  articleFileBadges(): FileKindBadge[] {
+    return fileKindBadges(this.articleFiles());
+  }
+
+  sectionFiles(section: ArticleSection): any[] {
+    return [
+      section?.mainFile,
+      ...(Array.isArray(section?.files) ? section.files : []),
+    ].filter(Boolean);
+  }
+
+  sectionFileSummary(section: ArticleSection): string {
+    return fileKindSummary(this.sectionFiles(section));
+  }
+
+  sectionFileBadges(section: ArticleSection): FileKindBadge[] {
+    return fileKindBadges(this.sectionFiles(section));
+  }
+
+  editorSteps(): Array<{ label: string; detail: string; complete: boolean }> {
+    const hasArticle = Boolean(this.articleRecordId(this.article));
+    return [
+      {
+        label: 'Datos',
+        detail: !this.article.title
+          ? 'Falta título'
+          : this.article.urltitle
+          ? 'Título y liga listos'
+          : 'Falta liga',
+        complete: Boolean(this.article.title && this.article.urltitle),
+      },
+      {
+        label: 'Contenido',
+        detail: this.article.intro ? `${this.readingMinutes()} min de lectura` : 'Falta introducción',
+        complete: Boolean(this.article.intro),
+      },
+      {
+        label: 'SEO',
+        detail: `${this.seoScore()}% completo`,
+        complete: this.seoScore() >= 75,
+      },
+      {
+        label: 'Multimedia',
+        detail: hasArticle ? this.articleFileSummary() : 'Disponible al guardar',
+        complete: hasArticle && this.articleFiles().length > 0,
+      },
+    ];
+  }
+
+  seoChecks(): Array<{ label: string; detail: string; complete: boolean }> {
+    const titleLength = this.effectiveSeoTitle().length;
+    const descriptionLength = this.effectiveSeoDescription().length;
+    const slug = this.articleId(this.article);
+    return [
+      {
+        label: 'Título para buscadores',
+        detail: `${titleLength} caracteres`,
+        complete: titleLength >= 35 && titleLength <= 70,
+      },
+      {
+        label: 'Descripción para compartir',
+        detail: `${descriptionLength} caracteres`,
+        complete: descriptionLength >= 90 && descriptionLength <= 165,
+      },
+      {
+        label: 'Liga legible',
+        detail: slug || 'Sin liga',
+        complete: Boolean(slug && slug.length <= 80),
+      },
+      {
+        label: 'Imagen social',
+        detail: this.fileUrl(this.article.mainImg) ? 'Imagen principal lista' : 'Pendiente',
+        complete: Boolean(this.fileUrl(this.article.mainImg)),
+      },
+    ];
+  }
+
+  seoScore(): number {
+    const checks = this.seoChecks();
+    const complete = checks.filter((check) => check.complete).length;
+    return Math.round((complete / checks.length) * 100);
+  }
+
+  contentWordCount(): number {
+    const content = [
+      this.article.intro,
+      ...this.articleSections.map((section) => section.text),
+      this.article.outro,
+    ].join(' ');
+    return stripHtml(content).replace(/\s+/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+  }
+
+  readingMinutes(): number {
+    return Math.max(1, Math.ceil(this.contentWordCount() / 220));
+  }
+
+  shareUrl(): string {
+    const slug = this.articleId(this.article) || 'link-del-articulo';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moyra.org';
+    return `${origin}/articulo/${slug}`;
+  }
+
+  effectiveSeoTitle(): string {
+    return (
+      String(this.article.seoTitle || '').trim() ||
+      (this.article.title
+        ? `${this.article.title} | Montaño & Reyes Arrazola S.C.`
+        : 'Artículo legal | Montaño & Reyes Arrazola S.C.')
+    );
+  }
+
+  effectiveSeoDescription(): string {
+    return (
+      String(this.article.seoDescription || '').trim() ||
+      excerpt(this.article.intro || this.article.outro || 'Artículo legal de Montaño & Reyes Arrazola S.C.', 155)
+    );
+  }
+
+  effectiveSeoKeywords(): string {
+    return (
+      String(this.article.seoKeywords || '').trim() ||
+      `${this.article.tags || 'blog legal, derecho'}, asesoría legal`
+    );
   }
 
   private async syncArticleSectionIds() {
@@ -501,11 +731,9 @@ export class ArticleComponent implements OnInit {
 
   private setSeo() {
     const isDetail = Boolean(this.article.title);
-    const title = isDetail
-      ? `${this.article.title} | Montaño & Reyes Arrazola S.C.`
-      : 'Nuevo artículo | Montaño & Reyes Arrazola S.C.';
+    const title = isDetail ? this.effectiveSeoTitle() : 'Nuevo artículo | Montaño & Reyes Arrazola S.C.';
     const description = isDetail
-      ? excerpt(this.article.intro || this.article.outro, 155)
+      ? this.effectiveSeoDescription()
       : 'Artículo legal de Montaño & Reyes Arrazola S.C.';
     const image = this.fileUrl(this.article.mainImg);
 
@@ -513,7 +741,7 @@ export class ArticleComponent implements OnInit {
     this._meta.updateTag({ name: 'description', content: description });
     this._meta.updateTag({
       name: 'keywords',
-      content: `${this.article.tags || 'blog legal, derecho'}, asesoría legal`,
+      content: this.effectiveSeoKeywords(),
     });
     this._meta.updateTag({ property: 'og:title', content: title });
     this._meta.updateTag({ property: 'og:description', content: description });

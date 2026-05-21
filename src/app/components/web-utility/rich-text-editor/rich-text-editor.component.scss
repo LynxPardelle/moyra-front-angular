@@ -1,0 +1,54 @@
+.rich-editor {
+  display: block;
+}
+
+.rich-editor__label {
+  color: #29303b;
+  display: block;
+  font-weight: 750;
+  margin-bottom: 0.25rem;
+}
+
+.rich-editor__help {
+  color: rgba(41, 48, 59, 0.66);
+  display: block;
+  line-height: 1.45;
+  margin-bottom: 0.5rem;
+}
+
+.rich-editor__control {
+  display: block;
+}
+
+:host ::ng-deep .ql-toolbar.ql-snow,
+:host ::ng-deep .ql-container.ql-snow {
+  border-color: rgba(41, 48, 59, 0.28);
+  border-radius: 0;
+}
+
+:host ::ng-deep .ql-toolbar.ql-snow {
+  background: #f5f7fa;
+  border-bottom: 0;
+  box-shadow: 0 8px 18px rgba(41, 48, 59, 0.06);
+}
+
+:host ::ng-deep .ql-container.ql-snow {
+  background: #ffffff;
+  box-shadow:
+    0 8px 18px rgba(41, 48, 59, 0.06),
+    inset 4px 0 0 rgba(75, 143, 245, 0.62);
+  color: #29303b;
+  font-size: 1rem;
+}
+
+:host ::ng-deep .ql-editor {
+  line-height: 1.65;
+  padding: 1rem 1rem 1rem 1.25rem;
+}
+
+:host ::ng-deep .ql-container.ql-snow:focus-within {
+  box-shadow:
+    0 0 0 3px rgba(75, 143, 245, 0.22),
+    0 12px 24px rgba(41, 48, 59, 0.08),
+    inset 4px 0 0 #4b8ff5;
+}

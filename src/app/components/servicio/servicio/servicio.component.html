@@ -69,9 +69,7 @@
 <div
   *ngIf="servicio.desc && servicio.desc !== ''"
   class="ank ank-w-65per mx-auto my-5 text-center"
-  [innerHTML]="
-    Linkify(this.valuefy(servicio.desc), '#000', '#4b8ff5') | safeHtml
-  "
+  [innerHTML]="richContent(servicio.desc) | safeRichHtml"
 ></div>
 
 <!-- Edit Main Section -->
@@ -82,7 +80,7 @@
   <div class="d-block w-75 mx-auto my-3">
     <label class="ank ank-text-textM mb-1 d-block" for="title">Título</label>
     <input
-      class="w-100 ank ank-text-bg1M ank-btn-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-btn-textM border-0 servicio-input"
       type="text"
       name="title"
       #title="ngModel"
@@ -103,18 +101,26 @@
     <label class="ank ank-text-textM mb-1 d-block" for="desc"
       >Descripción</label
     >
-    <textarea
-      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
-      type="text"
-      name="desc"
-      #desc="ngModel"
-      [(ngModel)]="servicio.desc"
-      placeholder="Descripción"
-      required
-    ></textarea>
+    @defer (when editSwitch) {
+      <app-rich-text-editor
+        label="Descripción"
+        help="Editor para textos largos: usa negritas, listas, citas y enlaces sin escribir HTML."
+        placeholder="Descripción"
+        [(value)]="servicio.desc"
+      ></app-rich-text-editor>
+    } @placeholder {
+      <textarea
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 servicio-textarea"
+        type="text"
+        name="desc"
+        [(ngModel)]="servicio.desc"
+        placeholder="Descripción"
+        required
+      ></textarea>
+    }
     <span
       class="ank ank-text-titleM font-weight-bold"
-      *ngIf="!desc.valid && desc.touched"
+      *ngIf="!servicio.desc"
     >
       La descripción es obligatoria.
     </span>
@@ -126,7 +132,7 @@
       >Palabras clave</label
     >
     <input
-      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0 servicio-input"
       type="text"
       name="tags"
       #tags="ngModel"
@@ -141,7 +147,7 @@
       >link-de-la-solucion-sin-acentos-ni-espacios)</label
     >
     <input
-      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0 servicio-input"
       type="text"
       name="urltitle"
       #urltitle="ngModel"
@@ -149,6 +155,51 @@
       placeholder="link-de-la-solucion-sin-acentos-ni-espacios"
     />
   </div>
+
+  <section class="seo-editor w-75 mx-auto">
+    <div class="seo-editor__heading">
+      <h2>Vista previa al compartir</h2>
+      <p>Textos que suelen usar Google, Facebook, WhatsApp, X y LinkedIn cuando se comparte esta solución.</p>
+    </div>
+
+    <label>
+      <span>Título SEO</span>
+      <input
+        class="servicio-input"
+        type="text"
+        name="seoTitle"
+        [(ngModel)]="servicio.seoTitle"
+        [placeholder]="effectiveSeoTitle()"
+      />
+    </label>
+
+    <label>
+      <span>Descripción SEO</span>
+      <textarea
+        class="servicio-small-textarea"
+        name="seoDescription"
+        [(ngModel)]="servicio.seoDescription"
+        [placeholder]="effectiveSeoDescription()"
+      ></textarea>
+    </label>
+
+    <label>
+      <span>Palabras clave</span>
+      <input
+        class="servicio-input"
+        type="text"
+        name="seoKeywords"
+        [(ngModel)]="servicio.seoKeywords"
+        [placeholder]="effectiveSeoKeywords()"
+      />
+    </label>
+
+    <div class="share-preview">
+      <small>{{ serviceUrl() }}</small>
+      <strong>{{ effectiveSeoTitle() }}</strong>
+      <p>{{ effectiveSeoDescription() }}</p>
+    </div>
+  </section>
 
   <!-- Submit Button -->
   <button

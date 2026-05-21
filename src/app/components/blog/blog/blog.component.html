@@ -33,38 +33,98 @@
     </p>
   </div>
 
-  <div *ngIf="!loading && articles.length > 0" class="article-grid">
+  <div *ngIf="!loading && articleItems.length > 0" class="article-grid">
     <article
-      *ngFor="let article of articles"
+      *ngFor="let item of articleItems; trackBy: trackArticleItem"
       class="article-card ank ank-boxShadow-0__4px__4px__trdark"
     >
       <a
-        class="article-card__link text-decoration-none"
-        href="/articulo/{{ articleId(article) }}"
-        [routerLink]="[isAdmin ? '/admin/articulo' : '/articulo', articleId(article)]"
+        *ngIf="item.mainFileUrl"
+        class="article-card__media-link text-decoration-none"
+        href="/articulo/{{ item.id }}"
+        [routerLink]="[isAdmin ? '/admin/articulo' : '/articulo', item.id]"
       >
-        <div class="article-card__media" *ngIf="article.mainImg && fileUrl(article.mainImg)">
+        <div class="article-card__media">
           <img
             class="article-card__image"
-            [src]="fileUrl(article.mainImg)"
-            [alt]="article.mainImg.title || article.title"
+            [src]="item.mainFileUrl"
+            [alt]="item.mainFileAlt"
           />
         </div>
-
-        <div class="article-card__body">
-          <p class="article-card__tags" *ngIf="article.tags">{{ article.tags }}</p>
-          <h3 class="article-card__title">{{ article.title }}</h3>
-          <p class="article-card__excerpt" *ngIf="article.intro">
-            {{ excerpt(article.intro) }}
-          </p>
-        </div>
       </a>
+
+      <div class="article-card__body">
+        <p class="article-card__tags" *ngIf="item.article.tags">{{ item.article.tags }}</p>
+        <a
+          class="article-card__title-link text-decoration-none"
+          href="/articulo/{{ item.id }}"
+          [routerLink]="[isAdmin ? '/admin/articulo' : '/articulo', item.id]"
+        >
+          <h3 class="article-card__title">{{ item.article.title }}</h3>
+        </a>
+
+        <p class="article-card__meta">
+          {{ item.readingMinutes }} min de lectura
+          <span *ngIf="item.embeds.length > 0"> · {{ item.embeds.length }} inserción{{ item.embeds.length === 1 ? '' : 'es' }}</span>
+        </p>
+
+        <div
+          class="article-card__content article-rich-content"
+          *ngIf="item.richContent"
+          [innerHTML]="item.richContent | safeRichHtml"
+        ></div>
+
+        <section *ngIf="item.embeds.length > 0" class="article-card__embeds">
+          <h4>Video y enlaces</h4>
+          <article
+            *ngFor="let embed of item.embeds; trackBy: trackEmbedItem"
+            class="article-card__embed"
+          >
+            <iframe
+              *ngIf="embed.kind !== 'link'; else articleRelatedLink"
+              [class.article-card__embed-frame--external]="embed.kind === 'iframe'"
+              [src]="embed.embedUrl | safeEmbedUrl"
+              [title]="embed.title"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+              allowfullscreen
+              sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+              loading="eager"
+              referrerpolicy="strict-origin-when-cross-origin"
+              [style.height.px]="embed.height"
+            ></iframe>
+            <ng-template #articleRelatedLink>
+              <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
+                <span>{{ embed.title }}</span>
+                <small>{{ embed.url }}</small>
+              </a>
+            </ng-template>
+          </article>
+        </section>
+
+        <section *ngIf="item.fileBadges.length > 0" class="article-card__files">
+          <div>
+            <h4>Archivos</h4>
+            <p>{{ item.fileSummary }}</p>
+          </div>
+          <div class="article-card__file-types">
+            <article
+              *ngFor="let badge of item.fileBadges; trackBy: trackFileBadge"
+              class="article-card__file-type"
+            >
+              <span [class]="badge.className" aria-hidden="true">
+                <span>{{ badge.icon }}</span>
+              </span>
+              <span>{{ badge.count }} {{ badge.count === 1 ? badge.label : badge.pluralLabel }}</span>
+            </article>
+          </div>
+        </section>
+      </div>
 
       <div class="article-card__actions">
         <a
           class="article-card__read text-decoration-none"
-          href="/articulo/{{ articleId(article) }}"
-          [routerLink]="[isAdmin ? '/admin/articulo' : '/articulo', articleId(article)]"
+          href="/articulo/{{ item.id }}"
+          [routerLink]="[isAdmin ? '/admin/articulo' : '/articulo', item.id]"
         >
           {{ isAdmin ? 'Editar artículo' : 'Ver artículo' }}
         </a>
@@ -73,7 +133,7 @@
           *ngIf="isAdmin && canChange"
           class="btn btn-warning py-1 px-3"
           type="button"
-          (click)="deleteArticle(articleRecordId(article))"
+          (click)="deleteArticle(item.recordId)"
         >
           Borrar
         </button>

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
@@ -12,18 +12,42 @@ import { WebService } from '../../../services/web.service';
 
 // Models
 import { Publication } from '../../../models/publication';
+import { SafeEmbedUrlPipe } from '../../../pipes/safe-embed-url';
+import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
+import { buildEmbedItems, EmbedItem, embedTrackKey } from '../../../utils/embeds';
+import { FileKindBadge, fileKindBadges, fileKindSummary } from '../../../utils/file-kind';
+import { hasHtmlMarkup } from '../../../utils/rich-content';
 
 // Extras
 import Swal from 'sweetalert2';
 
+type PublicationListItem = {
+  publication: Publication;
+  id: string;
+  recordId: string;
+  mainFileUrl: string;
+  mainFileAlt: string;
+  richContent: string;
+  embeds: EmbedItem[];
+  fileSummary: string;
+  fileBadges: FileKindBadge[];
+};
+
 @Component({
   selector: 'publications',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, SafeRichHtmlPipe, SafeEmbedUrlPipe],
   templateUrl: './publications.component.html',
   styleUrls: ['./publications.component.scss']
 })
-export class PublicationsComponent implements OnInit {
+export class PublicationsComponent implements OnChanges, OnInit {
+  @Input() embedded = false;
+  @Input() maxItems = 0;
+  @Input() publicationsInput: Publication[] | null = null;
+  @Input() showEmptyState = true;
+  @Input() showHeading = true;
+
   public publications: Publication[] = [];
+  public publicationItems: PublicationListItem[] = [];
   public main: any = null;
   public identity: any;
   public isAdmin = false;
@@ -44,10 +68,31 @@ export class PublicationsComponent implements OnInit {
     this.canChange = isAdminIdentity(this.identity);
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (
+      changes['publicationsInput'] ||
+      changes['maxItems'] ||
+      changes['embedded']
+    ) {
+      this.syncPublicationInput();
+    }
+  }
+
   ngOnInit(): void {
     this.isAdmin = this._router.routerState.snapshot.url.includes('admin');
-    this.setSeo();
-    void this.loadMainTexts();
+    if (!this.embedded) {
+      this.setSeo();
+    }
+
+    if (this.showHeading) {
+      void this.loadMainTexts();
+    }
+
+    if (this.publicationsInput) {
+      this.syncPublicationInput();
+      return;
+    }
+
     void this.getPublications();
   }
 
@@ -68,7 +113,7 @@ export class PublicationsComponent implements OnInit {
     this.loading = true;
     try {
       const response = await this._publicationService.getPublications().toPromise();
-      this.publications = response?.publications || [];
+      this.setPublications(response?.publications || []);
     } catch (err: any) {
       this._webService.consoleLog(
         err,
@@ -76,6 +121,7 @@ export class PublicationsComponent implements OnInit {
         'background-color: #244f7a; color: white; padding: 1em;'
       );
       this.publications = [];
+      this.publicationItems = [];
     } finally {
       this.loading = false;
     }
@@ -137,13 +183,48 @@ export class PublicationsComponent implements OnInit {
     return file.publicUrl || (file.location ? this.urlPublication + 'get-file/' + file.location : '');
   }
 
-  excerpt(text: string, length: number = 220): string {
-    const cleanText = stripHtml(text || '').replace(/\s+/g, ' ').trim();
-    if (cleanText.length <= length) {
-      return cleanText;
+  richContent(text: string): string {
+    const content = String(text || '');
+    if (hasHtmlMarkup(content)) {
+      return content;
     }
 
-    return cleanText.slice(0, length - 1).trimEnd() + '...';
+    const linked = this._webService.Linkify(content, '#29303b', '#4b8ff5');
+    return linked?.text || content;
+  }
+
+  embedItems(publication: any): EmbedItem[] {
+    return buildEmbedItems([
+      publication?.youtube,
+      ...(Array.isArray(publication?.insertions) ? publication.insertions : []),
+    ]);
+  }
+
+  publicationFiles(publication: any): any[] {
+    return [
+      publication?.mainFile,
+      ...(Array.isArray(publication?.files) ? publication.files : []),
+    ].filter(Boolean);
+  }
+
+  fileSummary(publication: any): string {
+    return fileKindSummary(this.publicationFiles(publication));
+  }
+
+  fileBadges(publication: any): FileKindBadge[] {
+    return fileKindBadges(this.publicationFiles(publication));
+  }
+
+  trackPublicationItem(index: number, item: PublicationListItem): string {
+    return item.id || item.recordId || String(index);
+  }
+
+  trackEmbedItem(index: number, embed: EmbedItem): string {
+    return embedTrackKey(embed, index);
+  }
+
+  trackFileBadge(index: number, badge: FileKindBadge): string {
+    return badge.kind || badge.icon || String(index);
   }
 
   text(key: string, fallback: string): string {
@@ -169,8 +250,40 @@ export class PublicationsComponent implements OnInit {
     this._meta.updateTag({ name: 'twitter:description', content: description });
   }
 
-}
+  private buildPublicationItem(publication: Publication): PublicationListItem {
+    const files = this.publicationFiles(publication);
+    const id = this.publicationId(publication);
 
-function stripHtml(value: string): string {
-  return value.replace(/<[^>]*>/g, ' ');
+    return {
+      publication,
+      id,
+      recordId: this.publicationRecordId(publication),
+      mainFileUrl: this.fileUrl(publication?.mainFile),
+      mainFileAlt: publication?.mainFile?.title || publication?.title || 'Publicación',
+      richContent: this.richContent(publication?.text || ''),
+      embeds: this.embedItems(publication),
+      fileSummary: fileKindSummary(files),
+      fileBadges: fileKindBadges(files),
+    };
+  }
+
+  private setPublications(publications: Publication[]): void {
+    this.publications = Array.isArray(publications) ? publications : [];
+    const visiblePublications =
+      this.maxItems > 0 ? this.publications.slice(0, this.maxItems) : this.publications;
+
+    this.publicationItems = visiblePublications.map((publication) =>
+      this.buildPublicationItem(publication)
+    );
+  }
+
+  private syncPublicationInput(): void {
+    if (!this.publicationsInput) {
+      return;
+    }
+
+    this.setPublications(this.publicationsInput);
+    this.loading = false;
+  }
+
 }
