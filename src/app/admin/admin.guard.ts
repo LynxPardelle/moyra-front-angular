@@ -10,6 +10,7 @@ import {
 import { Observable, map } from 'rxjs';
 import { AuthFacade } from '../store/auth/auth.facade';
 import { AuthUiStore } from '../store/auth/auth-ui.store';
+import { consumeAuthStorageFailureReason } from '../store/auth/auth.storage';
 
 @Injectable({
   providedIn: 'root'
@@ -44,8 +45,12 @@ export class AdminGuard implements CanActivate, CanActivateChild {
         }
 
         this._authUiStore.markDeniedAdminUrl(url);
+        const authReason = consumeAuthStorageFailureReason();
         return this._router.createUrlTree(['/login'], {
-          queryParams: { returnUrl: url },
+          queryParams: {
+            returnUrl: url,
+            ...(authReason ? { auth: authReason } : {}),
+          },
         });
       })
     );

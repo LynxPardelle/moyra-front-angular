@@ -5,6 +5,7 @@ const IDENTITY_KEY = 'identity';
 const TOKEN_KEY = 'token';
 
 export type AuthRole = 'ROLE_USER' | 'ROLE_ADMIN' | string;
+export type AuthStorageFailureReason = 'expired' | 'invalid' | null;
 
 export type AuthSession = {
   identity: any;
@@ -13,7 +14,10 @@ export type AuthSession = {
   expiresAt: number | null;
 };
 
+let lastAuthStorageFailureReason: AuthStorageFailureReason = null;
+
 export function readStoredAuthSession(): AuthSession | null {
+  lastAuthStorageFailureReason = null;
   const token = readStorageValue(TOKEN_KEY);
   if (!token) {
     return null;
@@ -25,6 +29,12 @@ export function readStoredAuthSession(): AuthSession | null {
   }
 
   return session;
+}
+
+export function consumeAuthStorageFailureReason(): AuthStorageFailureReason {
+  const reason = lastAuthStorageFailureReason;
+  lastAuthStorageFailureReason = null;
+  return reason;
 }
 
 export function persistAuthSession(identity: any, token: string): AuthSession | null {
@@ -52,15 +62,18 @@ export function createAuthSession(identity: any, token: string | null | undefine
 
   const tokenIdentity = decodeJwtPayload(normalizedToken);
   if (tokenIdentity && isJwtExpired(tokenIdentity)) {
+    lastAuthStorageFailureReason = 'expired';
     return null;
   }
 
   if (ApiRuntime.isV2 && !tokenIdentity) {
+    lastAuthStorageFailureReason = 'invalid';
     return null;
   }
 
   const normalizedIdentity = normalizeIdentity(identity, tokenIdentity);
   if (!normalizedIdentity) {
+    lastAuthStorageFailureReason = 'invalid';
     return null;
   }
 

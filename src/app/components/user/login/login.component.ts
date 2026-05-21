@@ -34,6 +34,7 @@ export class LoginComponent implements OnInit {
   public user: User = new User('', '', '', '', '', new Date());
   public identity: any;
   public token: any;
+  public accessNotice: string | null = null;
 
   // Console Settings
   public document: string = 'login.component.ts';
@@ -49,10 +50,14 @@ export class LoginComponent implements OnInit {
     private _authFacade: AuthFacade
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.accessNotice = this.resolveAccessNotice();
+  }
 
   async onSubmit() {
     try {
+      const returnUrl = this._route.snapshot.queryParamMap.get('returnUrl');
+      const wantsAdmin = Boolean(returnUrl && returnUrl.startsWith('/admin'));
       let auth = await this.loginWithCognitoChallengeSupport();
       if (!auth || !auth.user) {
         throw new Error('No se encontró el usuario.');
@@ -73,11 +78,24 @@ export class LoginComponent implements OnInit {
       }
 
       this._authFacade.setCredentials(authSession.identity, authSession.token);
-      const returnUrl = this._route.snapshot.queryParamMap.get('returnUrl');
       const adminTarget =
         returnUrl && returnUrl.startsWith('/admin') ? returnUrl : '/admin';
       if (authSession.role === 'ROLE_ADMIN') {
         this._router.navigateByUrl(adminTarget);
+      } else if (wantsAdmin) {
+        this._router.navigate(['/inicio']);
+        Swal.fire({
+          title: 'Cuenta sin permisos de administración',
+          html: 'La cuenta se identificó correctamente, pero no tiene permisos para entrar al panel de administración.',
+          icon: 'warning',
+          customClass: {
+            popup: 'bg-bg1M',
+            title: 'text-titleM',
+            closeButton: 'bg-titleM',
+            confirmButton: 'bg-titleM',
+          }
+        });
+        return;
       } else {
         this._router.navigate(['/inicio']);
       }
@@ -160,5 +178,24 @@ export class LoginComponent implements OnInit {
         .completeNewPasswordChallenge(this.user.email, e.error.session, result.value)
         .toPromise();
     }
+  }
+
+  private resolveAccessNotice(): string | null {
+    const authReason = this._route.snapshot.queryParamMap.get('auth');
+    const returnUrl = this._route.snapshot.queryParamMap.get('returnUrl');
+
+    if (authReason === 'expired') {
+      return 'Tu sesión expiró. Por seguridad, vuelve a iniciar sesión para continuar.';
+    }
+
+    if (authReason === 'invalid') {
+      return 'No pudimos validar la sesión guardada. Vuelve a iniciar sesión para continuar.';
+    }
+
+    if (returnUrl && returnUrl.startsWith('/admin')) {
+      return 'Esta zona requiere una cuenta con permisos de administración.';
+    }
+
+    return null;
   }
 }

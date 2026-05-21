@@ -1,4 +1,4 @@
-import { createAuthSession } from './auth.storage';
+import { consumeAuthStorageFailureReason, createAuthSession } from './auth.storage';
 
 describe('auth storage session normalization', () => {
   it('rejects missing tokens', () => {
@@ -37,6 +37,14 @@ describe('auth storage session normalization', () => {
     );
 
     expect(session).toBeNull();
+    expect(consumeAuthStorageFailureReason()).toBe('expired');
+  });
+
+  it('reports invalid JWT sessions in the v2 runtime', () => {
+    const session = createAuthSession({ role: 'ROLE_ADMIN' }, 'legacy-token');
+
+    expect(session).toBeNull();
+    expect(consumeAuthStorageFailureReason()).toBe('invalid');
   });
 });
 
