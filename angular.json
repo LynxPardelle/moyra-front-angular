@@ -35,6 +35,7 @@
               }
             ],
             "styles": [
+              "node_modules/quill/dist/quill.snow.css",
               "src/styles.scss"
             ],
             "server": "src/main.server.ts",
@@ -49,7 +50,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "800kB",
-                  "maximumError": "1MB"
+                  "maximumError": "1100kB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -75,6 +76,12 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "allowedHosts": [
+              "localhost",
+              "127.0.0.1"
+            ]
+          },
           "configurations": {
             "production": {
               "buildTarget": "moyra-frontend:build:production"
@@ -109,6 +116,7 @@
               }
             ],
             "styles": [
+              "node_modules/quill/dist/quill.snow.css",
               "src/styles.scss"
             ]
           }

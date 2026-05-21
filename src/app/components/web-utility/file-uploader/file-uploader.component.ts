@@ -45,6 +45,27 @@ import {
 // Extras
 import Swal from 'sweetalert2';
 
+const ACCEPTED_FILE_EXTENSIONS = [
+  '.csv',
+  '.doc',
+  '.docx',
+  '.eml',
+  '.gif',
+  '.jpeg',
+  '.jpg',
+  '.msg',
+  '.pdf',
+  '.png',
+  '.ppt',
+  '.pptx',
+  '.rtf',
+  '.txt',
+  '.webp',
+  '.xls',
+  '.xlsx',
+  '.zip',
+];
+
 @Component({
   selector: 'app-file-uploader',
   imports: [CommonModule, NgxUploaderModule],
@@ -85,6 +106,9 @@ export class FileUploaderComponent implements OnInit {
   public messagesErrorFiles: string[];
   public fileProgress: UploadFile[];
   public doneUploading: boolean;
+  public acceptedFileTypes = ACCEPTED_FILE_EXTENSIONS.join(',');
+  public acceptedFileSummary =
+    'PDF, Word, Excel, PowerPoint, imágenes, TXT, RTF, CSV, ZIP y correos .eml/.msg. Máximo 50 MB por archivo.';
   constructor(
     private _userService: UserService,
     private _webService: WebService,

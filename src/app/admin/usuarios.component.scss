@@ -1,0 +1,110 @@
+.admin-users-page {
+  color: #29303b;
+  margin: 0 auto;
+  max-width: 760px;
+  padding: 1.25rem 1rem 3rem;
+}
+
+.admin-users-page__header {
+  margin-bottom: 1.5rem;
+}
+
+.admin-users-page__header p {
+  color: #4b8ff5;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0;
+  margin: 0 0 0.45rem;
+  text-transform: uppercase;
+}
+
+.admin-users-page__header h1 {
+  color: #202631;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.admin-users-page__header span {
+  color: rgba(41, 48, 59, 0.76);
+  display: block;
+  line-height: 1.58;
+  margin-top: 0.75rem;
+}
+
+.admin-users-form {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  box-shadow:
+    0 26px 62px rgba(17, 20, 26, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.58) inset;
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+
+.admin-users-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.admin-users-field span {
+  color: rgba(41, 48, 59, 0.78);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.admin-users-field input,
+.admin-users-field select {
+  background: rgba(32, 38, 49, 0.92);
+  border: 1px solid rgba(32, 38, 49, 0.92);
+  color: #ffffff;
+  min-height: 46px;
+  padding: 0.72rem 0.85rem;
+}
+
+.admin-users-field input:focus,
+.admin-users-field select:focus {
+  background: #202631;
+  border-color: #4b8ff5;
+  outline: none;
+}
+
+.admin-users-field small {
+  color: rgba(41, 48, 59, 0.66);
+  font-size: 0.8rem;
+}
+
+.admin-users-field__error {
+  color: #cf4b3b !important;
+  font-weight: 700;
+}
+
+.admin-users-save {
+  background: #29303b;
+  border: 0;
+  box-shadow: 0 14px 28px rgba(17, 20, 26, 0.18);
+  color: #ffffff;
+  font-weight: 750;
+  margin-top: 0.7rem;
+  min-height: 48px;
+  padding: 0.78rem 1rem;
+  transition: background 160ms ease, box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
+  width: 100%;
+}
+
+.admin-users-save:hover:not(:disabled),
+.admin-users-save:focus-visible:not(:disabled) {
+  background: #4b8ff5;
+  box-shadow: 0 18px 34px rgba(75, 143, 245, 0.28);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.admin-users-save:disabled {
+  background: rgba(41, 48, 59, 0.18);
+  box-shadow: none;
+  color: rgba(41, 48, 59, 0.48);
+  cursor: not-allowed;
+}

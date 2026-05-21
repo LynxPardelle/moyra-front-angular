@@ -12,15 +12,23 @@ import { SharedService } from '../../../services/shared.service';
 
 // Models
 import { Servicio } from '../../../models/servicio';
-import { SafeHtmlPipe } from '../../../pipes/safe-html';
+import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { renderTemplateExpressions } from '../../../utils/template-value';
+import { hasHtmlMarkup } from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
+import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
 
 // Extras
 import Swal from 'sweetalert2';
 @Component({
   selector: 'servicio',
-  imports: [CommonModule, FormsModule, SafeHtmlPipe, FileUploaderComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    SafeRichHtmlPipe,
+    FileUploaderComponent,
+    RichTextEditorComponent,
+  ],
   templateUrl: './servicio.component.html',
   styleUrls: ['./servicio.component.scss'],
 })
@@ -32,7 +40,10 @@ export class ServicioComponent implements OnInit {
     '',
     '',
     '',
-    new Date()
+    new Date(),
+    '',
+    '',
+    ''
   );
   public servicios: Servicio[] = [];
   public identity: any;
@@ -220,6 +231,10 @@ export class ServicioComponent implements OnInit {
         this.servicio.desc !== '' ||
         this.servicio.urltitle !== ''
       ) {
+        this.servicio.seoTitle = String(this.servicio.seoTitle || '').trim();
+        this.servicio.seoDescription = String(this.servicio.seoDescription || '').trim();
+        this.servicio.seoKeywords = String(this.servicio.seoKeywords || '').trim();
+
         if (this.servicio._id !== '') {
           let result = await Swal.fire({
             title: '¿Seguro que quieres hacer los cambios en la solución?',
@@ -556,5 +571,43 @@ export class ServicioComponent implements OnInit {
   // Complex functions
   valuefy(text: string) {
     return renderTemplateExpressions(text, this as unknown as Record<string, unknown>);
+  }
+
+  richContent(text: string): string {
+    const content = this.valuefy(text);
+    return hasHtmlMarkup(content)
+      ? content
+      : this.Linkify(content, '#000', '#4b8ff5');
+  }
+
+  serviceUrl(): string {
+    const slug = this.servicio.urltitle || this.servicio._id || '';
+    if (typeof window === 'undefined') {
+      return `/solucion/${slug}`;
+    }
+
+    return `${window.location.origin}/solucion/${slug}`;
+  }
+
+  effectiveSeoTitle(): string {
+    return (
+      String(this.servicio.seoTitle || '').trim() ||
+      `${this.servicio.title || 'Solución legal'} | Montaño & Reyes Arrazola S.C.`
+    );
+  }
+
+  effectiveSeoDescription(): string {
+    return (
+      String(this.servicio.seoDescription || '').trim() ||
+      String(this.servicio.desc || '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 160)
+    );
+  }
+
+  effectiveSeoKeywords(): string {
+    return String(this.servicio.seoKeywords || '').trim() || String(this.servicio.tags || '').trim();
   }
 }

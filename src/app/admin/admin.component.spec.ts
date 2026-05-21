@@ -1,6 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { provideEffects } from '@ngrx/effects';
+import { provideStore } from '@ngrx/store';
 
 import { AdminComponent } from './admin.component';
+import { AuthEffects } from '../store/auth/auth.effects';
+import { authFeatureKey, authReducer } from '../store/auth/auth.reducer';
 
 describe('AdminComponent', () => {
   let component: AdminComponent;
@@ -8,7 +13,12 @@ describe('AdminComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ AdminComponent ]
+      imports: [AdminComponent],
+      providers: [
+        provideRouter([]),
+        provideStore({ [authFeatureKey]: authReducer }),
+        provideEffects([AuthEffects]),
+      ],
     })
     .compileComponents();
   });

@@ -1,4 +1,5 @@
 import { environment } from '../../environments/environment';
+import { decodeJwtPayload, isJwtExpired } from '../utils/auth-token';
 
 type RuntimeProcess = {
   env?: Record<string, string | undefined>;
@@ -90,12 +91,25 @@ export function roleFromIdentity(identity: any): string {
     return 'ROLE_USER';
   }
 
-  const groups = identity['cognito:groups'] || identity.groups;
-  if (Array.isArray(groups) && groups.includes('ROLE_ADMIN')) {
+  if (identity.role === 'ROLE_ADMIN') {
     return 'ROLE_ADMIN';
   }
 
-  if (typeof groups === 'string' && groups.split(',').includes('ROLE_ADMIN')) {
+  const groups = identity['cognito:groups'] || identity.groups;
+  if (
+    Array.isArray(groups) &&
+    groups.some((group) => String(group).trim() === 'ROLE_ADMIN')
+  ) {
+    return 'ROLE_ADMIN';
+  }
+
+  if (
+    typeof groups === 'string' &&
+    groups
+      .split(',')
+      .map((group) => group.trim())
+      .includes('ROLE_ADMIN')
+  ) {
     return 'ROLE_ADMIN';
   }
 
@@ -135,18 +149,23 @@ export function jsonAuthHeaders(token: string | null | undefined): Record<string
 }
 
 export function storedToken(): string | null {
-  if (typeof localStorage !== 'undefined') {
-    const token = localStorage.getItem('token');
-    if (token) {
-      return token;
-    }
+  const token = readStoredToken();
+  if (!token) {
+    return null;
   }
 
-  if (typeof sessionStorage !== 'undefined') {
-    return sessionStorage.getItem('token');
+  const tokenPayload = decodeJwtPayload(token);
+  if (tokenPayload && isJwtExpired(tokenPayload)) {
+    clearStoredCredentials();
+    return null;
   }
 
-  return null;
+  if (ApiRuntime.isV2 && !tokenPayload) {
+    clearStoredCredentials();
+    return null;
+  }
+
+  return token;
 }
 
 export function toApiPayload(
@@ -270,4 +289,31 @@ function absoluteApiUrl(pathOrUrl: string): string {
   const path = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
 
   return `${origin}${path}`;
+}
+
+function readStoredToken(): string | null {
+  if (typeof localStorage !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) {
+      return token;
+    }
+  }
+
+  if (typeof sessionStorage !== 'undefined') {
+    return sessionStorage.getItem('token');
+  }
+
+  return null;
+}
+
+function clearStoredCredentials(): void {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('identity');
+    localStorage.removeItem('token');
+  }
+
+  if (typeof sessionStorage !== 'undefined') {
+    sessionStorage.removeItem('identity');
+    sessionStorage.removeItem('token');
+  }
 }

@@ -7,7 +7,10 @@ export class Article {
     public sections: any[],
     public tags: string,
     public urltitle: string,
-    public create_at: Date
+    public create_at: Date,
+    public seoTitle: string = '',
+    public seoDescription: string = '',
+    public seoKeywords: string = ''
   ) {}
 }
 

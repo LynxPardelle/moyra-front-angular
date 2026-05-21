@@ -1,7 +1,8 @@
-import { Component, OnInit, DoCheck, Input } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, Params } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 // Services
 import { GlobalMain, isAdminIdentity } from '../../../services/global';
@@ -12,19 +13,27 @@ import { SharedService } from '../../../services/shared.service';
 
 // Models
 import { Main, Equip } from '../../../models/main';
-import { SafeHtmlPipe } from '../../../pipes/safe-html';
+import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { renderTemplateExpressions } from '../../../utils/template-value';
+import { hasHtmlMarkup } from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
+import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
 
 // Extras
 import Swal from 'sweetalert2';
 @Component({
   selector: 'we',
-  imports: [CommonModule, FormsModule, SafeHtmlPipe, FileUploaderComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    SafeRichHtmlPipe,
+    FileUploaderComponent,
+    RichTextEditorComponent,
+  ],
   templateUrl: './we.component.html',
   styleUrls: ['./we.component.scss'],
 })
-export class WeComponent implements OnInit, DoCheck {
+export class WeComponent implements OnInit, OnDestroy {
   public main!: Main;
   public equips!: Equip[];
   public equip: Equip = new Equip('', '', null, '', 0);
@@ -42,6 +51,8 @@ export class WeComponent implements OnInit, DoCheck {
   public document: string = 'we.component.ts';
   public customConsoleCSS =
     'background-color: yellow; color: black; padding: 1em;';
+  private sharedSubscription?: Subscription;
+
   constructor(
     private _mainService: MainService,
     private _userService: UserService,
@@ -51,7 +62,7 @@ export class WeComponent implements OnInit, DoCheck {
     private _route: ActivatedRoute,
     private _router: Router
   ) {
-    _sharedService.changeEmitted$.subscribe((sharedContent) => {
+    this.sharedSubscription = _sharedService.changeEmitted$.subscribe((sharedContent) => {
       if (
         typeof sharedContent === 'object' &&
         sharedContent.from !== 'we' &&
@@ -60,11 +71,6 @@ export class WeComponent implements OnInit, DoCheck {
         switch (sharedContent.property) {
           case 'main':
             this.main = sharedContent.thing;
-            this._webService.consoleLog(
-              sharedContent.thing,
-              this.document + ' 39',
-              this.customConsoleCSS
-            );
             break;
           case 'onlyConsoleMessage':
             this._webService.consoleLog(
@@ -106,7 +112,9 @@ export class WeComponent implements OnInit, DoCheck {
     })();
   }
 
-  ngDoCheck(): void {}
+  ngOnDestroy(): void {
+    this.sharedSubscription?.unsubscribe();
+  }
 
   async getMain() {
     try {
@@ -616,5 +624,17 @@ export class WeComponent implements OnInit, DoCheck {
   // Complex functions
   valuefy(text: string) {
     return renderTemplateExpressions(text, this as unknown as Record<string, unknown>);
+  }
+
+  richContent(text: string): string {
+    const content = this.valuefy(text || '');
+    return hasHtmlMarkup(content)
+      ? content
+      : this.Linkify(content, '#000', '#4b8ff5');
+  }
+
+  text(key: string, fallback: string): string {
+    const value = this.main?.pageTexts?.[key];
+    return typeof value === 'string' && value.trim() ? value : fallback;
   }
 }

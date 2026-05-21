@@ -1,0 +1,15 @@
+<div class="rich-editor">
+  <span *ngIf="label" class="rich-editor__label">{{ label }}</span>
+  <small *ngIf="help" class="rich-editor__help">{{ help }}</small>
+  <quill-editor
+    class="rich-editor__control"
+    [ngModel]="value"
+    (ngModelChange)="updateValue($event)"
+    [modules]="editorModules"
+    [placeholder]="placeholder"
+    [styles]="{ minHeight: minHeight }"
+    [sanitize]="true"
+    format="html"
+    theme="snow"
+  ></quill-editor>
+</div>

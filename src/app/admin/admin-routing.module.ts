@@ -10,6 +10,7 @@ import { AdminComponent } from './admin.component';
 import { AdminGuard } from './admin.guard';
 import { ArchivosComponent } from './archivos.component';
 import { ConfiguracionesComponent } from './configuraciones.component';
+import { UsuariosComponent } from './usuarios.component';
 
 /* PublicationComponents */
 import { PublicationsComponent } from '../components/publication/publications/publications.component';
@@ -32,6 +33,7 @@ const routes: Routes = [
     path: '',
     component: AdminComponent,
     canActivate: [AdminGuard],
+    canActivateChild: [AdminGuard],
     children: [
       { path: '', redirectTo: 'we', pathMatch: 'full' },
 
@@ -39,6 +41,7 @@ const routes: Routes = [
       { path: 'we', component: WeComponent },
       { path: 'configuraciones', component: ConfiguracionesComponent },
       { path: 'archivos', component: ArchivosComponent },
+      { path: 'usuarios/nuevo', component: UsuariosComponent },
 
       // Publication
       { path: 'publications', component: PublicationsComponent },

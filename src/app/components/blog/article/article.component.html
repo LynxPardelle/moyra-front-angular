@@ -61,6 +61,7 @@
       class="article-detail__hero mx-auto mb-4"
       [src]="fileUrl(article.mainImg)"
       [alt]="article.mainImg.title || article.title"
+      (click)="openImagePreview(article.mainImg)"
     />
 
     <section
@@ -80,13 +81,40 @@
           class="article-section__image mx-auto mb-3"
           [src]="fileUrl(section.mainFile)"
           [alt]="section.mainFile.title || section.title"
+          (click)="openImagePreview(section.mainFile)"
         />
 
         <div
           *ngIf="section.text"
           class="article-section__content"
-          [innerHTML]="Linkify(valuefy(section.text, section), '#29303b', '#4b8ff5') | safeHtml"
+          [innerHTML]="richContent(section.text, section) | safeRichHtml"
         ></div>
+
+        <section *ngIf="sectionEmbedItems(section).length > 0" class="content-embeds">
+          <article
+            *ngFor="let embed of sectionEmbedItems(section); trackBy: trackEmbedItem"
+            class="content-embed"
+          >
+            <iframe
+              *ngIf="embed.kind !== 'link'; else articleRelatedLink"
+              [class.content-embed__frame--external]="embed.kind === 'iframe'"
+              [src]="embed.embedUrl | safeEmbedUrl"
+              [title]="embed.title"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+              allowfullscreen
+              sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+              loading="eager"
+              referrerpolicy="strict-origin-when-cross-origin"
+              [style.height.px]="embed.height"
+            ></iframe>
+            <ng-template #articleRelatedLink>
+              <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
+                <span>{{ embed.title }}</span>
+                <small>{{ embed.url }}</small>
+              </a>
+            </ng-template>
+          </article>
+        </section>
 
         <div
           *ngIf="section.files && section.files.length > 0"
@@ -97,17 +125,28 @@
             class="article-section-file text-decoration-none"
             [href]="fileUrl(file)"
             target="_blank"
-            rel="noopener"
+            rel="noopener noreferrer"
           >
-            <img
-              *ngIf="isImage(file)"
-              class="article-section-file__image"
-              [src]="fileUrl(file)"
-              [alt]="file.title || section.title"
-            />
+            <span
+              class="article-section-file__preview"
+              [class.article-section-file__preview--image]="isImage(file)"
+            >
+              <img
+                *ngIf="isImage(file); else articleDocumentPreview"
+                class="article-section-file__image"
+                [src]="fileUrl(file)"
+                [alt]="file.title || section.title"
+              />
+              <ng-template #articleDocumentPreview>
+                <span [class]="fileKindIconClass(file)" aria-hidden="true">
+                  <span>{{ fileKindIconText(file) }}</span>
+                </span>
+              </ng-template>
+            </span>
             <span class="article-section-file__title">
               {{ file.title || file.location || 'Archivo' }}
             </span>
+            <small>{{ fileKindLabel(file) }}</small>
           </a>
         </div>
       </section>
@@ -116,7 +155,7 @@
     <div
       *ngIf="article.outro"
       class="article-detail__outro mx-auto my-4"
-      [innerHTML]="Linkify(valuefy(article.outro), '#29303b', '#4b8ff5') | safeHtml"
+      [innerHTML]="richContent(article.outro) | safeRichHtml"
     ></div>
   </ng-container>
 
@@ -128,6 +167,36 @@
       </h1>
     </header>
 
+    <div class="content-editor__workflow" aria-label="Estado del artículo">
+      <article
+        *ngFor="let step of editorSteps()"
+        class="content-editor__step"
+        [class.content-editor__step--complete]="step.complete"
+      >
+        <strong>{{ step.label }}</strong>
+        <span>{{ step.detail }}</span>
+      </article>
+    </div>
+
+    <section class="content-editor__dashboard">
+      <article class="content-editor__metric">
+        <span>Lectura estimada</span>
+        <strong>{{ readingMinutes() }} min</strong>
+      </article>
+      <article class="content-editor__metric">
+        <span>Contenido</span>
+        <strong>{{ contentWordCount() }} palabras</strong>
+      </article>
+      <article class="content-editor__metric">
+        <span>SEO</span>
+        <strong>{{ seoScore() }}%</strong>
+      </article>
+      <article class="content-editor__metric">
+        <span>Archivos</span>
+        <strong>{{ articleFileSummary() }}</strong>
+      </article>
+    </section>
+
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="title">Título</label>
       <input
@@ -135,7 +204,8 @@
         type="text"
         id="title"
         name="title"
-        [(ngModel)]="article.title"
+        [ngModel]="article.title"
+        (ngModelChange)="updateTitle($event)"
         placeholder="Título del artículo"
         required
       />
@@ -150,7 +220,8 @@
         type="text"
         id="urltitle"
         name="urltitle"
-        [(ngModel)]="article.urltitle"
+        [ngModel]="article.urltitle"
+        (ngModelChange)="updateSlug($event)"
         placeholder="link-del-articulo"
       />
     </div>
@@ -169,34 +240,114 @@
 
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="intro">Introducción</label>
-      <textarea
-        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-small-textarea"
-        id="intro"
-        name="intro"
-        [(ngModel)]="article.intro"
-        placeholder="Resumen visible en el blog y metadescripción."
-        required
-      ></textarea>
+      @defer (when editSwitch) {
+        <app-rich-text-editor
+          label="Introducción"
+          help="Resumen visible en el blog y útil como descripción para compartir."
+          placeholder="Resumen visible en el blog y metadescripción."
+          minHeight="150px"
+          [(value)]="article.intro"
+        ></app-rich-text-editor>
+      } @placeholder {
+        <textarea
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-small-textarea"
+          id="intro"
+          name="intro"
+          [(ngModel)]="article.intro"
+          placeholder="Resumen visible en el blog y metadescripción."
+          required
+        ></textarea>
+      }
     </div>
 
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="outro">Cierre</label>
-      <textarea
-        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
-        id="outro"
-        name="outro"
-        [(ngModel)]="article.outro"
-        placeholder="Cierre del artículo."
-      ></textarea>
+      @defer (when editSwitch) {
+        <app-rich-text-editor
+          label="Cierre"
+          help="Texto largo del cierre del artículo."
+          placeholder="Cierre del artículo."
+          [(value)]="article.outro"
+        ></app-rich-text-editor>
+      } @placeholder {
+        <textarea
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
+          id="outro"
+          name="outro"
+          [(ngModel)]="article.outro"
+          placeholder="Cierre del artículo."
+        ></textarea>
+      }
     </div>
+
+    <section class="seo-editor">
+      <div class="seo-editor__heading">
+        <h2>SEO y vista previa al compartir</h2>
+        <p>Textos que suelen usar Google, Facebook, WhatsApp, X y LinkedIn cuando se comparte este artículo.</p>
+      </div>
+      <label>
+        <span>Título SEO</span>
+        <input
+          class="article-input"
+          type="text"
+          name="seoTitle"
+          [(ngModel)]="article.seoTitle"
+          [placeholder]="effectiveSeoTitle()"
+        />
+      </label>
+      <label>
+        <span>Descripción SEO</span>
+        <textarea
+          class="article-small-textarea"
+          name="seoDescription"
+          [(ngModel)]="article.seoDescription"
+          [placeholder]="effectiveSeoDescription()"
+        ></textarea>
+      </label>
+      <label>
+        <span>Palabras clave</span>
+        <input
+          class="article-input"
+          type="text"
+          name="seoKeywords"
+          [(ngModel)]="article.seoKeywords"
+          [placeholder]="effectiveSeoKeywords()"
+        />
+      </label>
+      <div class="share-preview">
+        <small>{{ shareUrl() }}</small>
+        <strong>{{ effectiveSeoTitle() }}</strong>
+        <p>{{ effectiveSeoDescription() }}</p>
+      </div>
+      <div class="content-editor__checks">
+        <article
+          *ngFor="let check of seoChecks()"
+          [class.content-editor__check--complete]="check.complete"
+        >
+          <span>{{ check.complete ? 'Listo' : 'Revisar' }}</span>
+          <div>
+            <strong>{{ check.label }}</strong>
+            <small>{{ check.detail }}</small>
+          </div>
+        </article>
+      </div>
+    </section>
 
     <button
       class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-4 w-100"
       type="button"
       (click)="onSubmit()"
     >
-      {{ articleRecordId(article) ? 'Guardar artículo' : 'Crear artículo' }}
+      {{ articleRecordId(article) ? 'Guardar cambios del artículo' : 'Crear borrador y habilitar multimedia' }}
     </button>
+
+    <section *ngIf="!articleRecordId(article)" class="content-editor__asset-gate">
+      <h3>Multimedia, secciones e inserciones</h3>
+      <p>
+        Guarda el borrador con título, liga e introducción para habilitar imagen principal,
+        archivos relacionados, videos, formularios e inserciones seguras.
+      </p>
+    </section>
 
     <section *ngIf="articleRecordId(article)" class="article-upload mt-5">
       <h3 class="editor-section-title">Imagen principal</h3>
@@ -270,13 +421,22 @@
         <label class="ank ank-text-textM mb-1 mt-3 d-block" [for]="'section-text-' + i">
           Contenido
         </label>
-        <textarea
-          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
-          [id]="'section-text-' + i"
-          [name]="'section-text-' + i"
-          [(ngModel)]="section.text"
-          placeholder="Contenido de la sección"
-        ></textarea>
+        @defer (when editSwitch) {
+          <app-rich-text-editor
+            label="Contenido"
+            help="Texto largo de esta sección."
+            placeholder="Contenido de la sección"
+            [(value)]="section.text"
+          ></app-rich-text-editor>
+        } @placeholder {
+          <textarea
+            class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
+            [id]="'section-text-' + i"
+            [name]="'section-text-' + i"
+            [(ngModel)]="section.text"
+            placeholder="Contenido de la sección"
+          ></textarea>
+        }
 
         <label class="ank ank-text-textM mb-1 mt-3 d-block" [for]="'section-insertions-' + i">
           Inserciones
@@ -287,8 +447,34 @@
           [name]="'section-insertions-' + i"
           [ngModel]="insertionLines(section)"
           (ngModelChange)="updateInsertions(section, $event)"
-          placeholder="Una inserción por línea"
+          placeholder="Una inserción por línea. Puedes pegar links o código iframe de YouTube."
         ></textarea>
+
+        <section *ngIf="sectionEmbedItems(section).length > 0" class="content-editor__embed-preview">
+          <h5>Vista previa de inserciones</h5>
+          <article
+            *ngFor="let embed of sectionEmbedItems(section); trackBy: trackEmbedItem"
+            class="content-editor__embed-item"
+          >
+            <iframe
+              *ngIf="embed.kind !== 'link'; else sectionEditorLink"
+              [src]="embed.embedUrl | safeEmbedUrl"
+              [title]="embed.title"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+              allowfullscreen
+              sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              [style.height.px]="embed.height"
+            ></iframe>
+            <ng-template #sectionEditorLink>
+              <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
+                <span>{{ embed.title }}</span>
+                <small>{{ embed.url }}</small>
+              </a>
+            </ng-template>
+          </article>
+        </section>
 
         <button
           class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-4 w-100"
@@ -327,7 +513,16 @@
           <h5 class="h6 text-center my-3">Archivos relacionados</h5>
           <div *ngIf="section.files && section.files.length > 0" class="file-reference-list">
             <div *ngFor="let file of section.files" class="file-reference-item">
-              <span>{{ file.title || file.location || 'Archivo' }}</span>
+              <span>
+                <span [class]="fileKindIconClass(file)" aria-hidden="true">
+                  <span>{{ fileKindIconText(file) }}</span>
+                </span>
+                {{ file.title || file.location || 'Archivo' }}
+                <small>{{ fileKindLabel(file) }}</small>
+              </span>
+              <button *ngIf="isImage(file)" type="button" (click)="openImagePreview(file)">
+                Ver
+              </button>
               <button type="button" (click)="removeSectionFile(section, file)">Quitar</button>
             </div>
           </div>
@@ -372,13 +567,22 @@
         <label class="ank ank-text-textM mb-1 mt-3 d-block" for="new-section-text">
           Contenido
         </label>
-        <textarea
-          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
-          id="new-section-text"
-          name="new-section-text"
-          [(ngModel)]="sectionDraft.text"
-          placeholder="Contenido de la sección"
-        ></textarea>
+        @defer (when editSwitch) {
+          <app-rich-text-editor
+            label="Contenido"
+            help="Texto largo de esta sección."
+            placeholder="Contenido de la sección"
+            [(value)]="sectionDraft.text"
+          ></app-rich-text-editor>
+        } @placeholder {
+          <textarea
+            class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
+            id="new-section-text"
+            name="new-section-text"
+            [(ngModel)]="sectionDraft.text"
+            placeholder="Contenido de la sección"
+          ></textarea>
+        }
 
         <label class="ank ank-text-textM mb-1 mt-3 d-block" for="new-section-insertions">
           Inserciones
@@ -389,8 +593,34 @@
           name="new-section-insertions"
           [ngModel]="insertionLines(sectionDraft)"
           (ngModelChange)="updateInsertions(sectionDraft, $event)"
-          placeholder="Una inserción por línea"
+          placeholder="Una inserción por línea. Puedes pegar links o código iframe de YouTube."
         ></textarea>
+
+        <section *ngIf="sectionEmbedItems(sectionDraft).length > 0" class="content-editor__embed-preview">
+          <h5>Vista previa de inserciones</h5>
+          <article
+            *ngFor="let embed of sectionEmbedItems(sectionDraft); trackBy: trackEmbedItem"
+            class="content-editor__embed-item"
+          >
+            <iframe
+              *ngIf="embed.kind !== 'link'; else draftSectionEditorLink"
+              [src]="embed.embedUrl | safeEmbedUrl"
+              [title]="embed.title"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+              allowfullscreen
+              sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              [style.height.px]="embed.height"
+            ></iframe>
+            <ng-template #draftSectionEditorLink>
+              <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
+                <span>{{ embed.title }}</span>
+                <small>{{ embed.url }}</small>
+              </a>
+            </ng-template>
+          </article>
+        </section>
 
         <button
           class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-4 w-100"
@@ -402,4 +632,23 @@
       </section>
     </section>
   </section>
+
+  <div
+    *ngIf="previewImage"
+    class="image-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Vista ampliada de imagen"
+    (click)="closeImagePreview()"
+  >
+    <div class="image-modal__content" (click)="$event.stopPropagation()">
+      <button type="button" class="image-modal__close" (click)="closeImagePreview()">
+        Cerrar
+      </button>
+      <img [src]="fileUrl(previewImage)" [alt]="previewImage.title || article.title" />
+      <a [href]="fileUrl(previewImage)" target="_blank" rel="noopener noreferrer">
+        Abrir en otra pestaña
+      </a>
+    </div>
+  </div>
 </article>

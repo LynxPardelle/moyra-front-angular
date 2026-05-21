@@ -12,16 +12,37 @@ import { WebService } from '../../../services/web.service';
 
 // Models
 import { Publication } from '../../../models/publication';
-import { SafeHtmlPipe } from '../../../pipes/safe-html';
+import { SafeEmbedUrlPipe } from '../../../pipes/safe-embed-url';
+import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { renderTemplateExpressions } from '../../../utils/template-value';
+import { buildEmbedItems, EmbedItem, embedTrackKey } from '../../../utils/embeds';
+import {
+  FileKindBadge,
+  fileKindBadges,
+  fileKindIconClass,
+  fileKindIconText,
+  fileKindLabel,
+  fileKindSummary,
+  isImageFile,
+} from '../../../utils/file-kind';
+import { hasHtmlMarkup } from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
+import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
 
 // Extras
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-publication',
-  imports: [CommonModule, FormsModule, RouterLink, SafeHtmlPipe, FileUploaderComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    SafeRichHtmlPipe,
+    SafeEmbedUrlPipe,
+    FileUploaderComponent,
+    RichTextEditorComponent,
+  ],
   templateUrl: './publication.component.html',
   styleUrls: ['./publication.component.scss'],
 })
@@ -42,7 +63,11 @@ export class PublicationComponent implements OnInit {
   public editSwitch = false;
   public loading = true;
   public urlPublication: string = GlobalPublication.url;
+  public previewImage: any = null;
+  public embeds: EmbedItem[] = [];
 
+  private generatedSlug = '';
+  private slugTouched = false;
   private readonly consoleStyle =
     'background-color: #244f7a; color: white; padding: 1em;';
 
@@ -73,6 +98,8 @@ export class PublicationComponent implements OnInit {
       if (!publicationId) {
         if (this.isAdmin && this.canChange) {
           this.editSwitch = true;
+          this.generatedSlug = '';
+          this.slugTouched = false;
           this.setSeo();
           return;
         }
@@ -90,6 +117,9 @@ export class PublicationComponent implements OnInit {
       }
 
       this.publication = normalizePublication(response.publication);
+      this.generatedSlug = this.publication.urltitle || '';
+      this.slugTouched = true;
+      this.refreshEmbedItems();
       this.setSeo();
     } catch (err: any) {
       this._webService.consoleLog(
@@ -112,6 +142,9 @@ export class PublicationComponent implements OnInit {
     try {
       this.publication.title = String(this.publication.title || '').trim();
       this.publication.text = String(this.publication.text || '').trim();
+      this.publication.seoTitle = String(this.publication.seoTitle || '').trim();
+      this.publication.seoDescription = String(this.publication.seoDescription || '').trim();
+      this.publication.seoKeywords = String(this.publication.seoKeywords || '').trim();
       this.publication.urltitle = normalizeSlug(
         this.publication.urltitle || this.publication.title
       );
@@ -151,6 +184,9 @@ export class PublicationComponent implements OnInit {
       }
 
       this.publication = normalizePublication(savedPublication);
+      this.generatedSlug = this.publication.urltitle || '';
+      this.slugTouched = true;
+      this.refreshEmbedItems();
       this.editSwitch = false;
       this.setSeo();
 
@@ -302,10 +338,29 @@ export class PublicationComponent implements OnInit {
           this.publicationRecordId(this.publication) === ''
         ? true
         : false;
+
+    if (this.editSwitch === false) {
+      this.refreshEmbedItems();
+    }
   }
 
   publicationId(publication: any): string {
     return publication?.urltitle || publication?.slug || publication?._id || publication?.id || '';
+  }
+
+  updateTitle(value: string): void {
+    this.publication.title = value;
+    if (this.publicationRecordId(this.publication) || this.slugTouched) {
+      return;
+    }
+
+    this.generatedSlug = normalizeSlug(value);
+    this.publication.urltitle = this.generatedSlug;
+  }
+
+  updateSlug(value: string): void {
+    this.slugTouched = true;
+    this.publication.urltitle = normalizeSlug(value);
   }
 
   publicationRecordId(publication: any): string {
@@ -321,9 +376,48 @@ export class PublicationComponent implements OnInit {
   }
 
   isImage(file: any): boolean {
-    return ['gif', 'jpeg', 'jpg', 'png', 'webp'].includes(
-      String(file?.type || '').toLowerCase()
-    );
+    return isImageFile(file);
+  }
+
+  openImagePreview(file: any): void {
+    if (file && this.isImage(file) && this.fileUrl(file)) {
+      this.previewImage = file;
+    }
+  }
+
+  closeImagePreview(): void {
+    this.previewImage = null;
+  }
+
+  fileKindLabel(file: any): string {
+    return fileKindLabel(file);
+  }
+
+  fileKindIconText(file: any): string {
+    return fileKindIconText(file);
+  }
+
+  fileKindIconClass(file: any): string {
+    return fileKindIconClass(file);
+  }
+
+  publicationFiles(): any[] {
+    return [
+      this.publication?.mainFile,
+      ...(Array.isArray(this.publication?.files) ? this.publication.files : []),
+    ].filter(Boolean);
+  }
+
+  publicationFileSummary(): string {
+    return fileKindSummary(this.publicationFiles());
+  }
+
+  publicationFileBadges(): FileKindBadge[] {
+    return fileKindBadges(this.publicationFiles());
+  }
+
+  trackFileBadge(index: number, badge: FileKindBadge): string {
+    return badge.kind || badge.icon || String(index);
   }
 
   Linkify(
@@ -342,6 +436,17 @@ export class PublicationComponent implements OnInit {
     });
   }
 
+  richContent(text: string): string {
+    const content = this.valuefy(text);
+    return hasHtmlMarkup(content)
+      ? content
+      : this.Linkify(content, '#29303b', '#4b8ff5');
+  }
+
+  trackEmbedItem(index: number, embed: EmbedItem): string {
+    return embedTrackKey(embed, index);
+  }
+
   insertionLines(): string {
     return Array.isArray(this.publication.insertions)
       ? this.publication.insertions.join('\n')
@@ -353,15 +458,124 @@ export class PublicationComponent implements OnInit {
       .split('\n')
       .map((line) => line.trim())
       .filter(Boolean);
+    this.refreshEmbedItems();
+  }
+
+  updateYoutube(value: string) {
+    this.publication.youtube = value;
+    this.refreshEmbedItems();
+  }
+
+  editorSteps(): Array<{ label: string; detail: string; complete: boolean }> {
+    const hasPublication = Boolean(this.publicationRecordId(this.publication));
+    return [
+      {
+        label: 'Datos',
+        detail: !this.publication.title
+          ? 'Falta título'
+          : this.publication.urltitle
+          ? 'Título y liga listos'
+          : 'Falta liga',
+        complete: Boolean(this.publication.title && this.publication.urltitle),
+      },
+      {
+        label: 'Contenido',
+        detail: this.publication.text ? `${this.readingMinutes()} min de lectura` : 'Falta contenido',
+        complete: Boolean(this.publication.text),
+      },
+      {
+        label: 'SEO',
+        detail: `${this.seoScore()}% completo`,
+        complete: this.seoScore() >= 75,
+      },
+      {
+        label: 'Multimedia',
+        detail: hasPublication ? this.publicationFileSummary() : 'Disponible al guardar',
+        complete: hasPublication && this.publicationFiles().length > 0,
+      },
+    ];
+  }
+
+  seoChecks(): Array<{ label: string; detail: string; complete: boolean }> {
+    const titleLength = this.effectiveSeoTitle().length;
+    const descriptionLength = this.effectiveSeoDescription().length;
+    const slug = this.publicationId(this.publication);
+    return [
+      {
+        label: 'Título para buscadores',
+        detail: `${titleLength} caracteres`,
+        complete: titleLength >= 35 && titleLength <= 70,
+      },
+      {
+        label: 'Descripción para compartir',
+        detail: `${descriptionLength} caracteres`,
+        complete: descriptionLength >= 90 && descriptionLength <= 165,
+      },
+      {
+        label: 'Liga legible',
+        detail: slug || 'Sin liga',
+        complete: Boolean(slug && slug.length <= 80),
+      },
+      {
+        label: 'Imagen social',
+        detail: this.fileUrl(this.publication.mainFile) ? 'Imagen principal lista' : 'Pendiente',
+        complete: Boolean(this.fileUrl(this.publication.mainFile)),
+      },
+    ];
+  }
+
+  seoScore(): number {
+    const checks = this.seoChecks();
+    const complete = checks.filter((check) => check.complete).length;
+    return Math.round((complete / checks.length) * 100);
+  }
+
+  contentWordCount(): number {
+    return stripHtml(this.publication.text || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+  }
+
+  readingMinutes(): number {
+    return Math.max(1, Math.ceil(this.contentWordCount() / 220));
+  }
+
+  shareUrl(): string {
+    const slug = this.publicationId(this.publication) || 'link-de-la-publicacion';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moyra.org';
+    return `${origin}/publication/${slug}`;
+  }
+
+  effectiveSeoTitle(): string {
+    return (
+      String(this.publication.seoTitle || '').trim() ||
+      (this.publication.title
+        ? `${this.publication.title} | Montaño & Reyes Arrazola S.C.`
+        : 'Publicación legal | Montaño & Reyes Arrazola S.C.')
+    );
+  }
+
+  effectiveSeoDescription(): string {
+    return (
+      String(this.publication.seoDescription || '').trim() ||
+      excerpt(this.publication.text || 'Publicación legal de Montaño & Reyes Arrazola S.C.', 155)
+    );
+  }
+
+  effectiveSeoKeywords(): string {
+    return (
+      String(this.publication.seoKeywords || '').trim() ||
+      `publicación legal, ${this.publication.title || 'derecho'}, asesoría legal`
+    );
   }
 
   private setSeo() {
     const isDetail = Boolean(this.publication.title);
-    const title = isDetail
-      ? `${this.publication.title} | Montaño & Reyes Arrazola S.C.`
-      : 'Nueva publicación | Montaño & Reyes Arrazola S.C.';
+    const title = isDetail ? this.effectiveSeoTitle() : 'Nueva publicación | Montaño & Reyes Arrazola S.C.';
     const description = isDetail
-      ? excerpt(this.publication.text, 155)
+      ? this.effectiveSeoDescription()
       : 'Publicación legal de Montaño & Reyes Arrazola S.C.';
     const image = this.fileUrl(this.publication.mainFile);
 
@@ -369,7 +583,7 @@ export class PublicationComponent implements OnInit {
     this._meta.updateTag({ name: 'description', content: description });
     this._meta.updateTag({
       name: 'keywords',
-      content: `publicación legal, ${this.publication.title || 'derecho'}, asesoría legal`,
+      content: this.effectiveSeoKeywords(),
     });
     this._meta.updateTag({ property: 'og:title', content: title });
     this._meta.updateTag({ property: 'og:description', content: description });
@@ -381,6 +595,13 @@ export class PublicationComponent implements OnInit {
       this._meta.updateTag({ property: 'og:image', content: image });
       this._meta.updateTag({ name: 'twitter:image', content: image });
     }
+  }
+
+  private refreshEmbedItems(): void {
+    this.embeds = buildEmbedItems([
+      this.publication.youtube,
+      ...(Array.isArray(this.publication.insertions) ? this.publication.insertions : []),
+    ]);
   }
 }
 

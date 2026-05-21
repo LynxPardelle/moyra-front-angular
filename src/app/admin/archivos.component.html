@@ -34,7 +34,7 @@
       <tbody>
         <tr *ngFor="let file of visibleFiles()">
           <td>
-            <a *ngIf="file.url" [href]="file.url" target="_blank" rel="noopener">
+            <a *ngIf="file.url" [href]="file.url" target="_blank" rel="noopener noreferrer">
               {{ file.title || file.location || file.id }}
             </a>
             <span *ngIf="!file.url">{{ file.title || file.location || file.id }}</span>

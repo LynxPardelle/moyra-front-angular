@@ -33,34 +33,61 @@
 
 .admin-config-card {
   background: #ffffff;
-  border-radius: 8px;
+  border-radius: 0;
+  box-shadow: 0 18px 40px rgba(41, 48, 59, 0.08);
   padding: 1.25rem;
 }
 
-.admin-config-card h2 {
+.admin-config-card__heading {
+  border-bottom: 1px solid rgba(41, 48, 59, 0.12);
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+}
+
+.admin-config-card__heading h2 {
   font-size: 1.05rem;
-  margin: 0 0 1rem;
+  margin: 0 0 0.35rem;
+}
+
+.admin-config-card__heading p {
+  color: rgba(41, 48, 59, 0.72);
+  line-height: 1.5;
+  margin: 0;
 }
 
 .admin-config-field {
   display: block;
-  margin-bottom: 1rem;
+  margin-bottom: 1.15rem;
 }
 
-.admin-config-field span {
+.admin-config-field__label {
   display: block;
   font-weight: 700;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.25rem;
+}
+
+.admin-config-field small {
+  color: rgba(41, 48, 59, 0.66);
+  display: block;
+  line-height: 1.45;
+  margin-bottom: 0.5rem;
 }
 
 .admin-config-field input,
 .admin-config-field textarea {
-  background: #f5f7fa;
-  border: 0;
-  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid rgba(41, 48, 59, 0.28);
+  border-radius: 0;
+  box-shadow:
+    0 8px 18px rgba(41, 48, 59, 0.06),
+    inset 4px 0 0 rgba(75, 143, 245, 0.62);
   color: #29303b;
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.45;
   min-height: 42px;
-  padding: 0.75rem;
+  padding: 0.8rem 0.9rem 0.8rem 1rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
   width: 100%;
 }
 
@@ -68,16 +95,26 @@
   min-height: 120px;
 }
 
+.admin-config-field input:hover,
+.admin-config-field textarea:hover {
+  border-color: rgba(75, 143, 245, 0.56);
+}
+
 .admin-config-field input:focus,
 .admin-config-field textarea:focus {
-  box-shadow: 0 0 0 3px rgba(75, 143, 245, 0.22);
+  background: #ffffff;
+  border-color: #4b8ff5;
+  box-shadow:
+    0 0 0 3px rgba(75, 143, 245, 0.22),
+    0 12px 24px rgba(41, 48, 59, 0.08),
+    inset 4px 0 0 #4b8ff5;
   outline: 0;
 }
 
 .admin-config-save {
   background: #29303b;
   border: 0;
-  border-radius: 6px;
+  border-radius: 0;
   color: #ffffff;
   font-weight: 700;
   min-height: 44px;

@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { AuthFacade } from '../store/auth/auth.facade';
 
 @Component({
   selector: 'app-admin',
@@ -11,7 +12,13 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 export class AdminComponent implements OnInit {
   public showAside: boolean = true;
 
-  constructor() { }
+  constructor(private _authFacade: AuthFacade, private _router: Router) {
+    effect(() => {
+      if (this._authFacade.hydrated() && !this._authFacade.isAdmin()) {
+        void this._router.navigate(['/login']);
+      }
+    });
+  }
 
   ngOnInit(): void {
   }

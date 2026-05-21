@@ -1,6 +1,6 @@
 <!-- Edit/Delete Buttons -->
 <div
-  class="position-fixed ank ank-top-15per ank-top-md-10per end-0"
+  class="we-floating-actions position-fixed ank ank-top-15per ank-top-md-10per end-0"
   *ngIf="
     canChange === true &&
     isAdmin === true
@@ -8,8 +8,9 @@
 >
   <button
     *ngIf="editSwitch == false"
-    class="btn bg-linkM text-bg1M mr-2"
+    class="we-icon-action"
     (click)="switchEdit()"
+    aria-label="Editar página Nosotros"
   >
     <svg
       width="1em"
@@ -31,41 +32,79 @@
 
   <button
     *ngIf="editSwitch == true"
-    class="btn bg-linkM text-bg1M mr-2 font-weight-normal float-right"
+    class="we-icon-action"
     (click)="switchEdit()"
+    aria-label="Cerrar edición"
   >
     X
   </button>
 </div>
 
-<img
-  *ngIf="main && main.mainImg && main.mainImg.location"
-  class="we-hero-image"
-  [src]="main.mainImg.publicUrl || (urlMain + 'get-file/' + main.mainImg.location)"
-  alt="{{ main.mainImg.title }}"
-/>
+<section class="we-page">
+  <header
+    class="we-hero"
+    [class.we-hero--solo]="!(main && main.mainImg && main.mainImg.location)"
+  >
+    <div class="we-hero__content">
+      <p class="we-eyebrow">Nosotros</p>
+      <h1>Experiencia legal con criterio práctico</h1>
+      <div
+        *ngIf="main && main.desc && main.desc !== ''"
+        class="we-hero__copy"
+        [innerHTML]="richContent(main.desc) | safeRichHtml"
+      ></div>
+    </div>
 
-<!-- Title -->
-<!-- <div class="w-75 mx-auto mt-5 titleMontano text-decoration-none">
-  <h1 class="text-center h2">
-    Montaño &
-    <wbr />
-    Reyes Arrazola,
-    <wbr />
-    S.C.
-  </h1>
-  <hr class="w-100 d-block mx-auto my-5" />
-</div> -->
+    <figure
+      *ngIf="main && main.mainImg && main.mainImg.location"
+      class="we-hero__media"
+    >
+      <img
+        [src]="main.mainImg.publicUrl || (urlMain + 'get-file/' + main.mainImg.location)"
+        alt="{{ main.mainImg.title }}"
+      />
+    </figure>
+  </header>
 
-<!-- Description -->
-<div
-  *ngIf="main && main.desc && main.desc !== ''"
-  class="w-75 mx-auto mt-5 text-center"
-  [innerHTML]="Linkify(this.valuefy(main.desc), '#000', '#4b8ff5') | safeHtml"
-></div>
+  <section class="we-principles" aria-label="Criterios de trabajo">
+    <article>
+      <h2>{{ text('wePrinciple1Title', 'Certeza jurídica') }}</h2>
+      <p>
+        {{
+          text(
+            'wePrinciple1Copy',
+            'Instrumentos legales claros para proteger bienes, derechos y obligaciones.'
+          )
+        }}
+      </p>
+    </article>
+    <article>
+      <h2>{{ text('wePrinciple2Title', 'Atención especializada') }}</h2>
+      <p>
+        {{
+          text(
+            'wePrinciple2Copy',
+            'Equipo actualizado en las áreas legales que sostienen decisiones relevantes.'
+          )
+        }}
+      </p>
+    </article>
+    <article>
+      <h2>{{ text('wePrinciple3Title', 'Criterio actual') }}</h2>
+      <p>
+        {{
+          text(
+            'wePrinciple3Copy',
+            'Soluciones con técnicas transparentes y enfoque práctico para empresas y personas.'
+          )
+        }}
+      </p>
+    </article>
+  </section>
+</section>
 
 <!-- Edit Main Section -->
-<section *ngIf="editSwitch === true">
+<section class="we-admin-editor" *ngIf="editSwitch === true">
   <h3 class="ank ank-text-titleM text-center mt-5">
     Edición de configuración del sitio
   </h3>
@@ -75,18 +114,27 @@
     <label class="ank ank-text-textM mb-1 d-block" for="desc"
       >Descripción</label
     >
-    <textarea
-      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
-      type="text"
-      name="desc"
-      #desc="ngModel"
-      [(ngModel)]="main.desc"
-      placeholder="Descripción"
-      required
-    ></textarea>
+    @defer (when editSwitch) {
+      <app-rich-text-editor
+        label="Descripción"
+        help="Texto principal de la página Nosotros."
+        placeholder="Descripción"
+        [(value)]="main.desc"
+      ></app-rich-text-editor>
+    } @placeholder {
+      <textarea
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
+        type="text"
+        name="desc"
+        #desc="ngModel"
+        [(ngModel)]="main.desc"
+        placeholder="Descripción"
+        required
+      ></textarea>
+    }
     <span
       class="ank ank-text-titleM font-weight-bold"
-      *ngIf="!desc.valid && desc.touched"
+      *ngIf="!main.desc"
     >
       La descripción es obligatoria.
     </span>
@@ -104,6 +152,13 @@
       placeholder="FaceBook"
       required
     />
+    <a
+      *ngIf="main.mail"
+      class="admin-link-preview"
+      [href]="'mailto:' + main.mail"
+    >
+      {{ 'mailto:' + main.mail }}
+    </a>
   </div>
 
   <!-- WhatsApp Edit -->
@@ -314,19 +369,20 @@
 </section>
 
 <!-- EquipMembers -->
-<section *ngIf="equips">
-  <hr class="w-75 d-block mx-auto my-5" />
+<section class="we-team" *ngIf="equips">
+  <div class="we-team__heading">
+    <p class="we-eyebrow">Equipo</p>
+    <h2>Profesionales especializados</h2>
+  </div>
 
-  <div
-    class="d-flex flex-column flex-sm-row flex-wrap justify-content-evenly align-items-center"
-  >
-    <div
+  <div class="we-team__grid">
+    <article
       *ngFor="let equip of equips"
-      class="mb-5 mx-auto position-relative ank ank-w-300px ank-w-sm-75per px-2"
+      class="we-team-card"
     >
       <!-- Edit/Delete Buttons -->
       <div
-        class="position-absolute ank ank-top-15per ank-top-md-10per end-0"
+        class="we-team-card__actions"
         *ngIf="
           canChange === true &&
           isAdmin === true &&
@@ -334,8 +390,9 @@
         "
       >
         <button
-          class="btn ank ank-btn-linkM ank-text-bg1M mr-2"
+          class="we-icon-action"
           (click)="switchEquip(equip)"
+          aria-label="Editar miembro del equipo"
         >
           <svg
             width="1em"
@@ -355,7 +412,11 @@
           </svg>
         </button>
 
-        <button class="btn btn-warning mr-2" (click)="deleteEquip(equip._id)">
+        <button
+          class="we-icon-action we-icon-action--danger"
+          (click)="deleteEquip(equip._id)"
+          aria-label="Eliminar miembro del equipo"
+        >
           <svg
             width="1em"
             height="1em"
@@ -372,30 +433,33 @@
         </button>
       </div>
 
-      <h3 class="text-center w-75 d-block mx-auto">
-        {{ equip.name }}
-      </h3>
-
-      <img
+      <figure
         *ngIf="equip.photo && equip.photo.location"
-        class="ank ank-w-75per ank-wmn-250px ank-wmx-500px ank-h-300px mx-auto d-block my-4 obj-fit-cover"
-        [src]="equip.photo.publicUrl || (urlMain + 'get-file/' + equip.photo.location)"
-        alt="{{ equip.photo.title }}"
-      />
+        class="we-team-card__media"
+      >
+        <img
+          [src]="equip.photo.publicUrl || (urlMain + 'get-file/' + equip.photo.location)"
+          alt="{{ equip.photo.title }}"
+        />
+      </figure>
 
-      <div
-        *ngIf="equip && equip.desc && equip.desc !== ''"
-        class="ank ank-w-275px ank-w-md-100per mx-auto d-block text-center"
-        [innerHTML]="
-          Linkify(this.valuefy(equip.desc), '#000', '#4b8ff5') | safeHtml
-        "
-      ></div>
-    </div>
+      <div class="we-team-card__body">
+        <h3>{{ equip.name }}</h3>
+
+        <div
+          *ngIf="equip && equip.desc && equip.desc !== ''"
+          class="we-team-card__bio"
+          [innerHTML]="
+            richContent(equip.desc) | safeRichHtml
+          "
+        ></div>
+      </div>
+    </article>
   </div>
 </section>
 
 <!-- Edit Section -->
-<section class="my-3" *ngIf="editSwitch === true">
+<section class="we-admin-editor my-3" *ngIf="editSwitch === true">
   <h3 class="ank ank-text-titleM text-center">
     <ng-container *ngIf="equip._id === ''; else elseEquipIdTemplate">
       Crear
@@ -429,18 +493,27 @@
     <label class="ank ank-text-textM mb-1 d-block" for="desc"
       >Descripción</label
     >
-    <textarea
-      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
-      type="text"
-      name="desc"
-      #desc="ngModel"
-      [(ngModel)]="equip.desc"
-      placeholder="Descripción"
-      required
-    ></textarea>
+    @defer (when editSwitch) {
+      <app-rich-text-editor
+        label="Descripción"
+        help="Perfil del miembro del equipo. Puedes usar listas, negritas y enlaces."
+        placeholder="Descripción"
+        [(value)]="equip.desc"
+      ></app-rich-text-editor>
+    } @placeholder {
+      <textarea
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
+        type="text"
+        name="desc"
+        #desc="ngModel"
+        [(ngModel)]="equip.desc"
+        placeholder="Descripción"
+        required
+      ></textarea>
+    }
     <span
       class="ank ank-text-titleM font-weight-bold"
-      *ngIf="!desc.valid && desc.touched"
+      *ngIf="!equip.desc"
     >
       La descripción es obligatoria.
     </span>

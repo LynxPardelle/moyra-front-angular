@@ -8,10 +8,11 @@ import { MainService } from '../../../services/main.service';
 import { PublicationService } from '../../../services/publication.service';
 import { ServicioService } from '../../../services/servicio.service';
 import { WebService } from '../../../services/web.service';
+import { PublicationsComponent } from '../../publication/publications/publications.component';
 
 @Component({
   selector: 'app-home',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, PublicationsComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
 })

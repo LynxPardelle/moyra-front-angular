@@ -1,14 +1,15 @@
-import { Component, DoCheck, HostListener, Inject, OnInit, PLATFORM_ID } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Component, HostListener, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
 import { NgxAngoraService } from 'ngx-angora-css';
+import { Subscription, filter } from 'rxjs';
 
 // Services
-import { ApiRuntime, GlobalMain, isAdminIdentity } from './services/global';
+import { ApiRuntime, GlobalMain } from './services/global';
 import { MainService } from './services/main.service';
-import { UserService } from './services/user.service';
 import { WebService } from './services/web.service';
 import { SharedService } from './services/shared.service';
+import { AuthFacade } from './store/auth/auth.facade';
 
 // Models
 import { Main } from './models/main';
@@ -18,7 +19,7 @@ import { Main } from './models/main';
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
-export class App implements DoCheck, OnInit {
+export class App implements OnDestroy, OnInit {
   public identity: any;
   public main!: Main;
 
@@ -56,19 +57,29 @@ export class App implements DoCheck, OnInit {
   private cssCreateTimer?: ReturnType<typeof setTimeout>;
   private lastCssCreateAt = 0;
   private stylesheetsReady?: Promise<void>;
+  private routeEventsSubscription?: Subscription;
 
   constructor(
     private _mainService: MainService,
-    private _userService: UserService,
 
     private _webService: WebService,
     private _angora: NgxAngoraService,
     private _location: Location,
+    private _router: Router,
 
     private _sharedService: SharedService,
+    private _authFacade: AuthFacade,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
     this.windowWidth = isPlatformBrowser(this.platformId) ? window.innerWidth : 0;
+    this._authFacade.hydrate();
+    this.routeEventsSubscription = this._router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.shareMain();
+        this.scheduleCssCreate(true);
+      });
+
     _sharedService.changeEmitted$.subscribe((sharedContent) => {
       if (
         typeof sharedContent === 'object' &&
@@ -93,13 +104,6 @@ export class App implements DoCheck, OnInit {
       }
     });
 
-    // Identity
-    this.identity = this._userService.getIdentity();
-    this._webService.consoleLog(
-      this.identity,
-      this.document + ' 58',
-      this.customConsoleCSS
-    );
     //ank
     this._angora.pushColors(this.colors);
     (async () => {
@@ -208,15 +212,18 @@ export class App implements DoCheck, OnInit {
     this.scheduleCssCreate(true);
   }
 
-  ngDoCheck(): void {
-    this.identity = this._userService.getIdentity();
-    this._sharedService.emitChange({
-      from: 'app',
-      to: 'all',
-      property: 'main',
-      thing: this.main,
-    });
-    this.scheduleCssCreate();
+  @HostListener('window:storage', ['$event'])
+  onStorageChange(event: StorageEvent) {
+    if (event.key === 'identity' || event.key === 'token') {
+      this._authFacade.hydrate();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.routeEventsSubscription?.unsubscribe();
+    if (this.cssCreateTimer) {
+      clearTimeout(this.cssCreateTimer);
+    }
   }
 
   async testing() {
@@ -229,7 +236,7 @@ export class App implements DoCheck, OnInit {
   }
 
   isAdminUser(): boolean {
-    return isAdminIdentity(this.identity);
+    return this._authFacade.isAdmin();
   }
 
   headerLogoUrl(): string {
@@ -340,5 +347,18 @@ export class App implements DoCheck, OnInit {
     return pathOrUrl.startsWith('/')
       ? `${apiOrigin}${pathOrUrl}`
       : `${ApiRuntime.url}/${pathOrUrl.replace(/^\/+/, '')}`;
+  }
+
+  private shareMain(): void {
+    if (!this.main) {
+      return;
+    }
+
+    this._sharedService.emitChange({
+      from: 'app',
+      to: 'all',
+      property: 'main',
+      thing: this.main,
+    });
   }
 }
