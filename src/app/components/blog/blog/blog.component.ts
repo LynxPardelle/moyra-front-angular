@@ -12,8 +12,8 @@ import { WebService } from '../../../services/web.service';
 
 // Models
 import { Article, ArticleSection } from '../../../models/article';
-import { SafeEmbedUrlPipe } from '../../../pipes/safe-embed-url';
 import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
+import { SafeEmbedFrameComponent } from '../../web-utility/safe-embed-frame/safe-embed-frame.component';
 import { buildEmbedItems, EmbedItem, embedTrackKey } from '../../../utils/embeds';
 import { FileKindBadge, fileKindBadges, fileKindSummary } from '../../../utils/file-kind';
 import { hasHtmlMarkup } from '../../../utils/rich-content';
@@ -36,7 +36,7 @@ type ArticleListItem = {
 
 @Component({
   selector: 'app-blog',
-  imports: [CommonModule, RouterLink, SafeRichHtmlPipe, SafeEmbedUrlPipe],
+  imports: [CommonModule, RouterLink, SafeRichHtmlPipe, SafeEmbedFrameComponent],
   templateUrl: './blog.component.html',
   styleUrls: ['./blog.component.scss'],
 })

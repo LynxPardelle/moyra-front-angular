@@ -12,7 +12,6 @@ import { WebService } from '../../../services/web.service';
 
 // Models
 import { Article, ArticleSection } from '../../../models/article';
-import { SafeEmbedUrlPipe } from '../../../pipes/safe-embed-url';
 import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { renderTemplateExpressions } from '../../../utils/template-value';
 import { buildEmbedItems, EmbedItem, embedTrackKey } from '../../../utils/embeds';
@@ -27,7 +26,9 @@ import {
 } from '../../../utils/file-kind';
 import { hasHtmlMarkup } from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
+import { AiAssistantPanelComponent } from '../../web-utility/ai-assistant-panel/ai-assistant-panel.component';
 import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
+import { SafeEmbedFrameComponent } from '../../web-utility/safe-embed-frame/safe-embed-frame.component';
 
 // Extras
 import Swal from 'sweetalert2';
@@ -39,8 +40,9 @@ import Swal from 'sweetalert2';
     FormsModule,
     RouterLink,
     SafeRichHtmlPipe,
-    SafeEmbedUrlPipe,
+    SafeEmbedFrameComponent,
     FileUploaderComponent,
+    AiAssistantPanelComponent,
     RichTextEditorComponent,
   ],
   templateUrl: './article.component.html',
@@ -691,6 +693,29 @@ export class ArticleComponent implements OnInit {
     const slug = this.articleId(this.article) || 'link-del-articulo';
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moyra.org';
     return `${origin}/articulo/${slug}`;
+  }
+
+  aiContext(): Record<string, unknown> {
+    return {
+      title: this.article.title,
+      slug: this.article.urltitle,
+      intro: this.article.intro,
+      outro: this.article.outro,
+      tags: this.article.tags,
+      seoTitle: this.article.seoTitle,
+      seoDescription: this.article.seoDescription,
+      seoKeywords: this.article.seoKeywords,
+      seoScore: this.seoScore(),
+      shareUrl: this.shareUrl(),
+      readingMinutes: this.readingMinutes(),
+      fileSummary: this.articleFileSummary(),
+      sections: this.articleSections.map((section) => ({
+        title: section.title,
+        text: section.text,
+        insertions: Array.isArray(section.insertions) ? section.insertions : [],
+        files: Array.isArray(section.files) ? section.files.length : 0,
+      })),
+    };
   }
 
   effectiveSeoTitle(): string {

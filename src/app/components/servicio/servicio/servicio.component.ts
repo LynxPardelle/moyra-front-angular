@@ -16,6 +16,7 @@ import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { renderTemplateExpressions } from '../../../utils/template-value';
 import { hasHtmlMarkup } from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
+import { AiAssistantPanelComponent } from '../../web-utility/ai-assistant-panel/ai-assistant-panel.component';
 import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
 
 // Extras
@@ -27,6 +28,7 @@ import Swal from 'sweetalert2';
     FormsModule,
     SafeRichHtmlPipe,
     FileUploaderComponent,
+    AiAssistantPanelComponent,
     RichTextEditorComponent,
   ],
   templateUrl: './servicio.component.html',
@@ -587,6 +589,20 @@ export class ServicioComponent implements OnInit {
     }
 
     return `${window.location.origin}/solucion/${slug}`;
+  }
+
+  aiContext(): Record<string, unknown> {
+    return {
+      title: this.servicio.title,
+      slug: this.servicio.urltitle,
+      description: this.servicio.desc,
+      tags: this.servicio.tags,
+      seoTitle: this.servicio.seoTitle,
+      seoDescription: this.servicio.seoDescription,
+      seoKeywords: this.servicio.seoKeywords,
+      shareUrl: this.serviceUrl(),
+      hasMainImage: Boolean(this.servicio.mainImg),
+    };
   }
 
   effectiveSeoTitle(): string {

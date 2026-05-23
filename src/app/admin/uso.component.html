@@ -1,0 +1,153 @@
+<section class="admin-usage-page">
+  <header class="admin-usage-page__header">
+    <p>Administración</p>
+    <h1>Uso y costos</h1>
+    <span>Seguimiento de IA, búsquedas en internet y costos operativos.</span>
+  </header>
+
+  <section class="admin-usage-toolbar">
+    <label class="admin-usage-field">
+      <span>Desde</span>
+      <input type="date" [(ngModel)]="from" />
+    </label>
+
+    <label class="admin-usage-field">
+      <span>Hasta</span>
+      <input type="date" [(ngModel)]="to" />
+    </label>
+
+    <button class="admin-usage-button" type="button" (click)="loadDashboard()">
+      Consultar
+    </button>
+  </section>
+
+  <div *ngIf="errorMessage" class="admin-usage-alert">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loading" class="admin-usage-card">
+    Cargando uso y costos...
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <section class="admin-usage-grid">
+      <article class="admin-usage-card admin-usage-metric">
+        <span>Solicitudes IA</span>
+        <strong>{{ usage?.totalRequests || 0 }}</strong>
+        <small>{{ usage?.failedRequests || 0 }} fallidas</small>
+      </article>
+
+      <article class="admin-usage-card admin-usage-metric">
+        <span>Costo estimado IA</span>
+        <strong>{{ formatUsd(usage?.estimatedModelCostUsd) }}</strong>
+        <small>Promedio {{ formatUsd(usage?.averageCostPerRequestUsd) }}</small>
+      </article>
+
+      <article class="admin-usage-card admin-usage-metric">
+        <span>Tokens</span>
+        <strong>{{ (usage?.totalInputTokens || 0) + (usage?.totalOutputTokens || 0) }}</strong>
+        <small>
+          Entrada {{ usage?.totalInputTokens || 0 }} · salida {{ usage?.totalOutputTokens || 0 }}
+        </small>
+      </article>
+
+      <article class="admin-usage-card admin-usage-metric">
+        <span>Investigación web</span>
+        <strong>{{ usage?.webResearch?.totalRequests || 0 }}</strong>
+        <small>{{ formatUsd(usage?.webResearch?.estimatedTotalCostUsd) }} estimados</small>
+      </article>
+    </section>
+
+    <section class="admin-usage-card admin-usage-costs">
+      <div class="admin-usage-card__heading">
+        <div>
+          <h2>Costos AWS</h2>
+          <p>
+            Los costos de AWS se muestran con caché. Cost Explorer puede tener desfase y no es
+            un medidor en tiempo real.
+          </p>
+        </div>
+
+        <button
+          class="admin-usage-button admin-usage-button--secondary"
+          type="button"
+          [disabled]="refreshingCosts"
+          (click)="refreshAwsCosts()"
+        >
+          {{ refreshingCosts ? 'Refrescando...' : 'Refrescar ahora' }}
+        </button>
+      </div>
+
+      <div class="admin-usage-settings">
+        <label class="admin-usage-field">
+          <span>Intervalo de actualización</span>
+          <select [(ngModel)]="selectedInterval">
+            <option *ngFor="let interval of intervals" [ngValue]="interval">
+              {{ interval }}
+            </option>
+          </select>
+        </label>
+
+        <button
+          class="admin-usage-button"
+          type="button"
+          [disabled]="savingInterval"
+          (click)="saveRefreshInterval()"
+        >
+          {{ savingInterval ? 'Guardando...' : 'Guardar intervalo' }}
+        </button>
+      </div>
+
+      <div class="admin-usage-summary">
+        <span>Estado: {{ awsCost?.status || 'sin datos' }}</span>
+        <span>Total actual: {{ formatUsd(awsCost?.totalUsd) }}</span>
+        <span>Mes anterior: {{ formatUsd(awsCost?.previousMonthTotalUsd) }}</span>
+      </div>
+
+      <table class="admin-usage-table" *ngIf="(awsCost?.services || []).length > 0">
+        <thead>
+          <tr>
+            <th>Servicio</th>
+            <th>Costo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let serviceCost of awsCost?.services">
+            <td>{{ serviceCost.service }}</td>
+            <td>{{ formatUsd(serviceCost.amountUsd) }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="admin-usage-note">
+        Refrescar manualmente puede generar una solicitud cobrada por AWS Cost Explorer.
+      </p>
+    </section>
+
+    <section class="admin-usage-card">
+      <div class="admin-usage-card__heading">
+        <div>
+          <h2>Uso por superficie</h2>
+          <p>Ayuda a decidir si el asistente se usa más en blog, publicaciones o contenido público.</p>
+        </div>
+      </div>
+
+      <table class="admin-usage-table" *ngIf="(usage?.bySurface || []).length > 0">
+        <thead>
+          <tr>
+            <th>Área</th>
+            <th>Solicitudes</th>
+            <th>Costo estimado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let surface of usage?.bySurface">
+            <td>{{ surface.label }}</td>
+            <td>{{ surface.requests }}</td>
+            <td>{{ formatUsd(surface.estimatedCostUsd) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </ng-container>
+</section>

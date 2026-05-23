@@ -1,0 +1,94 @@
+<section class="ai-assistant-panel">
+  <div class="ai-assistant-panel__heading">
+    <div>
+      <p>Asistente IA</p>
+      <h2>Mejorar contenido SEO</h2>
+      <span>Las sugerencias deben revisarse por un abogado antes de publicarse.</span>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="ai-assistant-panel__alert">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="statusMessage" class="ai-assistant-panel__notice">
+    {{ statusMessage }}
+  </div>
+
+  <div class="ai-assistant-panel__grid">
+    <label class="ai-assistant-panel__field">
+      <span>Qué quieres generar</span>
+      <select [(ngModel)]="selectedAction" [ngModelOptions]="{ standalone: true }">
+        <option *ngFor="let action of actions" [ngValue]="action.value">
+          {{ action.label }}
+        </option>
+      </select>
+    </label>
+
+    <label class="ai-assistant-panel__field">
+      <span>Modelo</span>
+      <select [(ngModel)]="selectedModel" [ngModelOptions]="{ standalone: true }">
+        <option *ngFor="let model of catalog?.models || []" [ngValue]="model.id">
+          {{ model.label }}
+        </option>
+      </select>
+    </label>
+  </div>
+
+  <p *ngIf="selectedModelInfo" class="ai-assistant-panel__model-note">
+    {{ selectedModelInfo.description }}
+    Entrada {{ formatUsd(selectedModelInfo.inputUsdPerMillionTokens) }} / 1M tokens,
+    salida {{ formatUsd(selectedModelInfo.outputUsdPerMillionTokens) }} / 1M tokens.
+  </p>
+
+  <label class="ai-assistant-panel__field">
+    <span>Instrucción adicional</span>
+    <textarea
+      [(ngModel)]="instruction"
+      [ngModelOptions]="{ standalone: true }"
+      rows="3"
+      placeholder="Ej. Más formal, enfocado en empresas, más claro para clientes."
+    ></textarea>
+  </label>
+
+  <label *ngIf="webResearchAvailable" class="ai-assistant-panel__toggle">
+    <input
+      type="checkbox"
+      [(ngModel)]="webResearch"
+      [ngModelOptions]="{ standalone: true }"
+    />
+    <span>
+      Investigar en internet
+      <small>
+        Incrementa costo.
+        {{ formatUsd(catalog?.webSearch?.priceUsdPerThousandCalls) }} / 1k búsquedas.
+      </small>
+    </span>
+  </label>
+
+  <p *ngIf="!webResearchAvailable" class="ai-assistant-panel__model-note">
+    Investigación en internet oculta por ahora: el primer pase usa Bedrock y no tiene proveedor de
+    búsqueda integrado en este ambiente.
+  </p>
+
+  <button
+    class="ai-assistant-panel__button"
+    type="button"
+    [disabled]="loading || !selectedModel || !assistantEnabled"
+    (click)="generate()"
+  >
+    {{
+      loading
+        ? 'Generando...'
+        : assistantEnabled
+          ? 'Generar sugerencia'
+          : 'Backend de IA pendiente'
+    }}
+  </button>
+
+  <label *ngIf="outputText" class="ai-assistant-panel__field ai-assistant-panel__field--output">
+    <span>Sugerencia editable</span>
+    <textarea [(ngModel)]="outputText" [ngModelOptions]="{ standalone: true }" rows="8"></textarea>
+    <small>Costo estimado de esta solicitud: {{ formatUsd(estimatedCostUsd) }}</small>
+  </label>
+</section>

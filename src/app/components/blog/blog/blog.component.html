@@ -80,24 +80,7 @@
             *ngFor="let embed of item.embeds; trackBy: trackEmbedItem"
             class="article-card__embed"
           >
-            <iframe
-              *ngIf="embed.kind !== 'link'; else articleRelatedLink"
-              [class.article-card__embed-frame--external]="embed.kind === 'iframe'"
-              [src]="embed.embedUrl | safeEmbedUrl"
-              [title]="embed.title"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-              allowfullscreen
-              sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
-              loading="eager"
-              referrerpolicy="strict-origin-when-cross-origin"
-              [style.height.px]="embed.height"
-            ></iframe>
-            <ng-template #articleRelatedLink>
-              <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
-                <span>{{ embed.title }}</span>
-                <small>{{ embed.url }}</small>
-              </a>
-            </ng-template>
+            <safe-embed-frame [embed]="embed" [compact]="true"></safe-embed-frame>
           </article>
         </section>
 

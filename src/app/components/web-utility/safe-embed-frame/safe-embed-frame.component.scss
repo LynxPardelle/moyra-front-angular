@@ -1,0 +1,43 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.safe-embed-frame {
+  aspect-ratio: 16 / 9;
+  background: #eef3f8;
+  border: 0;
+  display: block;
+  width: 100%;
+}
+
+.safe-embed-frame--external {
+  aspect-ratio: auto;
+  max-height: min(70vh, 640px);
+  min-height: min(58vh, 380px);
+}
+
+.safe-embed-frame--compact {
+  max-height: 300px;
+}
+
+.safe-embed-frame--external.safe-embed-frame--compact {
+  min-height: 240px;
+}
+
+.safe-embed-link {
+  color: #29303b;
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem;
+  text-decoration: none;
+}
+
+.safe-embed-link small {
+  color: #4b8ff5;
+  overflow-wrap: anywhere;
+}
+
+.safe-embed-link--compact {
+  padding: 0.75rem;
+}

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MainService } from '../services/main.service';
+import { AiAssistantPanelComponent } from '../components/web-utility/ai-assistant-panel/ai-assistant-panel.component';
 import Swal from 'sweetalert2';
 
 type ConfigField = {
@@ -226,7 +227,7 @@ const PAGE_TEXT_FIELDS: ConfigField[] = [
 
 @Component({
   selector: 'admin-configuraciones',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AiAssistantPanelComponent],
   templateUrl: './configuraciones.component.html',
   styleUrls: ['./configuraciones.component.scss'],
 })
@@ -296,6 +297,22 @@ export class ConfiguracionesComponent implements OnInit {
     } finally {
       this.saving = false;
     }
+  }
+
+  aiContext(): Record<string, unknown> {
+    return {
+      pageTexts: this.pageTexts,
+      groups: this.groupedFields.map((group) => ({
+        section: group.section,
+        description: group.description,
+        fields: group.fields.map((field) => ({
+          key: field.key,
+          label: field.label,
+          description: field.description,
+          value: this.pageTexts[field.key],
+        })),
+      })),
+    };
   }
 
   private groupFields(): ConfigFieldGroup[] {

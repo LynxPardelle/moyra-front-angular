@@ -12,7 +12,6 @@ import { WebService } from '../../../services/web.service';
 
 // Models
 import { Publication } from '../../../models/publication';
-import { SafeEmbedUrlPipe } from '../../../pipes/safe-embed-url';
 import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { renderTemplateExpressions } from '../../../utils/template-value';
 import { buildEmbedItems, EmbedItem, embedTrackKey } from '../../../utils/embeds';
@@ -27,7 +26,9 @@ import {
 } from '../../../utils/file-kind';
 import { hasHtmlMarkup } from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
+import { AiAssistantPanelComponent } from '../../web-utility/ai-assistant-panel/ai-assistant-panel.component';
 import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
+import { SafeEmbedFrameComponent } from '../../web-utility/safe-embed-frame/safe-embed-frame.component';
 
 // Extras
 import Swal from 'sweetalert2';
@@ -39,8 +40,9 @@ import Swal from 'sweetalert2';
     FormsModule,
     RouterLink,
     SafeRichHtmlPipe,
-    SafeEmbedUrlPipe,
+    SafeEmbedFrameComponent,
     FileUploaderComponent,
+    AiAssistantPanelComponent,
     RichTextEditorComponent,
   ],
   templateUrl: './publication.component.html',
@@ -546,6 +548,25 @@ export class PublicationComponent implements OnInit {
     const slug = this.publicationId(this.publication) || 'link-de-la-publicacion';
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://moyra.org';
     return `${origin}/publication/${slug}`;
+  }
+
+  aiContext(): Record<string, unknown> {
+    return {
+      title: this.publication.title,
+      slug: this.publication.urltitle,
+      text: this.publication.text,
+      youtube: this.publication.youtube,
+      insertions: this.publication.insertions,
+      seoTitle: this.publication.seoTitle,
+      seoDescription: this.publication.seoDescription,
+      seoKeywords: this.publication.seoKeywords,
+      seoScore: this.seoScore(),
+      shareUrl: this.shareUrl(),
+      readingMinutes: this.readingMinutes(),
+      fileSummary: this.publicationFileSummary(),
+      files: Array.isArray(this.publication.files) ? this.publication.files.length : 0,
+      hasMainFile: Boolean(this.fileUrl(this.publication.mainFile)),
+    };
   }
 
   effectiveSeoTitle(): string {

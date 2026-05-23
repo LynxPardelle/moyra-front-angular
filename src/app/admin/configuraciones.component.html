@@ -8,6 +8,11 @@
   <div *ngIf="loading" class="admin-config-card">Cargando configuraciones...</div>
 
   <form *ngIf="!loading" class="admin-config-form" (ngSubmit)="save()">
+    <app-ai-assistant-panel
+      surface="configurations"
+      [context]="aiContext()"
+    ></app-ai-assistant-panel>
+
     <section *ngFor="let group of groupedFields" class="admin-config-card">
       <div class="admin-config-card__heading">
         <h2>{{ group.section }}</h2>

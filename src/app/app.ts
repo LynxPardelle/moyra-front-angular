@@ -81,6 +81,7 @@ export class App implements OnDestroy, OnInit {
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(() => {
         this.shareMain();
+        this.scrollMainToTop();
         this.scheduleCssCreate(true);
       });
 
@@ -390,6 +391,18 @@ export class App implements OnDestroy, OnInit {
       to: 'all',
       property: 'main',
       thing: this.main,
+    });
+  }
+
+  private scrollMainToTop(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    document.querySelector<HTMLElement>('.site-main')?.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'auto',
     });
   }
 }

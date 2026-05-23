@@ -11,6 +11,7 @@ import { AdminGuard } from './admin.guard';
 import { ArchivosComponent } from './archivos.component';
 import { ConfiguracionesComponent } from './configuraciones.component';
 import { UsuariosComponent } from './usuarios.component';
+import { UsoComponent } from './uso.component';
 
 /* PublicationComponents */
 import { PublicationsComponent } from '../components/publication/publications/publications.component';
@@ -40,6 +41,7 @@ const routes: Routes = [
       // Main
       { path: 'we', component: WeComponent },
       { path: 'configuraciones', component: ConfiguracionesComponent },
+      { path: 'uso', component: UsoComponent },
       { path: 'archivos', component: ArchivosComponent },
       { path: 'usuarios/nuevo', component: UsuariosComponent },
 

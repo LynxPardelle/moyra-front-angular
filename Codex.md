@@ -13,8 +13,11 @@ This file is for durable agent memory only. Dated implementation history belongs
 - Angular app with serverless API v2 routing from `src/app/services/global.ts`.
 - Admin authentication is centralized in `src/app/store/auth/` using NgRx store/effects.
 - Admin guards must not trust raw `localStorage` identity. They derive admin access from validated Cognito claims and should redirect to login with `returnUrl` when auth fails.
+- The global site brand/header is visual identity only and must not use `h1`/`h2`; each routed page owns its own document heading hierarchy.
+- Header and footer remain fixed; `.site-main` is the scroll container between them so visible content does not sit under fixed chrome.
 - Rich text editing is shared through the Quill-based rich text editor. Long-form content should preserve headings, emphasis, links, lists, quotes, YouTube embeds, and safe insertions.
 - Publications and home should reuse the same publication-card presentation where practical.
+- Local embed QA should run under `localhost`, not `127.0.0.1`; some YouTube privacy embeds show unavailable under `127.0.0.1`. The browser entry redirects `127.0.0.1` to `localhost` for local development.
 
 ## Security Notes
 
@@ -23,8 +26,14 @@ This file is for durable agent memory only. Dated implementation history belongs
 - `POST /api/v2/auth/refresh` rotates short-lived Cognito access/id tokens from the cookie.
 - `POST /api/v2/auth/logout` clears the refresh cookie.
 - Refresh/logout must reject untrusted browser origins through `ALLOWED_CORS_ORIGINS`.
-- Secure external iframes are allowed only through validated insertion fields, not arbitrary rich HTML.
+- Localhost/127 frontend sessions against the remote API should not use credentialed auth cookies. The browser can block login when the API lacks `access-control-allow-credentials`; local development should authenticate with the returned token and skip refresh-cookie calls.
+- Secure external iframes are allowed only through validated insertion fields, not arbitrary rich HTML. Use `SafeEmbedFrameComponent` with static iframe `allow`/`sandbox` branches; Angular strips/blocks dynamic bindings for these iframe attributes at runtime.
+- YouTube embeds should keep the privacy host (`youtube-nocookie.com`) and should not render with a `sandbox` attribute. Keep sandboxing on approved non-YouTube iframes such as Google Forms.
 - AI usage dashboards should avoid background Cost Explorer polling. Use cached AWS cost snapshots and lazy refresh only when `/admin/uso` is opened after the configured interval expires.
+- Phase 2 AI cost tracking uses `/admin/uso` plus `AiUsageService`. On 2026-05-21 CT, `MoyraCloud-development` was deployed with `/api/v2/ai/models`, `/api/v2/ai/assist`, AI usage, Cost Explorer settings, and Bedrock permissions; `GET /api/v2/ai/models` returned the Bedrock catalog locally. Current Bedrock generation may still return `BEDROCK_TOKEN_QUOTA_EXCEEDED` when the AWS account exhausts its daily/temporary token quota.
+- The shared `AiAssistantPanelComponent` is the admin-facing first pass for Blog, Publicaciones, Soluciones, and Configuraciones. It generates editable suggestions only; it must not auto-save or auto-publish generated text.
+- Real AI generation uses Amazon Bedrock Runtime through the Lambda IAM role. Optional environment control: `BEDROCK_DEFAULT_MODEL_ID`. No OpenAI API key is needed for the Bedrock first pass.
+- Web research is intentionally disabled in the Bedrock first pass. To add internet research later, document and integrate OpenAI web search, Tavily, SerpAPI, Bedrock Agents/tool use, or another search provider with separate cost tracking.
 
 ## Deployment Baseline
 

@@ -1,6 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 
 import { PublicationComponent } from './publication.component';
+import { PublicationService } from '../../../services/publication.service';
+import { WebService } from '../../../services/web.service';
+import { BsModalService } from 'ngx-bootstrap/modal';
 
 describe('PublicationComponent', () => {
   let component: PublicationComponent;
@@ -8,9 +14,18 @@ describe('PublicationComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ PublicationComponent ]
+      imports: [PublicationComponent],
+      providers: [
+        PublicationService,
+        WebService,
+        BsModalService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { params: {} } } },
+      ],
     })
-    .compileComponents();
+      .compileComponents();
   });
 
   beforeEach(() => {

@@ -148,6 +148,24 @@ export function jsonAuthHeaders(token: string | null | undefined): Record<string
   return headers;
 }
 
+export function supportsCredentialedAuthCookies(): boolean {
+  if (!ApiRuntime.isV2 || typeof window === 'undefined') {
+    return false;
+  }
+
+  const host = browserHost();
+  if (!host || isLoopbackHost(host)) {
+    return false;
+  }
+
+  try {
+    const apiHost = new URL(web).hostname;
+    return !isLoopbackHost(apiHost);
+  } catch {
+    return false;
+  }
+}
+
 export function storedToken(): string | null {
   const token = readStoredToken();
   if (!token) {
@@ -277,6 +295,16 @@ function resolveFileUrl(file: any): string {
   }
 
   return '';
+}
+
+function isLoopbackHost(host: string): boolean {
+  const normalizedHost = host.trim().toLowerCase();
+  return (
+    normalizedHost === 'localhost' ||
+    normalizedHost === '127.0.0.1' ||
+    normalizedHost === '::1' ||
+    normalizedHost.endsWith('.localhost')
+  );
 }
 
 function absoluteApiUrl(pathOrUrl: string): string {

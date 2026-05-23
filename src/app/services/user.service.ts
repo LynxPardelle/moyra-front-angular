@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import {
   ApiRuntime,
   GlobalUser,
   apiUrl,
   jsonAuthHeaders,
   storedToken,
+  supportsCredentialedAuthCookies,
 } from './global';
 import { readStoredAuthSession } from '../store/auth/auth.storage';
 
@@ -66,13 +67,17 @@ export class UserService {
 
     return this._http.post(loginUrl, body, {
       headers: headers,
-      withCredentials: ApiRuntime.isV2,
+      withCredentials: supportsCredentialedAuthCookies(),
     });
   }
 
   refreshSession(): Observable<any> {
     if (!ApiRuntime.isV2) {
       return this._http.post(this.urlUser + 'refresh', {});
+    }
+
+    if (!supportsCredentialedAuthCookies()) {
+      return of(null);
     }
 
     return this._http.post(
@@ -88,6 +93,10 @@ export class UserService {
   logoutSession(): Observable<any> {
     if (!ApiRuntime.isV2) {
       return this._http.post(this.urlUser + 'logout', {});
+    }
+
+    if (!supportsCredentialedAuthCookies()) {
+      return of({ status: 'skipped' });
     }
 
     return this._http.post(
@@ -115,7 +124,7 @@ export class UserService {
 
     return this._http.post(apiUrl('/auth/login'), body, {
       headers: headers,
-      withCredentials: true,
+      withCredentials: supportsCredentialedAuthCookies(),
     });
   }
 

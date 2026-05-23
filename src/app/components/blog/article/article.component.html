@@ -95,24 +95,7 @@
             *ngFor="let embed of sectionEmbedItems(section); trackBy: trackEmbedItem"
             class="content-embed"
           >
-            <iframe
-              *ngIf="embed.kind !== 'link'; else articleRelatedLink"
-              [class.content-embed__frame--external]="embed.kind === 'iframe'"
-              [src]="embed.embedUrl | safeEmbedUrl"
-              [title]="embed.title"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-              allowfullscreen
-              sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
-              loading="eager"
-              referrerpolicy="strict-origin-when-cross-origin"
-              [style.height.px]="embed.height"
-            ></iframe>
-            <ng-template #articleRelatedLink>
-              <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
-                <span>{{ embed.title }}</span>
-                <small>{{ embed.url }}</small>
-              </a>
-            </ng-template>
+            <safe-embed-frame [embed]="embed"></safe-embed-frame>
           </article>
         </section>
 
@@ -196,6 +179,11 @@
         <strong>{{ articleFileSummary() }}</strong>
       </article>
     </section>
+
+    <app-ai-assistant-panel
+      surface="blog"
+      [context]="aiContext()"
+    ></app-ai-assistant-panel>
 
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="title">Título</label>
@@ -456,23 +444,7 @@
             *ngFor="let embed of sectionEmbedItems(section); trackBy: trackEmbedItem"
             class="content-editor__embed-item"
           >
-            <iframe
-              *ngIf="embed.kind !== 'link'; else sectionEditorLink"
-              [src]="embed.embedUrl | safeEmbedUrl"
-              [title]="embed.title"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-              allowfullscreen
-              sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
-              loading="lazy"
-              referrerpolicy="strict-origin-when-cross-origin"
-              [style.height.px]="embed.height"
-            ></iframe>
-            <ng-template #sectionEditorLink>
-              <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
-                <span>{{ embed.title }}</span>
-                <small>{{ embed.url }}</small>
-              </a>
-            </ng-template>
+            <safe-embed-frame [embed]="embed"></safe-embed-frame>
           </article>
         </section>
 
@@ -602,23 +574,7 @@
             *ngFor="let embed of sectionEmbedItems(sectionDraft); trackBy: trackEmbedItem"
             class="content-editor__embed-item"
           >
-            <iframe
-              *ngIf="embed.kind !== 'link'; else draftSectionEditorLink"
-              [src]="embed.embedUrl | safeEmbedUrl"
-              [title]="embed.title"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-              allowfullscreen
-              sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
-              loading="lazy"
-              referrerpolicy="strict-origin-when-cross-origin"
-              [style.height.px]="embed.height"
-            ></iframe>
-            <ng-template #draftSectionEditorLink>
-              <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
-                <span>{{ embed.title }}</span>
-                <small>{{ embed.url }}</small>
-              </a>
-            </ng-template>
+            <safe-embed-frame [embed]="embed"></safe-embed-frame>
           </article>
         </section>
 

@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { provideEffects } from '@ngrx/effects';
 import { provideStore } from '@ngrx/store';
@@ -16,6 +18,8 @@ describe('AdminComponent', () => {
       imports: [AdminComponent],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         provideStore({ [authFeatureKey]: authReducer }),
         provideEffects([AuthEffects]),
       ],
@@ -31,5 +35,11 @@ describe('AdminComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('renders the usage and cost dashboard link', () => {
+    const text = fixture.nativeElement.textContent;
+
+    expect(text).toContain('Uso y costos');
   });
 });

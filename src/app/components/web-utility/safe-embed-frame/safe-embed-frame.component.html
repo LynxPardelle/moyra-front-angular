@@ -1,0 +1,37 @@
+<iframe
+  *ngIf="embed?.kind === 'youtube'"
+  class="safe-embed-frame"
+  [class.safe-embed-frame--compact]="compact"
+  [src]="embed?.embedUrl | safeEmbedUrl"
+  [title]="embed?.title || 'Video relacionado'"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  allowfullscreen
+  loading="lazy"
+  referrerpolicy="strict-origin-when-cross-origin"
+></iframe>
+
+<iframe
+  *ngIf="embed?.kind === 'iframe'"
+  class="safe-embed-frame safe-embed-frame--external"
+  [class.safe-embed-frame--compact]="compact"
+  [src]="embed?.embedUrl | safeEmbedUrl"
+  [title]="embed?.title || 'Inserción relacionada'"
+  allow="clipboard-write; encrypted-media; fullscreen; picture-in-picture; web-share"
+  allowfullscreen
+  sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+  loading="lazy"
+  referrerpolicy="strict-origin-when-cross-origin"
+  [style.height.px]="embed?.height"
+></iframe>
+
+<a
+  *ngIf="embed?.kind === 'link'"
+  class="safe-embed-link"
+  [class.safe-embed-link--compact]="compact"
+  [href]="embed?.url"
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  <span>{{ embed?.title }}</span>
+  <small>{{ embed?.url }}</small>
+</a>

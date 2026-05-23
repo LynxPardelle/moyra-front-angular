@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { FileUploaderComponent } from './file-uploader.component';
+import { BsModalService } from 'ngx-bootstrap/modal';
 
 describe('FileUploaderComponent', () => {
   let component: FileUploaderComponent;
@@ -8,9 +11,10 @@ describe('FileUploaderComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ FileUploaderComponent ]
+      imports: [FileUploaderComponent],
+      providers: [BsModalService, provideHttpClient(), provideHttpClientTesting()],
     })
-    .compileComponents();
+      .compileComponents();
   });
 
   beforeEach(() => {

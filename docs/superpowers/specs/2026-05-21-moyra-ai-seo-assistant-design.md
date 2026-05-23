@@ -2,7 +2,7 @@
 
 Date: 2026-05-21 CT
 Status: Proposed for review
-Scope: Phase 2, Option 1 implementation first; cost/usage dashboard and opt-in web research included; Options 2 and 3 documented as future releases.
+Scope: Phase 2, Option 1 implementation first; cost/usage dashboard included; web research documented as a future provider/tool integration; Options 2 and 3 documented as future releases.
 
 ## Summary
 
@@ -10,7 +10,7 @@ Phase 1 is considered complete: blog, publications, solutions, configuration edi
 
 Phase 2 will start with a polished AI editorial assistant for admins. The assistant will help attorneys improve SEO and content quality across Blog, Publicaciones, Soluciones, and Configuraciones. The first release must be cost-controlled, safe, and useful after a few weeks of real usage data. It will not publish automatically. It will generate suggestions that the attorney can review, edit, and explicitly apply.
 
-This phase also includes an admin usage/cost dashboard. The dashboard must show AI usage, estimated AI spend, model pricing, optional web research spend, and high-level AWS service cost visibility. The implementation should still avoid OpenSearch and any broad retrieval architecture in this first increment.
+This phase also includes an admin usage/cost dashboard. The dashboard must show AI usage, estimated AI spend, model pricing, future web research spend when that feature is integrated, and high-level AWS service cost visibility. The implementation should still avoid OpenSearch and any broad retrieval architecture in this first increment.
 
 ## Goals
 
@@ -21,7 +21,7 @@ This phase also includes an admin usage/cost dashboard. The dashboard must show 
 - Track usage and estimated cost per request so real usage can be reviewed after two weeks.
 - Show per-session token and cost estimates while the admin uses the assistant.
 - Let admins choose from allowed models and see model cost/characteristic summaries before generating.
-- Offer internet research as an explicit opt-in that warns about incremental cost and records that spend separately.
+- Keep internet research disabled in the Bedrock first pass, with documentation for adding it later through OpenAI web search or another search-capable provider/tool.
 - Provide an admin dashboard for AI usage, estimated AI cost, web research usage, and AWS service cost visibility.
 - Keep infrastructure modest and reversible.
 
@@ -322,7 +322,7 @@ Request:
 {
   "surface": "blog | publication | service | configuration",
   "action": "seo-pack | improve-readability | outline | faq | social-snippets | research-with-web",
-  "model": "gpt-5.4-mini",
+  "model": "amazon.nova-lite-v1:0",
   "webResearch": {
     "enabled": false
   },
@@ -350,7 +350,7 @@ Response:
   "status": "success",
   "requestId": "string",
   "usage": {
-    "provider": "openai",
+    "provider": "amazon-bedrock",
     "model": "string",
     "inputTokens": 0,
     "outputTokens": 0,
@@ -374,7 +374,7 @@ The backend should:
 - Validate requested `model` against an environment-configured model allowlist.
 - Sanitize incoming HTML to plain text before sending it to the model.
 - Truncate very large content to a configured max token/character budget.
-- Retrieve the provider API key from Secrets Manager or SSM SecureString.
+- Use Amazon Bedrock Runtime through the Lambda IAM role; no external provider API key is required for Phase 2 Option 1.
 - Log request metadata, not full content.
 - Store usage records in DynamoDB for cost review.
 - Return structured JSON only.
@@ -390,26 +390,27 @@ Additional admin-only endpoints:
 
 ## Provider Choice
 
-Use OpenAI direct for Phase 2 Option 1.
+Use Amazon Bedrock direct for Phase 2 Option 1.
 
 Reasoning:
 
-- Lowest integration complexity for this repo.
-- Good structured output support.
-- Easy model switching between cheaper and stronger models.
-- Costs are straightforward to estimate.
+- Keeps inference inside AWS IAM and the existing serverless account boundary.
+- Avoids adding an OpenAI API key or external provider secret for the first release.
+- Lets Cost Explorer and Bedrock spend live in the same AWS cost view.
+- Supports simple model switching through an allowlisted Bedrock catalog.
 
 Provider abstraction should be minimal:
 
 - A backend helper like `generateAiSuggestion(input)`.
-- Environment variables for provider and model.
+- Environment variable for the default Bedrock model id.
 - A small model catalog returned by the backend.
 - No multi-provider UI in the first release.
 
 Initial model recommendation:
 
-- Default: `gpt-5.4-mini`.
-- Cheap mode for simple tasks: `gpt-5.4-nano`.
+- Default: `amazon.nova-lite-v1:0`.
+- Cheap mode for simple tasks: `amazon.nova-micro-v1:0`.
+- Stronger mode for complex drafts: `amazon.nova-pro-v1:0`.
 - The implementation should make the model configurable by environment variable.
 
 Model catalog fields:
@@ -429,8 +430,8 @@ Pricing must be reviewed again before implementation and before production launc
 
 Current official references checked on 2026-05-21:
 
-- OpenAI `gpt-5.4-mini`: USD 0.75 input / USD 4.50 output per 1M tokens. `gpt-5.4-nano`: USD 0.20 input / USD 1.25 output per 1M tokens. Source: https://developers.openai.com/api/docs/pricing
-- OpenAI web search: USD 10.00 per 1k calls. Included in Phase 2 Option 1 only as an explicit admin opt-in. Source: https://developers.openai.com/api/docs/pricing
+- Amazon Bedrock pricing for Amazon Nova models must be reviewed before production launch. The first implementation keeps model prices in the backend catalog only as estimates for cost visibility. Source: https://aws.amazon.com/bedrock/pricing/
+- Internet research is not included in the Bedrock first pass. To add it later, integrate a separate provider/tool such as OpenAI web search, Tavily, SerpAPI, or a Bedrock Agent/tool-use flow and track those costs separately. OpenAI web search reference if selected later: https://developers.openai.com/api/docs/pricing
 - AWS Cost Explorer API: USD 0.01 per request using the primary billing view; custom billing views can cost USD 0.01 per source. Source: https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/
 - Gemini 2.5 Flash: USD 0.30 input / USD 2.50 output per 1M tokens. Source: https://ai.google.dev/gemini-api/docs/pricing
 - AWS Secrets Manager: USD 0.40 per secret per month and USD 0.05 per 10,000 API calls in the pricing example. Source: https://aws.amazon.com/secrets-manager/pricing/
@@ -445,11 +446,11 @@ Phase 2 Option 1 must include:
 - Per-request max output tokens.
 - Admin-only access.
 - No public unauthenticated AI endpoint.
-- Web research default off and explicit opt-in per request.
+- Web research disabled in the Bedrock first pass; future enablement must be explicit, admin-only, and separately cost-tracked.
 - No automatic retry loops that can multiply token usage.
 - Optional environment variable `AI_ASSISTANT_ENABLED=false` kill switch.
 - Optional environment variable `AI_MONTHLY_SOFT_LIMIT_USD` for warning-only tracking.
-- Optional environment variable `AI_WEB_RESEARCH_ENABLED=false` kill switch.
+- No web research feature flag in the Bedrock first pass; add a new explicit flag only when a search provider/tool is implemented.
 - Cost Explorer dashboard data cached for at least 6 hours.
 - Default AWS cost refresh interval set to 6 hours.
 - Admin-configurable AWS cost refresh interval with allowed values only: 6 hours, 12 hours, 1 day, 3 days, 7 days, 15 days, 1 month.

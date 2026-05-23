@@ -1,0 +1,224 @@
+.admin-usage-page {
+  color: #29303b;
+  margin: 0 auto;
+  max-width: 1120px;
+  padding: 1.5rem;
+}
+
+.admin-usage-page__header {
+  margin-bottom: 1.5rem;
+}
+
+.admin-usage-page__header p {
+  color: #4b8ff5;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+  text-transform: uppercase;
+}
+
+.admin-usage-page__header h1 {
+  font-size: 1.8rem;
+  margin: 0 0 0.35rem;
+}
+
+.admin-usage-page__header span,
+.admin-usage-card__heading p,
+.admin-usage-note {
+  color: rgba(41, 48, 59, 0.72);
+}
+
+.admin-usage-toolbar,
+.admin-usage-grid,
+.admin-usage-settings,
+.admin-usage-summary {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-usage-toolbar {
+  align-items: end;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  margin-bottom: 1rem;
+}
+
+.admin-usage-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.admin-usage-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(41, 48, 59, 0.08);
+  border-radius: 0;
+  box-shadow: 0 18px 40px rgba(41, 48, 59, 0.08);
+  margin-bottom: 1rem;
+  padding: 1.25rem;
+}
+
+.admin-usage-card__heading {
+  align-items: start;
+  border-bottom: 1px solid rgba(41, 48, 59, 0.12);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+}
+
+.admin-usage-card__heading h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.35rem;
+}
+
+.admin-usage-card__heading p {
+  line-height: 1.5;
+  margin: 0;
+}
+
+.admin-usage-metric span {
+  color: rgba(41, 48, 59, 0.66);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+  text-transform: uppercase;
+}
+
+.admin-usage-metric strong {
+  display: block;
+  font-size: 1.8rem;
+  line-height: 1.1;
+}
+
+.admin-usage-metric small {
+  color: rgba(41, 48, 59, 0.7);
+  display: block;
+  margin-top: 0.45rem;
+}
+
+.admin-usage-field {
+  display: block;
+}
+
+.admin-usage-field span {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.admin-usage-field input,
+.admin-usage-field select {
+  background: #ffffff;
+  border: 1px solid rgba(41, 48, 59, 0.28);
+  border-radius: 0;
+  box-shadow:
+    0 8px 18px rgba(41, 48, 59, 0.06),
+    inset 4px 0 0 rgba(75, 143, 245, 0.62);
+  color: #29303b;
+  font-size: 1rem;
+  font-weight: 650;
+  min-height: 42px;
+  padding: 0.75rem 0.9rem 0.75rem 1rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  width: 100%;
+}
+
+.admin-usage-field input:focus,
+.admin-usage-field select:focus {
+  background: #ffffff;
+  border-color: #4b8ff5;
+  box-shadow:
+    0 0 0 3px rgba(75, 143, 245, 0.22),
+    0 12px 24px rgba(41, 48, 59, 0.08),
+    inset 4px 0 0 #4b8ff5;
+  outline: 0;
+}
+
+.admin-usage-button {
+  background: #29303b;
+  border: 0;
+  border-radius: 0;
+  color: #ffffff;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 0.75rem 1rem;
+}
+
+.admin-usage-button--secondary {
+  background: #ffffff;
+  border: 1px solid rgba(41, 48, 59, 0.22);
+  box-shadow: 0 8px 18px rgba(41, 48, 59, 0.06);
+  color: #29303b;
+}
+
+.admin-usage-button:disabled {
+  opacity: 0.65;
+}
+
+.admin-usage-alert {
+  background: rgba(176, 43, 43, 0.1);
+  border-left: 4px solid #b02b2b;
+  color: #6f1f1f;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+}
+
+.admin-usage-settings {
+  align-items: end;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  margin-bottom: 1rem;
+}
+
+.admin-usage-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.admin-usage-summary span {
+  background: rgba(75, 143, 245, 0.08);
+  border-left: 4px solid rgba(75, 143, 245, 0.62);
+  font-weight: 700;
+  padding: 0.85rem 1rem;
+}
+
+.admin-usage-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.admin-usage-table th,
+.admin-usage-table td {
+  border-bottom: 1px solid rgba(41, 48, 59, 0.12);
+  padding: 0.8rem 0.6rem;
+  text-align: left;
+}
+
+.admin-usage-table th {
+  color: rgba(41, 48, 59, 0.7);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.admin-usage-note {
+  font-size: 0.92rem;
+  margin: 1rem 0 0;
+}
+
+@media (max-width: 900px) {
+  .admin-usage-toolbar,
+  .admin-usage-grid,
+  .admin-usage-settings,
+  .admin-usage-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-usage-card__heading {
+    display: block;
+  }
+
+  .admin-usage-card__heading .admin-usage-button {
+    margin-top: 1rem;
+    width: 100%;
+  }
+}

@@ -1,6 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 
 import { ServiciosComponent } from './servicios.component';
+import { MainService } from '../../../services/main.service';
+import { ServicioService } from '../../../services/servicio.service';
+import { WebService } from '../../../services/web.service';
 
 describe('ServiciosComponent', () => {
   let component: ServiciosComponent;
@@ -8,9 +14,18 @@ describe('ServiciosComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ ServiciosComponent ]
+      imports: [ServiciosComponent],
+      providers: [
+        MainService,
+        ServicioService,
+        WebService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { params: {} } } },
+      ],
     })
-    .compileComponents();
+      .compileComponents();
   });
 
   beforeEach(() => {
