@@ -91,9 +91,9 @@
       <div class="admin-usage-settings">
         <label class="admin-usage-field">
           <span>Intervalo de actualización</span>
-          <select [(ngModel)]="selectedInterval">
+          <select class="admin-usage-select" [(ngModel)]="selectedInterval">
             <option *ngFor="let interval of intervals" [ngValue]="interval">
-              {{ interval }}
+              {{ intervalLabels[interval] }}
             </option>
           </select>
         </label>

@@ -6,6 +6,7 @@ import {
   AiUsageService,
   AiUsageSummary,
   AwsCostSummary,
+  COST_REFRESH_INTERVAL_LABELS,
   COST_REFRESH_INTERVALS,
   CostRefreshInterval,
 } from '../services/ai-usage.service';
@@ -18,6 +19,7 @@ import {
 })
 export class UsoComponent implements OnInit {
   public readonly intervals = COST_REFRESH_INTERVALS;
+  public readonly intervalLabels = COST_REFRESH_INTERVAL_LABELS;
 
   public from = '';
   public to = '';

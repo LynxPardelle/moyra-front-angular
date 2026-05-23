@@ -155,7 +155,9 @@ describe('UsoComponent', () => {
     expect(text).toContain('USD 0.14');
     expect(text).toContain('USD 4.56');
     expect(text).toContain('14998000 tokens disponibles');
-    expect(text).toContain('6 hours');
+    expect(text).toContain('Cada 6 horas');
+    expect(text).toContain('Cada bimestre');
+    expect(text).toContain('Cada trimestre');
     expect(text).toContain('Producción');
     expect(text).toContain('Testing');
     expect(text).toContain('Guarda archivos del sitio');
@@ -166,12 +168,12 @@ describe('UsoComponent', () => {
   });
 
   it('updates the AWS cost refresh interval from the dashboard', () => {
-    component.selectedInterval = '1 day';
+    component.selectedInterval = '3 months';
     component.saveRefreshInterval();
     fixture.detectChanges();
 
-    expect(service.updateCostRefreshIntervalCalls).toEqual(['1 day']);
-    expect(component.selectedInterval).toBe('1 day');
+    expect(service.updateCostRefreshIntervalCalls).toEqual(['3 months']);
+    expect(component.selectedInterval).toBe('3 months');
   });
 
   it('runs a manual AWS cost refresh for the selected date range', () => {

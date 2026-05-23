@@ -123,6 +123,10 @@
   width: 100%;
 }
 
+.admin-usage-field select {
+  min-width: 260px;
+}
+
 .admin-usage-field input:focus,
 .admin-usage-field select:focus {
   background: #ffffff;

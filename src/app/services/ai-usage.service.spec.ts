@@ -8,6 +8,8 @@ import {
 import { apiUrl } from './global';
 import {
   AiUsageService,
+  COST_REFRESH_INTERVAL_LABELS,
+  COST_REFRESH_INTERVALS,
   CostRefreshInterval,
   FALLBACK_BEDROCK_MODEL_CATALOG,
 } from './ai-usage.service';
@@ -118,7 +120,7 @@ describe('AiUsageService', () => {
   });
 
   it('updates the AWS cost refresh interval using the allowlisted value', () => {
-    const interval: CostRefreshInterval = '1 day';
+    const interval: CostRefreshInterval = '3 months';
 
     service.updateCostRefreshInterval(interval).subscribe((settings) => {
       expect(settings.awsCostRefreshInterval).toBe(interval);
@@ -131,6 +133,14 @@ describe('AiUsageService', () => {
     });
     expect(req.request.headers.get('Authorization')).toBe(token);
     req.flush({ awsCostRefreshInterval: interval });
+  });
+
+  it('exposes readable labels for every AWS cost refresh interval', () => {
+    expect(COST_REFRESH_INTERVALS).toContain('2 months');
+    expect(COST_REFRESH_INTERVALS).toContain('3 months');
+    expect(COST_REFRESH_INTERVALS.every((interval) => COST_REFRESH_INTERVAL_LABELS[interval])).toBeTrue();
+    expect(COST_REFRESH_INTERVAL_LABELS['2 months']).toBe('Cada bimestre');
+    expect(COST_REFRESH_INTERVAL_LABELS['3 months']).toBe('Cada trimestre');
   });
 
   it('manual AWS cost refresh sends an admin-only refresh request', () => {

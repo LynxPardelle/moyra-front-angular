@@ -12,9 +12,23 @@ export const COST_REFRESH_INTERVALS = [
   '7 days',
   '15 days',
   '1 month',
+  '2 months',
+  '3 months',
 ] as const;
 
 export type CostRefreshInterval = (typeof COST_REFRESH_INTERVALS)[number];
+
+export const COST_REFRESH_INTERVAL_LABELS: Record<CostRefreshInterval, string> = {
+  '6 hours': 'Cada 6 horas',
+  '12 hours': 'Cada 12 horas',
+  '1 day': 'Cada dia',
+  '3 days': 'Cada 3 dias',
+  '7 days': 'Cada semana',
+  '15 days': 'Cada quincena',
+  '1 month': 'Cada mes',
+  '2 months': 'Cada bimestre',
+  '3 months': 'Cada trimestre',
+};
 
 export type AiModelInfo = {
   id: string;
