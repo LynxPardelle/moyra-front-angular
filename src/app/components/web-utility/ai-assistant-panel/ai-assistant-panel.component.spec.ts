@@ -7,18 +7,18 @@ import { AiAssistantPanelComponent } from './ai-assistant-panel.component';
 class FakeAiUsageService {
   getModelCatalog() {
     return of({
-      defaultModel: 'ai21.jamba-1-5-mini-v1:0',
+      defaultModel: 'amazon.nova-micro-v1:0',
       models: [
         {
-          id: 'ai21.jamba-1-5-mini-v1:0',
-          label: 'AI21 Jamba 1.5 Mini',
-          description: 'Contexto amplio.',
-          inputUsdPerMillionTokens: 0.2,
-          outputUsdPerMillionTokens: 0.4,
+          id: 'amazon.nova-micro-v1:0',
+          label: 'Amazon Nova Micro',
+          description: 'Costo bajo.',
+          inputUsdPerMillionTokens: 0.035,
+          outputUsdPerMillionTokens: 0.14,
         },
       ],
       assistantEnabled: true,
-      monthlyTokenBudget: 16666666,
+      monthlyTokenBudget: 15000000,
     });
   }
 
@@ -27,11 +27,11 @@ class FakeAiUsageService {
       totalRequests: 2,
       totalInputTokens: 1200,
       totalOutputTokens: 800,
-      monthlyTokenBudget: 16666666,
-      monthlyTokenRemaining: 16664666,
-      monthlyTokenBudgetEstimatedCostUsd: 5,
+      monthlyTokenBudget: 15000000,
+      monthlyTokenRemaining: 14998000,
+      monthlyTokenBudgetEstimatedCostUsd: 1.31,
       monthlyTokensUsedEstimatedCostUsd: 0.0003,
-      monthlyTokenBudgetPricingNote: 'Aproximado con AI21 Jamba 1.5 Mini.',
+      monthlyTokenBudgetPricingNote: 'Aproximado con Amazon Nova Micro.',
     });
   }
 
@@ -40,7 +40,7 @@ class FakeAiUsageService {
       status: 'success',
       requestId: 'usage-123',
       outputText: 'Título sugerido',
-      model: 'ai21.jamba-1-5-mini-v1:0',
+      model: 'amazon.nova-micro-v1:0',
       usage: {
         inputTokens: 100,
         outputTokens: 50,
@@ -73,9 +73,9 @@ describe('AiAssistantPanelComponent', () => {
     const text = fixture.nativeElement.textContent;
 
     expect(text).toContain('Asistente IA');
-    expect(text).toContain('AI21 Jamba 1.5 Mini');
+    expect(text).toContain('Amazon Nova Micro');
     expect(text).toContain('Tokens mensuales');
-    expect(text).toContain('2,000 de 16,666,666');
+    expect(text).toContain('2,000 de 15,000,000');
     expect(text).toContain('tope aprox.');
     expect(text).not.toContain('Investigación en internet');
   });

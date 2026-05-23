@@ -112,6 +112,10 @@
         <span>Estado: {{ awsCost?.status || 'sin datos' }}</span>
         <span>Total Moyra del periodo: {{ formatUsd(awsCost?.periodTotalUsd || awsCost?.totalUsd) }}</span>
         <span>Base mensual Moyra: {{ formatUsd(awsCost?.estimatedPersistentMonthlyUsd) }}</span>
+        <span *ngIf="awsCost?.costExplorerApiRequestCount">
+          Cost Explorer API: {{ awsCost?.costExplorerApiRequestCount }} refresh ·
+          {{ formatUsd(awsCost?.costExplorerApiCostUsd) }}
+        </span>
       </div>
 
       <section class="admin-usage-estimates" *ngIf="computedEnvironments.length > 0">
@@ -190,7 +194,8 @@
       </ul>
 
       <p class="admin-usage-note">
-        Refrescar manualmente puede generar una solicitud cobrada por AWS Cost Explorer.
+        Refrescar manualmente usa AWS Cost Explorer API y suma aprox. USD 0.01 por
+        refresh exitoso del rango consultado.
       </p>
     </section>
 

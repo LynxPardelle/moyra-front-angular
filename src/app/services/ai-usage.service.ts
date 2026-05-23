@@ -36,7 +36,7 @@ export type AiModelCatalog = {
 
 export const FALLBACK_BEDROCK_MODEL_CATALOG: AiModelCatalog = {
   provider: 'amazon-bedrock',
-  defaultModel: 'ai21.jamba-1-5-mini-v1:0',
+  defaultModel: 'amazon.nova-micro-v1:0',
   assistantEnabled: false,
   source: 'fallback',
   notice:
@@ -72,7 +72,7 @@ export const FALLBACK_BEDROCK_MODEL_CATALOG: AiModelCatalog = {
       outputUsdPerMillionTokens: 3.2,
     },
   ],
-  monthlyTokenBudget: 16666666,
+  monthlyTokenBudget: 15000000,
 };
 
 export type AiUsageSummary = {
@@ -134,6 +134,8 @@ export type AwsCostSummary = {
   periodTotalUsd?: number;
   totalUsd?: number;
   costExplorerTotalUsd?: number;
+  costExplorerApiRequestCount?: number;
+  costExplorerApiCostUsd?: number;
   estimatedPersistentMonthlyUsd?: number;
   previousMonthTotalUsd?: number;
   lastRefreshedAt?: string;
