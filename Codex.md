@@ -44,6 +44,8 @@ This file is for durable agent memory only. Dated implementation history belongs
 
 ## Latest Verified State
 
+- 2026-05-23 CT test rollout: frontend commit `aff3e87` was pushed to `test`; infra commit `4ad588d` deployed to `MoyraCloud-test` through GitHub Actions run `26327079939`. Backend health returned 200, stack status was `UPDATE_COMPLETE`, and Lambda env showed `BEDROCK_MAX_OUTPUT_TOKENS=1800`, `BEDROCK_MONTHLY_TOKEN_BUDGET=300000`, `BEDROCK_USE_CROSS_REGION_INFERENCE=false`, and default model `amazon.nova-micro-v1:0`.
+- 2026-05-23 CT browser audit on `https://test.moyra.org`: `/admin/uso` hid web research, hid zero-cost AWS rows, showed period total, `AWS Secrets Manager (test, estimado base) USD 0.40`, and showed the 300,000 monthly token budget. `/admin/publications` linked `Editar publicación` to `/admin/publication/Test-post?edit=true`, and that route opened directly in editor mode with the AI assistant and model dropdown. A test generation still returned the friendly `BEDROCK_TOKEN_QUOTA_EXCEEDED` message, so AWS Bedrock quota approval remains the blocker for real generation.
 - Frontend commit `369eb87` is deployed to both testing and production branches.
 - Infra commit `607d9b8` is deployed to testing and production.
 - Testing refresh smoke passed: `https://api.test.moyra.org/api/v2` health 200, credentialed CORS for `https://test.moyra.org`, login/admin refresh 200, missing cookie 401, untrusted origin 403, and `/admin/publications` stayed authenticated after reload with no console warning/error logs.
