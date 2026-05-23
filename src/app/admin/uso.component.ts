@@ -125,7 +125,11 @@ export class UsoComponent implements OnInit {
   }
 
   formatUsd(value: number | undefined): string {
-    const amount = Math.abs(Number(value || 0)) < 0.00005 ? 0 : Number(value || 0);
+    const rawAmount = Number(value || 0);
+    if (rawAmount > 0 && rawAmount < 0.0001) {
+      return '< USD 0.0001';
+    }
+    const amount = Math.abs(rawAmount) < 0.00005 ? 0 : rawAmount;
     const decimals = amount > 0 && Math.abs(amount) < 0.01 ? 4 : 2;
     return `USD ${amount.toFixed(decimals)}`;
   }
