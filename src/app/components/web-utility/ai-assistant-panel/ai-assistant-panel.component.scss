@@ -118,6 +118,13 @@
   font-size: 0.98rem;
 }
 
+.ai-assistant-panel__usage small {
+  color: rgba(41, 48, 59, 0.68);
+  display: block;
+  line-height: 1.45;
+  margin-top: 0.25rem;
+}
+
 .ai-assistant-panel__usage meter {
   height: 10px;
   width: 100%;

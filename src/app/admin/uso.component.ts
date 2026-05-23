@@ -100,19 +100,34 @@ export class UsoComponent implements OnInit {
 
   get billableServices() {
     return (this.awsCost?.services || []).filter((service) => {
-      return Math.abs(Number(service.amountUsd || 0)) >= 0.005;
+      return Math.abs(Number(service.amountUsd || 0)) > 0.0000005;
     });
   }
 
   get computedServices() {
     return (this.awsCost?.computedServices || []).filter((service) => {
-      return Math.abs(Number(service.amountUsd || 0)) >= 0.005;
+      return Math.abs(Number(service.amountUsd || 0)) > 0.0000005;
     });
   }
 
+  get computedEnvironments() {
+    return (this.awsCost?.computedEnvironments || []).filter((environment) => {
+      return Math.abs(Number(environment.totalUsd || 0)) > 0.0000005;
+    });
+  }
+
+  get usedTokenCost(): number {
+    return (
+      Number(this.usage?.monthlyTokensUsedEstimatedCostUsd) ||
+      Number(this.usage?.estimatedModelCostUsd) ||
+      0
+    );
+  }
+
   formatUsd(value: number | undefined): string {
-    const amount = Math.abs(Number(value || 0)) < 0.005 ? 0 : Number(value || 0);
-    return `USD ${amount.toFixed(2)}`;
+    const amount = Math.abs(Number(value || 0)) <= 0.0000005 ? 0 : Number(value || 0);
+    const decimals = amount > 0 && Math.abs(amount) < 0.01 ? 4 : 2;
+    return `USD ${amount.toFixed(decimals)}`;
   }
 
   private toDateInput(date: Date): string {

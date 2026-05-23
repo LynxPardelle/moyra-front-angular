@@ -45,9 +45,17 @@
     <div>
       <span>Tokens mensuales</span>
       <strong>{{ monthlyUsageText }}</strong>
+      <small>
+        Usados {{ formatUsd(monthlyTokensUsedEstimatedCostUsd) }} · tope aprox.
+        {{ formatUsd(monthlyTokenBudgetEstimatedCostUsd) }}
+      </small>
     </div>
     <meter min="0" max="100" [value]="monthlyUsagePercent"></meter>
   </div>
+
+  <p *ngIf="monthlyTokenBudgetPricingNote" class="ai-assistant-panel__model-note">
+    {{ monthlyTokenBudgetPricingNote }}
+  </p>
 
   <label class="ai-assistant-panel__field">
     <span>Instrucción adicional</span>

@@ -54,17 +54,27 @@
       <article class="admin-usage-card admin-usage-metric">
         <span>Límite mensual IA</span>
         <strong>{{ usage?.monthlyTokenBudget || 0 }}</strong>
-        <small>{{ usage?.monthlyTokenRemaining || 0 }} tokens disponibles</small>
+        <small>
+          {{ usage?.monthlyTokenRemaining || 0 }} tokens disponibles ·
+          tope aprox. {{ formatUsd(usage?.monthlyTokenBudgetEstimatedCostUsd) }}
+        </small>
+        <small>
+          usados aprox. {{ formatUsd(usedTokenCost) }}
+        </small>
       </article>
     </section>
+
+    <p class="admin-usage-note" *ngIf="usage?.monthlyTokenBudgetPricingNote">
+      {{ usage?.monthlyTokenBudgetPricingNote }}
+    </p>
 
     <section class="admin-usage-card admin-usage-costs">
       <div class="admin-usage-card__heading">
         <div>
-          <h2>Costos AWS</h2>
+          <h2>Costos AWS de Moyra</h2>
           <p>
-            Los costos de AWS se muestran con caché. Cost Explorer puede tener desfase y no es
-            un medidor en tiempo real.
+            El total principal se calcula por recursos de Moyra en producción, testing y
+            development. No incluye EC2 del frontend porque vive en tu servidor personal.
           </p>
         </div>
 
@@ -100,44 +110,80 @@
 
       <div class="admin-usage-summary">
         <span>Estado: {{ awsCost?.status || 'sin datos' }}</span>
-        <span>Total del periodo: {{ formatUsd(awsCost?.periodTotalUsd || awsCost?.totalUsd) }}</span>
-        <span>Base mensual estimada: {{ formatUsd(awsCost?.estimatedPersistentMonthlyUsd) }}</span>
+        <span>Total Moyra del periodo: {{ formatUsd(awsCost?.periodTotalUsd || awsCost?.totalUsd) }}</span>
+        <span>Base mensual Moyra: {{ formatUsd(awsCost?.estimatedPersistentMonthlyUsd) }}</span>
       </div>
 
-      <table class="admin-usage-table" *ngIf="billableServices.length > 0">
-        <thead>
-          <tr>
-            <th>Servicio</th>
-            <th>Costo</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let serviceCost of billableServices">
-            <td>{{ serviceCost.service }}</td>
-            <td>{{ formatUsd(serviceCost.amountUsd) }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p class="admin-usage-note" *ngIf="billableServices.length === 0">
-        Cost Explorer no devolvió servicios con costo mayor a USD 0.005 para este periodo.
-      </p>
-
-      <section class="admin-usage-estimates" *ngIf="computedServices.length > 0">
-        <h3>Costos base calculados</h3>
+      <section class="admin-usage-estimates" *ngIf="computedEnvironments.length > 0">
+        <h3>Cálculo por ambiente</h3>
         <p>
-          Estimaciones de recursos persistentes conocidos. Se guardan junto con la caché para
-          complementar Cost Explorer cuando aún no refleja cargos pequeños.
+          Estimación propia de recursos Moyra. Los importes se calculan aunque AWS los absorba
+          por free tier o créditos.
         </p>
+        <article
+          class="admin-usage-environment"
+          *ngFor="let environment of computedEnvironments"
+        >
+          <div class="admin-usage-environment__heading">
+            <strong>{{ environment.environmentLabel }}</strong>
+            <span>
+              Periodo {{ formatUsd(environment.totalUsd) }} · base mensual
+              {{ formatUsd(environment.monthlyBaseUsd) }}
+            </span>
+          </div>
+
+          <table class="admin-usage-table">
+            <thead>
+              <tr>
+                <th>Servicio</th>
+                <th>Para qué se usa</th>
+                <th>Uso medido</th>
+                <th>Costo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let serviceCost of environment.services">
+                <td>{{ serviceCost.service }}</td>
+                <td>
+                  {{ serviceCost.purpose }}
+                  <small *ngIf="serviceCost.basis">{{ serviceCost.basis }}</small>
+                </td>
+                <td>{{ serviceCost.usageLabel || '-' }}</td>
+                <td>{{ formatUsd(serviceCost.amountUsd) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <section class="admin-usage-estimates" *ngIf="billableServices.length > 0">
+        <h3>Referencia Cost Explorer</h3>
+        <p>
+          Vista cacheada por servicio de la cuenta AWS, filtrada a servicios que usa Moyra.
+          No se usa como total principal porque no separa bien ambientes ni recursos externos.
+        </p>
+        <div class="admin-usage-summary">
+          <span>Cost Explorer filtrado: {{ formatUsd(awsCost?.costExplorerTotalUsd) }}</span>
+        </div>
         <table class="admin-usage-table">
+          <thead>
+            <tr>
+              <th>Servicio</th>
+              <th>Costo</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr *ngFor="let serviceCost of computedServices">
+            <tr *ngFor="let serviceCost of billableServices">
               <td>{{ serviceCost.service }}</td>
               <td>{{ formatUsd(serviceCost.amountUsd) }}</td>
             </tr>
           </tbody>
         </table>
       </section>
+
+      <p class="admin-usage-note" *ngIf="billableServices.length === 0">
+        Cost Explorer no devolvió servicios Moyra con costo para este periodo.
+      </p>
 
       <ul class="admin-usage-notes" *ngIf="(awsCost?.costSourceNotes || []).length > 0">
         <li *ngFor="let note of awsCost?.costSourceNotes">{{ note }}</li>

@@ -10,8 +10,11 @@ class FakeAiUsageService {
       totalRequests: 8,
       totalInputTokens: 1200,
       totalOutputTokens: 800,
-      monthlyTokenBudget: 300000,
-      monthlyTokenRemaining: 298000,
+      monthlyTokenBudget: 1000000,
+      monthlyTokenRemaining: 998000,
+      monthlyTokenBudgetEstimatedCostUsd: 0.0875,
+      monthlyTokensUsedEstimatedCostUsd: 0.14,
+      monthlyTokenBudgetPricingNote: 'Aproximado con Amazon Nova Micro.',
       estimatedModelCostUsd: 0.14,
       averageCostPerRequestUsd: 0.0175,
       failedRequests: 1,
@@ -24,15 +27,72 @@ class FakeAiUsageService {
       status: 'cached',
       totalUsd: 4.56,
       periodTotalUsd: 4.56,
-      estimatedPersistentMonthlyUsd: 0.4,
+      costExplorerTotalUsd: 1.23,
+      estimatedPersistentMonthlyUsd: 1.21,
       lastRefreshedAt: '2026-05-21T10:00:00.000Z',
       services: [
-        { service: 'Lambda', amountUsd: 1.23 },
-        { service: 'DynamoDB', amountUsd: 2.34 },
+        { service: 'AWS Lambda', amountUsd: 1.23 },
         { service: 'Amazon S3', amountUsd: 0 },
       ],
       computedServices: [
-        { service: 'AWS Secrets Manager (estimado base)', amountUsd: 0.4 },
+        {
+          service: 'AWS Secrets Manager',
+          environment: 'production',
+          environmentLabel: 'Producción',
+          purpose: 'Guarda el secreto usado para firmar sesiones.',
+          usageLabel: '1 secreto',
+          basis: '1 secreto JWT por ambiente.',
+          amountUsd: 0.4,
+          monthlyAmountUsd: 0.4,
+        },
+        {
+          service: 'Amazon S3',
+          environment: 'test',
+          environmentLabel: 'Testing',
+          purpose: 'Guarda archivos del sitio.',
+          usageLabel: '15 objetos, 2 MB',
+          basis: 'Almacenamiento Standard.',
+          amountUsd: 0.0042,
+          monthlyAmountUsd: 0.006,
+        },
+      ],
+      computedEnvironments: [
+        {
+          environment: 'production',
+          environmentLabel: 'Producción',
+          totalUsd: 0.4,
+          monthlyBaseUsd: 0.4,
+          services: [
+            {
+              service: 'AWS Secrets Manager',
+              environment: 'production',
+              environmentLabel: 'Producción',
+              purpose: 'Guarda el secreto usado para firmar sesiones.',
+              usageLabel: '1 secreto',
+              basis: '1 secreto JWT por ambiente.',
+              amountUsd: 0.4,
+              monthlyAmountUsd: 0.4,
+            },
+          ],
+        },
+        {
+          environment: 'test',
+          environmentLabel: 'Testing',
+          totalUsd: 0.0042,
+          monthlyBaseUsd: 0.006,
+          services: [
+            {
+              service: 'Amazon S3',
+              environment: 'test',
+              environmentLabel: 'Testing',
+              purpose: 'Guarda archivos del sitio.',
+              usageLabel: '15 objetos, 2 MB',
+              basis: 'Almacenamiento Standard.',
+              amountUsd: 0.0042,
+              monthlyAmountUsd: 0.006,
+            },
+          ],
+        },
       ],
     },
     settings: {
@@ -94,13 +154,15 @@ describe('UsoComponent', () => {
     expect(text).toContain('8');
     expect(text).toContain('USD 0.14');
     expect(text).toContain('USD 4.56');
-    expect(text).toContain('298000 tokens disponibles');
+    expect(text).toContain('998000 tokens disponibles');
     expect(text).toContain('6 hours');
-    expect(text).toContain('DynamoDB');
+    expect(text).toContain('Producción');
+    expect(text).toContain('Testing');
+    expect(text).toContain('Guarda archivos del sitio');
     expect(text).toContain('AWS Secrets Manager');
-    expect(text).not.toContain('Amazon S3');
+    expect(text).toContain('Amazon S3');
     expect(text).not.toContain('Investigación web');
-    expect(text).toContain('Los costos de AWS se muestran con caché');
+    expect(text).toContain('El total principal se calcula');
   });
 
   it('updates the AWS cost refresh interval from the dashboard', () => {

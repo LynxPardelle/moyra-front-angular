@@ -55,7 +55,7 @@ describe('AiUsageService', () => {
     service.getModelCatalog().subscribe((catalog) => {
       expect(catalog.defaultModel).toBe('amazon.nova-lite-v1:0');
       expect(catalog.models.length).toBe(1);
-      expect(catalog.monthlyTokenBudget).toBe(300000);
+      expect(catalog.monthlyTokenBudget).toBe(1000000);
     });
 
     const req = http.expectOne(apiUrl('/ai/models'));
@@ -73,7 +73,7 @@ describe('AiUsageService', () => {
           outputUsdPerMillionTokens: 0.24,
         },
       ],
-      monthlyTokenBudget: 300000,
+      monthlyTokenBudget: 1000000,
     });
   });
 

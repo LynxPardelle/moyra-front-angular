@@ -64,6 +64,9 @@ export class AiAssistantPanelComponent implements OnInit {
   public estimatedCostUsd = 0;
   public monthlyTokenBudget = 0;
   public monthlyTokensUsed = 0;
+  public monthlyTokenBudgetEstimatedCostUsd = 0;
+  public monthlyTokensUsedEstimatedCostUsd = 0;
+  public monthlyTokenBudgetPricingNote = '';
 
   constructor(private _aiUsageService: AiUsageService) {}
 
@@ -155,7 +158,9 @@ export class AiAssistantPanelComponent implements OnInit {
   }
 
   formatUsd(value: number | undefined): string {
-    return `USD ${Number(value || 0).toFixed(2)}`;
+    const amount = Math.abs(Number(value || 0)) <= 0.0000005 ? 0 : Number(value || 0);
+    const decimals = amount > 0 && Math.abs(amount) < 0.01 ? 4 : 2;
+    return `USD ${amount.toFixed(decimals)}`;
   }
 
   formatNumber(value: number | undefined): string {
@@ -175,6 +180,13 @@ export class AiAssistantPanelComponent implements OnInit {
         Number(usage?.totalInputTokens || 0) + Number(usage?.totalOutputTokens || 0);
       this.monthlyTokenBudget =
         Number(usage?.monthlyTokenBudget || 0) || this.monthlyTokenBudget;
+      this.monthlyTokenBudgetEstimatedCostUsd = Number(
+        usage?.monthlyTokenBudgetEstimatedCostUsd || 0
+      );
+      this.monthlyTokensUsedEstimatedCostUsd = Number(
+        usage?.monthlyTokensUsedEstimatedCostUsd || usage?.estimatedModelCostUsd || 0
+      );
+      this.monthlyTokenBudgetPricingNote = usage?.monthlyTokenBudgetPricingNote || '';
     } catch {
       this.monthlyTokensUsed = 0;
     }

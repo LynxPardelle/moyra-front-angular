@@ -64,7 +64,7 @@ export const FALLBACK_BEDROCK_MODEL_CATALOG: AiModelCatalog = {
       outputUsdPerMillionTokens: 3.2,
     },
   ],
-  monthlyTokenBudget: 300000,
+  monthlyTokenBudget: 1000000,
 };
 
 export type AiUsageSummary = {
@@ -73,6 +73,9 @@ export type AiUsageSummary = {
   totalOutputTokens?: number;
   monthlyTokenBudget?: number;
   monthlyTokenRemaining?: number;
+  monthlyTokenBudgetEstimatedCostUsd?: number;
+  monthlyTokensUsedEstimatedCostUsd?: number;
+  monthlyTokenBudgetPricingNote?: string;
   estimatedModelCostUsd?: number;
   averageCostPerRequestUsd?: number;
   failedRequests?: number;
@@ -98,14 +101,31 @@ export type WebResearchUsage = {
 export type AwsCostService = {
   service: string;
   amountUsd: number;
+  environment?: string;
+  environmentLabel?: string;
+  purpose?: string;
+  basis?: string;
+  usageLabel?: string;
+  costKind?: string;
+  monthlyAmountUsd?: number;
+};
+
+export type AwsCostEnvironment = {
+  environment: string;
+  environmentLabel: string;
+  totalUsd: number;
+  monthlyBaseUsd?: number;
+  services: AwsCostService[];
 };
 
 export type AwsCostSummary = {
   status: 'cached' | 'refreshed' | 'stale' | 'disabled' | string;
   services: AwsCostService[];
   computedServices?: AwsCostService[];
+  computedEnvironments?: AwsCostEnvironment[];
   periodTotalUsd?: number;
   totalUsd?: number;
+  costExplorerTotalUsd?: number;
   estimatedPersistentMonthlyUsd?: number;
   previousMonthTotalUsd?: number;
   lastRefreshedAt?: string;

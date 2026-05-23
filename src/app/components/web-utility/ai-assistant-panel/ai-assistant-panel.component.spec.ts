@@ -18,7 +18,7 @@ class FakeAiUsageService {
         },
       ],
       assistantEnabled: true,
-      monthlyTokenBudget: 300000,
+      monthlyTokenBudget: 1000000,
     });
   }
 
@@ -27,8 +27,11 @@ class FakeAiUsageService {
       totalRequests: 2,
       totalInputTokens: 1200,
       totalOutputTokens: 800,
-      monthlyTokenBudget: 300000,
-      monthlyTokenRemaining: 298000,
+      monthlyTokenBudget: 1000000,
+      monthlyTokenRemaining: 998000,
+      monthlyTokenBudgetEstimatedCostUsd: 0.15,
+      monthlyTokensUsedEstimatedCostUsd: 0.0003,
+      monthlyTokenBudgetPricingNote: 'Aproximado con Amazon Nova Lite.',
     });
   }
 
@@ -72,7 +75,8 @@ describe('AiAssistantPanelComponent', () => {
     expect(text).toContain('Asistente IA');
     expect(text).toContain('Amazon Nova Lite');
     expect(text).toContain('Tokens mensuales');
-    expect(text).toContain('2,000 de 300,000');
+    expect(text).toContain('2,000 de 1,000,000');
+    expect(text).toContain('tope aprox.');
     expect(text).not.toContain('Investigación en internet');
   });
 
