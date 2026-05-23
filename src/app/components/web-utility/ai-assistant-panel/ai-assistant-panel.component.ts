@@ -57,12 +57,13 @@ export class AiAssistantPanelComponent implements OnInit {
   public selectedAction = '';
   public selectedModel = '';
   public instruction = '';
-  public webResearch = false;
   public outputText = '';
   public loading = false;
   public errorMessage = '';
   public statusMessage = '';
   public estimatedCostUsd = 0;
+  public monthlyTokenBudget = 0;
+  public monthlyTokensUsed = 0;
 
   constructor(private _aiUsageService: AiUsageService) {}
 
@@ -83,8 +84,22 @@ export class AiAssistantPanelComponent implements OnInit {
     return this.catalog?.assistantEnabled !== false;
   }
 
-  get webResearchAvailable(): boolean {
-    return this.catalog?.webSearch?.enabled === true;
+  get monthlyUsageText(): string {
+    if (!this.monthlyTokenBudget) {
+      return 'Uso mensual de tokens pendiente de cargar.';
+    }
+
+    return `${this.formatNumber(this.monthlyTokensUsed)} de ${this.formatNumber(
+      this.monthlyTokenBudget
+    )} tokens usados este mes.`;
+  }
+
+  get monthlyUsagePercent(): number {
+    if (!this.monthlyTokenBudget) {
+      return 0;
+    }
+
+    return Math.min(100, Math.round((this.monthlyTokensUsed / this.monthlyTokenBudget) * 100));
   }
 
   async loadCatalog(): Promise<void> {
@@ -92,7 +107,8 @@ export class AiAssistantPanelComponent implements OnInit {
       this.catalog = (await firstValueFrom(this._aiUsageService.getModelCatalog())) || null;
       this.selectedModel = this.catalog?.defaultModel || this.catalog?.models[0]?.id || '';
       this.statusMessage = this.catalog?.notice || '';
-      this.webResearch = this.webResearchAvailable ? this.webResearch : false;
+      this.monthlyTokenBudget = Number(this.catalog?.monthlyTokenBudget || 0);
+      await this.loadMonthlyUsage();
     } catch (error: any) {
       this.errorMessage =
         error?.error?.message || error?.message || 'No se pudo cargar el catálogo de modelos.';
@@ -120,7 +136,7 @@ export class AiAssistantPanelComponent implements OnInit {
           action: this.selectedAction,
           model: this.selectedModel,
           instruction: this.instruction,
-          webResearch: this.webResearchAvailable ? this.webResearch : false,
+          webResearch: false,
           context: this.context,
         })
       );
@@ -129,6 +145,7 @@ export class AiAssistantPanelComponent implements OnInit {
       this.estimatedCostUsd =
         (response?.usage?.estimatedModelCostUsd || 0) +
         (response?.usage?.estimatedWebSearchCostUsd || 0);
+      await this.loadMonthlyUsage();
     } catch (error: any) {
       this.errorMessage =
         error?.error?.message || error?.message || 'No se pudo generar la sugerencia.';
@@ -139,5 +156,34 @@ export class AiAssistantPanelComponent implements OnInit {
 
   formatUsd(value: number | undefined): string {
     return `USD ${Number(value || 0).toFixed(2)}`;
+  }
+
+  formatNumber(value: number | undefined): string {
+    return Number(value || 0).toLocaleString('es-MX');
+  }
+
+  private async loadMonthlyUsage(): Promise<void> {
+    try {
+      const today = new Date();
+      const usage = await firstValueFrom(
+        this._aiUsageService.getAiUsage(
+          this.toDateInput(new Date(today.getFullYear(), today.getMonth(), 1)),
+          this.toDateInput(today)
+        )
+      );
+      this.monthlyTokensUsed =
+        Number(usage?.totalInputTokens || 0) + Number(usage?.totalOutputTokens || 0);
+      this.monthlyTokenBudget =
+        Number(usage?.monthlyTokenBudget || 0) || this.monthlyTokenBudget;
+    } catch {
+      this.monthlyTokensUsed = 0;
+    }
+  }
+
+  private toDateInput(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

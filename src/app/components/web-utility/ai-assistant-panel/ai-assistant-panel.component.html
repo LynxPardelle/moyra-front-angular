@@ -41,6 +41,14 @@
     salida {{ formatUsd(selectedModelInfo.outputUsdPerMillionTokens) }} / 1M tokens.
   </p>
 
+  <div class="ai-assistant-panel__usage">
+    <div>
+      <span>Tokens mensuales</span>
+      <strong>{{ monthlyUsageText }}</strong>
+    </div>
+    <meter min="0" max="100" [value]="monthlyUsagePercent"></meter>
+  </div>
+
   <label class="ai-assistant-panel__field">
     <span>Instrucción adicional</span>
     <textarea
@@ -50,26 +58,6 @@
       placeholder="Ej. Más formal, enfocado en empresas, más claro para clientes."
     ></textarea>
   </label>
-
-  <label *ngIf="webResearchAvailable" class="ai-assistant-panel__toggle">
-    <input
-      type="checkbox"
-      [(ngModel)]="webResearch"
-      [ngModelOptions]="{ standalone: true }"
-    />
-    <span>
-      Investigar en internet
-      <small>
-        Incrementa costo.
-        {{ formatUsd(catalog?.webSearch?.priceUsdPerThousandCalls) }} / 1k búsquedas.
-      </small>
-    </span>
-  </label>
-
-  <p *ngIf="!webResearchAvailable" class="ai-assistant-panel__model-note">
-    Investigación en internet oculta por ahora: el primer pase usa Bedrock y no tiene proveedor de
-    búsqueda integrado en este ambiente.
-  </p>
 
   <button
     class="ai-assistant-panel__button"

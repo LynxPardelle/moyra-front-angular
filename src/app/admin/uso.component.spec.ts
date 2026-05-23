@@ -10,15 +10,11 @@ class FakeAiUsageService {
       totalRequests: 8,
       totalInputTokens: 1200,
       totalOutputTokens: 800,
+      monthlyTokenBudget: 300000,
+      monthlyTokenRemaining: 298000,
       estimatedModelCostUsd: 0.14,
       averageCostPerRequestUsd: 0.0175,
       failedRequests: 1,
-      webResearch: {
-        totalRequests: 2,
-        estimatedSearchCalls: 3,
-        estimatedSearchCostUsd: 0.03,
-        estimatedTotalCostUsd: 0.07,
-      },
       bySurface: [
         { label: 'Blog', requests: 5, estimatedCostUsd: 0.09 },
         { label: 'Publicaciones', requests: 3, estimatedCostUsd: 0.05 },
@@ -27,11 +23,16 @@ class FakeAiUsageService {
     awsCost: {
       status: 'cached',
       totalUsd: 4.56,
-      previousMonthTotalUsd: 5.67,
+      periodTotalUsd: 4.56,
+      estimatedPersistentMonthlyUsd: 0.4,
       lastRefreshedAt: '2026-05-21T10:00:00.000Z',
       services: [
         { service: 'Lambda', amountUsd: 1.23 },
         { service: 'DynamoDB', amountUsd: 2.34 },
+        { service: 'Amazon S3', amountUsd: 0 },
+      ],
+      computedServices: [
+        { service: 'AWS Secrets Manager (estimado base)', amountUsd: 0.4 },
       ],
     },
     settings: {
@@ -93,8 +94,12 @@ describe('UsoComponent', () => {
     expect(text).toContain('8');
     expect(text).toContain('USD 0.14');
     expect(text).toContain('USD 4.56');
+    expect(text).toContain('298000 tokens disponibles');
     expect(text).toContain('6 hours');
     expect(text).toContain('DynamoDB');
+    expect(text).toContain('AWS Secrets Manager');
+    expect(text).not.toContain('Amazon S3');
+    expect(text).not.toContain('Investigación web');
     expect(text).toContain('Los costos de AWS se muestran con caché');
   });
 

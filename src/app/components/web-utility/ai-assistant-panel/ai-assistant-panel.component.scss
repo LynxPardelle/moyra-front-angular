@@ -29,8 +29,7 @@
 
 .ai-assistant-panel__heading span,
 .ai-assistant-panel__model-note,
-.ai-assistant-panel__field small,
-.ai-assistant-panel__toggle small {
+.ai-assistant-panel__field small {
   color: rgba(41, 48, 59, 0.7);
 }
 
@@ -95,20 +94,33 @@
   margin: 0 0 1rem;
 }
 
-.ai-assistant-panel__toggle {
-  align-items: flex-start;
-  display: flex;
-  gap: 0.65rem;
-  margin-bottom: 1rem;
-}
-
-.ai-assistant-panel__toggle input {
-  margin-top: 0.25rem;
-}
-
-.ai-assistant-panel__toggle span {
+.ai-assistant-panel__usage {
+  background: rgba(75, 143, 245, 0.08);
+  border-left: 4px solid rgba(75, 143, 245, 0.62);
   display: grid;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+}
+
+.ai-assistant-panel__usage span {
+  color: rgba(41, 48, 59, 0.66);
+  display: block;
+  font-size: 0.74rem;
   font-weight: 700;
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
+}
+
+.ai-assistant-panel__usage strong {
+  color: #29303b;
+  display: block;
+  font-size: 0.98rem;
+}
+
+.ai-assistant-panel__usage meter {
+  height: 10px;
+  width: 100%;
 }
 
 .ai-assistant-panel__button {

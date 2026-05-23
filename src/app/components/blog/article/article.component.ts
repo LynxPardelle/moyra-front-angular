@@ -113,6 +113,7 @@ export class ArticleComponent implements OnInit {
       this.generatedSlug = this.article.urltitle || '';
       this.slugTouched = true;
       await this.loadSections();
+      this.editSwitch = this.shouldStartInEditMode();
       this.setSeo();
     } catch (err: any) {
       this._webService.consoleLog(
@@ -778,6 +779,14 @@ export class ArticleComponent implements OnInit {
       this._meta.updateTag({ property: 'og:image', content: image });
       this._meta.updateTag({ name: 'twitter:image', content: image });
     }
+  }
+
+  private shouldStartInEditMode(): boolean {
+    return (
+      this.isAdmin === true &&
+      this.canChange === true &&
+      this._route.snapshot.queryParamMap.get('edit') === 'true'
+    );
   }
 }
 

@@ -122,6 +122,7 @@ export class PublicationComponent implements OnInit {
       this.generatedSlug = this.publication.urltitle || '';
       this.slugTouched = true;
       this.refreshEmbedItems();
+      this.editSwitch = this.shouldStartInEditMode();
       this.setSeo();
     } catch (err: any) {
       this._webService.consoleLog(
@@ -623,6 +624,14 @@ export class PublicationComponent implements OnInit {
       this.publication.youtube,
       ...(Array.isArray(this.publication.insertions) ? this.publication.insertions : []),
     ]);
+  }
+
+  private shouldStartInEditMode(): boolean {
+    return (
+      this.isAdmin === true &&
+      this.canChange === true &&
+      this._route.snapshot.queryParamMap.get('edit') === 'true'
+    );
   }
 }
 

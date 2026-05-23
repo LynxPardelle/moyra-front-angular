@@ -28,15 +28,10 @@ export type AiModelCatalog = {
   provider?: string;
   defaultModel: string;
   models: AiModelInfo[];
+  monthlyTokenBudget?: number;
   assistantEnabled?: boolean;
   source?: 'api' | 'fallback';
   notice?: string;
-  webSearch?: {
-    enabled: boolean;
-    priceUsdPerThousandCalls: number;
-    requiresExternalProvider?: boolean;
-    warning?: string;
-  };
 };
 
 export const FALLBACK_BEDROCK_MODEL_CATALOG: AiModelCatalog = {
@@ -69,19 +64,15 @@ export const FALLBACK_BEDROCK_MODEL_CATALOG: AiModelCatalog = {
       outputUsdPerMillionTokens: 3.2,
     },
   ],
-  webSearch: {
-    enabled: false,
-    priceUsdPerThousandCalls: 0,
-    requiresExternalProvider: true,
-    warning:
-      'La investigación en internet no está integrada en el primer pase con Bedrock.',
-  },
+  monthlyTokenBudget: 300000,
 };
 
 export type AiUsageSummary = {
   totalRequests: number;
   totalInputTokens?: number;
   totalOutputTokens?: number;
+  monthlyTokenBudget?: number;
+  monthlyTokenRemaining?: number;
   estimatedModelCostUsd?: number;
   averageCostPerRequestUsd?: number;
   failedRequests?: number;
@@ -112,10 +103,14 @@ export type AwsCostService = {
 export type AwsCostSummary = {
   status: 'cached' | 'refreshed' | 'stale' | 'disabled' | string;
   services: AwsCostService[];
+  computedServices?: AwsCostService[];
+  periodTotalUsd?: number;
   totalUsd?: number;
+  estimatedPersistentMonthlyUsd?: number;
   previousMonthTotalUsd?: number;
   lastRefreshedAt?: string;
   staleReason?: string;
+  costSourceNotes?: string[];
 };
 
 export type CostDashboardSettings = {
@@ -225,6 +220,5 @@ function cloneModelCatalog(catalog: AiModelCatalog): AiModelCatalog {
   return {
     ...catalog,
     models: catalog.models.map((model) => ({ ...model })),
-    webSearch: catalog.webSearch ? { ...catalog.webSearch } : undefined,
   };
 }

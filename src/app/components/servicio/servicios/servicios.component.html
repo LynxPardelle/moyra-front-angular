@@ -28,8 +28,9 @@
       <a
         class="service-card__media"
         *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
-        href="/solucion/{{ servicio.urltitle }}"
-        [routerLink]="['/solucion', servicio.urltitle]"
+        [attr.href]="isAdmin ? '/admin/solucion/' + servicio.urltitle : '/solucion/' + servicio.urltitle"
+        [routerLink]="[isAdmin ? '/admin/solucion' : '/solucion', servicio.urltitle]"
+        [queryParams]="isAdmin ? { edit: 'true' } : null"
       >
         <img
           [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
@@ -39,9 +40,10 @@
 
       <div class="service-card__body">
         <a
-          href="/solucion/{{ servicio.urltitle }}"
+          [attr.href]="isAdmin ? '/admin/solucion/' + servicio.urltitle : '/solucion/' + servicio.urltitle"
           class="service-card__title-link"
-          [routerLink]="['/solucion', servicio.urltitle]"
+          [routerLink]="[isAdmin ? '/admin/solucion' : '/solucion', servicio.urltitle]"
+          [queryParams]="isAdmin ? { edit: 'true' } : null"
         >
           <h2 class="service-card__title">{{ servicio.title }}</h2>
         </a>
@@ -72,6 +74,7 @@
           class="service-card__read"
           [attr.href]="isAdmin ? '/admin/solucion/' + servicio.urltitle : '/solucion/' + servicio.urltitle"
           [routerLink]="[isAdmin ? '/admin/solucion' : '/solucion', servicio.urltitle]"
+          [queryParams]="isAdmin ? { edit: 'true' } : null"
         >
           Ver más
         </a>

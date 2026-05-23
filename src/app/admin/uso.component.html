@@ -2,7 +2,7 @@
   <header class="admin-usage-page__header">
     <p>Administración</p>
     <h1>Uso y costos</h1>
-    <span>Seguimiento de IA, búsquedas en internet y costos operativos.</span>
+    <span>Seguimiento de IA, tokens y costos operativos.</span>
   </header>
 
   <section class="admin-usage-toolbar">
@@ -52,9 +52,9 @@
       </article>
 
       <article class="admin-usage-card admin-usage-metric">
-        <span>Investigación web</span>
-        <strong>{{ usage?.webResearch?.totalRequests || 0 }}</strong>
-        <small>{{ formatUsd(usage?.webResearch?.estimatedTotalCostUsd) }} estimados</small>
+        <span>Límite mensual IA</span>
+        <strong>{{ usage?.monthlyTokenBudget || 0 }}</strong>
+        <small>{{ usage?.monthlyTokenRemaining || 0 }} tokens disponibles</small>
       </article>
     </section>
 
@@ -100,11 +100,11 @@
 
       <div class="admin-usage-summary">
         <span>Estado: {{ awsCost?.status || 'sin datos' }}</span>
-        <span>Total actual: {{ formatUsd(awsCost?.totalUsd) }}</span>
-        <span>Mes anterior: {{ formatUsd(awsCost?.previousMonthTotalUsd) }}</span>
+        <span>Total del periodo: {{ formatUsd(awsCost?.periodTotalUsd || awsCost?.totalUsd) }}</span>
+        <span>Base mensual estimada: {{ formatUsd(awsCost?.estimatedPersistentMonthlyUsd) }}</span>
       </div>
 
-      <table class="admin-usage-table" *ngIf="(awsCost?.services || []).length > 0">
+      <table class="admin-usage-table" *ngIf="billableServices.length > 0">
         <thead>
           <tr>
             <th>Servicio</th>
@@ -112,12 +112,36 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let serviceCost of awsCost?.services">
+          <tr *ngFor="let serviceCost of billableServices">
             <td>{{ serviceCost.service }}</td>
             <td>{{ formatUsd(serviceCost.amountUsd) }}</td>
           </tr>
         </tbody>
       </table>
+
+      <p class="admin-usage-note" *ngIf="billableServices.length === 0">
+        Cost Explorer no devolvió servicios con costo mayor a USD 0.005 para este periodo.
+      </p>
+
+      <section class="admin-usage-estimates" *ngIf="computedServices.length > 0">
+        <h3>Costos base calculados</h3>
+        <p>
+          Estimaciones de recursos persistentes conocidos. Se guardan junto con la caché para
+          complementar Cost Explorer cuando aún no refleja cargos pequeños.
+        </p>
+        <table class="admin-usage-table">
+          <tbody>
+            <tr *ngFor="let serviceCost of computedServices">
+              <td>{{ serviceCost.service }}</td>
+              <td>{{ formatUsd(serviceCost.amountUsd) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <ul class="admin-usage-notes" *ngIf="(awsCost?.costSourceNotes || []).length > 0">
+        <li *ngFor="let note of awsCost?.costSourceNotes">{{ note }}</li>
+      </ul>
 
       <p class="admin-usage-note">
         Refrescar manualmente puede generar una solicitud cobrada por AWS Cost Explorer.

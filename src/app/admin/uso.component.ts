@@ -98,8 +98,20 @@ export class UsoComponent implements OnInit {
     }
   }
 
+  get billableServices() {
+    return (this.awsCost?.services || []).filter((service) => {
+      return Math.abs(Number(service.amountUsd || 0)) >= 0.005;
+    });
+  }
+
+  get computedServices() {
+    return (this.awsCost?.computedServices || []).filter((service) => {
+      return Math.abs(Number(service.amountUsd || 0)) >= 0.005;
+    });
+  }
+
   formatUsd(value: number | undefined): string {
-    const amount = Number(value || 0);
+    const amount = Math.abs(Number(value || 0)) < 0.005 ? 0 : Number(value || 0);
     return `USD ${amount.toFixed(2)}`;
   }
 

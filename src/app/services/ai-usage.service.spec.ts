@@ -55,7 +55,7 @@ describe('AiUsageService', () => {
     service.getModelCatalog().subscribe((catalog) => {
       expect(catalog.defaultModel).toBe('amazon.nova-lite-v1:0');
       expect(catalog.models.length).toBe(1);
-      expect(catalog.webSearch?.requiresExternalProvider).toBeTrue();
+      expect(catalog.monthlyTokenBudget).toBe(300000);
     });
 
     const req = http.expectOne(apiUrl('/ai/models'));
@@ -73,11 +73,7 @@ describe('AiUsageService', () => {
           outputUsdPerMillionTokens: 0.24,
         },
       ],
-      webSearch: {
-        enabled: false,
-        priceUsdPerThousandCalls: 0,
-        requiresExternalProvider: true,
-      },
+      monthlyTokenBudget: 300000,
     });
   });
 
@@ -87,7 +83,6 @@ describe('AiUsageService', () => {
       expect(catalog.assistantEnabled).toBeFalse();
       expect(catalog.defaultModel).toBe(FALLBACK_BEDROCK_MODEL_CATALOG.defaultModel);
       expect(catalog.models.length).toBeGreaterThan(1);
-      expect(catalog.webSearch?.enabled).toBeFalse();
     });
 
     const req = http.expectOne(apiUrl('/ai/models'));
@@ -153,14 +148,14 @@ describe('AiUsageService', () => {
     req.flush({ status: 'refreshed', services: [] });
   });
 
-  it('sends an AI assistance request with model and web research options', () => {
+  it('sends an AI assistance request with model options and web research disabled', () => {
     service
       .requestAssistance({
         surface: 'blog',
         action: 'seo-metadata',
         model: 'amazon.nova-lite-v1:0',
         instruction: 'Hazlo claro para clientes.',
-        webResearch: true,
+        webResearch: false,
         context: {
           title: 'Contrato mercantil',
         },
@@ -178,7 +173,7 @@ describe('AiUsageService', () => {
       action: 'seo-metadata',
       model: 'amazon.nova-lite-v1:0',
       instruction: 'Hazlo claro para clientes.',
-      webResearch: true,
+      webResearch: false,
       context: {
         title: 'Contrato mercantil',
       },

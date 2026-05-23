@@ -206,6 +206,7 @@ export class ServicioComponent implements OnInit {
         }
 
         this.servicio = servicio.servicio;
+        this.editSwitch = this.shouldStartInEditMode();
         this._webService.consoleLog(
           this.servicio,
           this.document + ' 125',
@@ -625,5 +626,13 @@ export class ServicioComponent implements OnInit {
 
   effectiveSeoKeywords(): string {
     return String(this.servicio.seoKeywords || '').trim() || String(this.servicio.tags || '').trim();
+  }
+
+  private shouldStartInEditMode(): boolean {
+    return (
+      this.isAdmin === true &&
+      this.canChange === true &&
+      this._route.snapshot.queryParamMap.get('edit') === 'true'
+    );
   }
 }

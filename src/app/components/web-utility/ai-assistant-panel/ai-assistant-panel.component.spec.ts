@@ -18,11 +18,17 @@ class FakeAiUsageService {
         },
       ],
       assistantEnabled: true,
-      webSearch: {
-        enabled: false,
-        priceUsdPerThousandCalls: 0,
-        requiresExternalProvider: true,
-      },
+      monthlyTokenBudget: 300000,
+    });
+  }
+
+  getAiUsage() {
+    return of({
+      totalRequests: 2,
+      totalInputTokens: 1200,
+      totalOutputTokens: 800,
+      monthlyTokenBudget: 300000,
+      monthlyTokenRemaining: 298000,
     });
   }
 
@@ -60,16 +66,14 @@ describe('AiAssistantPanelComponent', () => {
     fixture.detectChanges();
   });
 
-  it('renders Bedrock model costs and disabled web research warning', () => {
+  it('renders Bedrock model costs and monthly token usage', () => {
     const text = fixture.nativeElement.textContent;
-    const webResearchToggle = fixture.nativeElement.querySelector(
-      '.ai-assistant-panel__toggle input'
-    ) as HTMLInputElement | null;
 
     expect(text).toContain('Asistente IA');
     expect(text).toContain('Amazon Nova Lite');
-    expect(text).toContain('Investigación en internet oculta por ahora');
-    expect(webResearchToggle).toBeNull();
+    expect(text).toContain('Tokens mensuales');
+    expect(text).toContain('2,000 de 300,000');
+    expect(text).not.toContain('Investigación en internet');
   });
 
   it('generates and displays an editable suggestion with cost', async () => {

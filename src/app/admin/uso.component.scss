@@ -205,6 +205,36 @@
   margin: 1rem 0 0;
 }
 
+.admin-usage-estimates {
+  border-top: 1px solid rgba(41, 48, 59, 0.12);
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.admin-usage-estimates h3 {
+  font-size: 0.98rem;
+  margin: 0 0 0.35rem;
+}
+
+.admin-usage-estimates p,
+.admin-usage-notes {
+  color: rgba(41, 48, 59, 0.72);
+  font-size: 0.92rem;
+}
+
+.admin-usage-estimates p {
+  margin: 0 0 0.65rem;
+}
+
+.admin-usage-notes {
+  margin: 1rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.admin-usage-notes li {
+  margin-bottom: 0.35rem;
+}
+
 @media (max-width: 900px) {
   .admin-usage-toolbar,
   .admin-usage-grid,

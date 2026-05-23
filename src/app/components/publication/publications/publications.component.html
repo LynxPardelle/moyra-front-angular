@@ -52,6 +52,7 @@
           isAdmin ? '/admin/publication' : '/publication',
           item.id
         ]"
+        [queryParams]="isAdmin ? { edit: 'true' } : null"
       >
         <div class="publication-card__media">
           <img
@@ -70,6 +71,7 @@
             isAdmin ? '/admin/publication' : '/publication',
             item.id
           ]"
+          [queryParams]="isAdmin ? { edit: 'true' } : null"
         >
           <h3 class="publication-card__title">{{ item.publication.title }}</h3>
         </a>
@@ -145,6 +147,7 @@
             isAdmin ? '/admin/publication' : '/publication',
             item.id
           ]"
+          [queryParams]="isAdmin ? { edit: 'true' } : null"
         >
           {{ isAdmin ? 'Editar publicación' : 'Ver publicación' }}
         </a>
