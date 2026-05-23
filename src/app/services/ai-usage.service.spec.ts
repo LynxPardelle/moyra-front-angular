@@ -53,9 +53,9 @@ describe('AiUsageService', () => {
 
   it('loads the allowed model catalog with admin auth', () => {
     service.getModelCatalog().subscribe((catalog) => {
-      expect(catalog.defaultModel).toBe('amazon.nova-lite-v1:0');
+      expect(catalog.defaultModel).toBe('ai21.jamba-1-5-mini-v1:0');
       expect(catalog.models.length).toBe(1);
-      expect(catalog.monthlyTokenBudget).toBe(1000000);
+      expect(catalog.monthlyTokenBudget).toBe(16666666);
     });
 
     const req = http.expectOne(apiUrl('/ai/models'));
@@ -63,17 +63,17 @@ describe('AiUsageService', () => {
     expect(req.request.headers.get('Authorization')).toBe(token);
     req.flush({
       provider: 'amazon-bedrock',
-      defaultModel: 'amazon.nova-lite-v1:0',
+      defaultModel: 'ai21.jamba-1-5-mini-v1:0',
       models: [
         {
-          id: 'amazon.nova-lite-v1:0',
-          label: 'Amazon Nova Lite',
-          description: 'Balanced quality and cost.',
-          inputUsdPerMillionTokens: 0.06,
-          outputUsdPerMillionTokens: 0.24,
+          id: 'ai21.jamba-1-5-mini-v1:0',
+          label: 'AI21 Jamba 1.5 Mini',
+          description: 'Broad context alternative.',
+          inputUsdPerMillionTokens: 0.2,
+          outputUsdPerMillionTokens: 0.4,
         },
       ],
-      monthlyTokenBudget: 1000000,
+      monthlyTokenBudget: 16666666,
     });
   });
 

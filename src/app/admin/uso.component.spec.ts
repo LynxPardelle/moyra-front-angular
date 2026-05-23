@@ -10,11 +10,11 @@ class FakeAiUsageService {
       totalRequests: 8,
       totalInputTokens: 1200,
       totalOutputTokens: 800,
-      monthlyTokenBudget: 1000000,
-      monthlyTokenRemaining: 998000,
-      monthlyTokenBudgetEstimatedCostUsd: 0.0875,
+      monthlyTokenBudget: 16666666,
+      monthlyTokenRemaining: 16664666,
+      monthlyTokenBudgetEstimatedCostUsd: 5,
       monthlyTokensUsedEstimatedCostUsd: 0.14,
-      monthlyTokenBudgetPricingNote: 'Aproximado con Amazon Nova Micro.',
+      monthlyTokenBudgetPricingNote: 'Aproximado con AI21 Jamba 1.5 Mini.',
       estimatedModelCostUsd: 0.14,
       averageCostPerRequestUsd: 0.0175,
       failedRequests: 1,
@@ -154,7 +154,7 @@ describe('UsoComponent', () => {
     expect(text).toContain('8');
     expect(text).toContain('USD 0.14');
     expect(text).toContain('USD 4.56');
-    expect(text).toContain('998000 tokens disponibles');
+    expect(text).toContain('16664666 tokens disponibles');
     expect(text).toContain('6 hours');
     expect(text).toContain('Producción');
     expect(text).toContain('Testing');

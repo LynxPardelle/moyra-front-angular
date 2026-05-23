@@ -36,12 +36,20 @@ export type AiModelCatalog = {
 
 export const FALLBACK_BEDROCK_MODEL_CATALOG: AiModelCatalog = {
   provider: 'amazon-bedrock',
-  defaultModel: 'amazon.nova-lite-v1:0',
+  defaultModel: 'ai21.jamba-1-5-mini-v1:0',
   assistantEnabled: false,
   source: 'fallback',
   notice:
     'El catálogo de modelos se cargó localmente porque la API de IA no está disponible en este ambiente.',
   models: [
+    {
+      id: 'ai21.jamba-1-5-mini-v1:0',
+      label: 'AI21 Jamba 1.5 Mini',
+      description:
+        'Alternativa de contexto amplio para borradores, SEO y reescritura cuando AWS habilite cuota diaria.',
+      inputUsdPerMillionTokens: 0.2,
+      outputUsdPerMillionTokens: 0.4,
+    },
     {
       id: 'amazon.nova-micro-v1:0',
       label: 'Amazon Nova Micro',
@@ -64,7 +72,7 @@ export const FALLBACK_BEDROCK_MODEL_CATALOG: AiModelCatalog = {
       outputUsdPerMillionTokens: 3.2,
     },
   ],
-  monthlyTokenBudget: 1000000,
+  monthlyTokenBudget: 16666666,
 };
 
 export type AiUsageSummary = {
