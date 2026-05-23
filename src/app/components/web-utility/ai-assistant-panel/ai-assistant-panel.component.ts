@@ -158,7 +158,7 @@ export class AiAssistantPanelComponent implements OnInit {
   }
 
   formatUsd(value: number | undefined): string {
-    const amount = Math.abs(Number(value || 0)) <= 0.0000005 ? 0 : Number(value || 0);
+    const amount = Math.abs(Number(value || 0)) < 0.00005 ? 0 : Number(value || 0);
     const decimals = amount > 0 && Math.abs(amount) < 0.01 ? 4 : 2;
     return `USD ${amount.toFixed(decimals)}`;
   }
