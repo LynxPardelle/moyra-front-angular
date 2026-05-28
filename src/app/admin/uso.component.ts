@@ -41,9 +41,15 @@ export class UsoComponent implements OnInit {
     void this.loadDashboard();
   }
 
+  get hasDashboardData(): boolean {
+    return Boolean(this.usage || this.awsCost);
+  }
+
   async loadDashboard(): Promise<void> {
     this.loading = true;
     this.errorMessage = '';
+    this.usage = null;
+    this.awsCost = null;
 
     try {
       const dashboard = await this._aiUsageService

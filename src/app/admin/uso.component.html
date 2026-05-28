@@ -29,7 +29,11 @@
     Cargando uso y costos...
   </div>
 
-  <ng-container *ngIf="!loading">
+  <div *ngIf="!loading && !hasDashboardData && errorMessage" class="admin-usage-card">
+    No se cargaron datos de uso y costos. Vuelve a intentar después de renovar la sesión.
+  </div>
+
+  <ng-container *ngIf="!loading && hasDashboardData">
     <section class="admin-usage-grid">
       <article class="admin-usage-card admin-usage-metric">
         <span>Solicitudes IA</span>

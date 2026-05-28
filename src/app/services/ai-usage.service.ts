@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import { apiUrl, jsonAuthHeaders, storedToken } from './global';
+import { AuthFacade } from '../store/auth/auth.facade';
 
 export const COST_REFRESH_INTERVALS = [
   '6 hours',
@@ -193,6 +194,8 @@ export type AiAssistResponse = {
 
 @Injectable({ providedIn: 'root' })
 export class AiUsageService {
+  private readonly _authFacade = inject(AuthFacade, { optional: true });
+
   constructor(private _http: HttpClient) {}
 
   getModelCatalog(): Observable<AiModelCatalog> {
@@ -256,7 +259,8 @@ export class AiUsageService {
   }
 
   private authHeaders(): HttpHeaders {
-    return new HttpHeaders(jsonAuthHeaders(storedToken()));
+    const token = this._authFacade?.token() || storedToken();
+    return new HttpHeaders(jsonAuthHeaders(token));
   }
 }
 

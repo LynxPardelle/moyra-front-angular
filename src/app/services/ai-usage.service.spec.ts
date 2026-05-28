@@ -6,6 +6,7 @@ import {
 } from '@angular/common/http/testing';
 
 import { apiUrl } from './global';
+import { AuthFacade } from '../store/auth/auth.facade';
 import {
   AiUsageService,
   COST_REFRESH_INTERVAL_LABELS,
@@ -30,14 +31,22 @@ describe('AiUsageService', () => {
   let service: AiUsageService;
   let http: HttpTestingController;
   let token: string;
+  let storeToken: string | null;
 
   beforeEach(() => {
     token = validToken();
+    storeToken = token;
     localStorage.setItem('token', token);
 
     TestBed.configureTestingModule({
       providers: [
         AiUsageService,
+        {
+          provide: AuthFacade,
+          useValue: {
+            token: () => storeToken,
+          },
+        },
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
@@ -117,6 +126,24 @@ describe('AiUsageService', () => {
     usageReq.flush({ totalRequests: 3 });
     costReq.flush({ status: 'cached', services: [] });
     settingsReq.flush({ awsCostRefreshInterval: '6 hours' });
+  });
+
+  it('uses the current auth store token before refresh-session persistence finishes', () => {
+    const refreshedToken = validToken();
+    localStorage.clear();
+    sessionStorage.clear();
+    storeToken = refreshedToken;
+
+    service.getAiUsage('2026-05-01', '2026-05-21').subscribe((usage) => {
+      expect(usage.totalRequests).toBe(4);
+    });
+
+    const req = http.expectOne(
+      apiUrl('/ai/usage?from=2026-05-01&to=2026-05-21')
+    );
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.get('Authorization')).toBe(refreshedToken);
+    req.flush({ totalRequests: 4 });
   });
 
   it('updates the AWS cost refresh interval using the allowlisted value', () => {

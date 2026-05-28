@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { AiUsageService } from '../services/ai-usage.service';
 import { UsoComponent } from './uso.component';
@@ -102,8 +102,13 @@ class FakeAiUsageService {
 
   updateCostRefreshIntervalCalls: string[] = [];
   refreshCalls: Array<{ from: string; to: string }> = [];
+  shouldFail = false;
 
   getDashboard() {
+    if (this.shouldFail) {
+      return throwError(() => ({ error: { message: 'No autorizado.' } }));
+    }
+
     return of(this.dashboard);
   }
 
@@ -141,10 +146,10 @@ describe('UsoComponent', () => {
     component = fixture.componentInstance;
     component.from = '2026-05-01';
     component.to = '2026-05-21';
-    fixture.detectChanges();
   });
 
   it('renders AI usage, AWS costs, and the selected refresh interval', async () => {
+    fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -167,17 +172,35 @@ describe('UsoComponent', () => {
     expect(text).toContain('El total principal se calcula');
   });
 
-  it('updates the AWS cost refresh interval from the dashboard', () => {
+  it('does not render empty metrics when the dashboard request is unauthorized', async () => {
+    service.shouldFail = true;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+
+    expect(text).toContain('No autorizado.');
+    expect(text).toContain('No se cargaron datos de uso y costos.');
+    expect(text).not.toContain('Solicitudes IA');
+    expect(text).not.toContain('Costo estimado IA');
+  });
+
+  it('updates the AWS cost refresh interval from the dashboard', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
     component.selectedInterval = '3 months';
-    component.saveRefreshInterval();
+    await component.saveRefreshInterval();
     fixture.detectChanges();
 
     expect(service.updateCostRefreshIntervalCalls).toEqual(['3 months']);
     expect(component.selectedInterval).toBe('3 months');
   });
 
-  it('runs a manual AWS cost refresh for the selected date range', () => {
-    component.refreshAwsCosts();
+  it('runs a manual AWS cost refresh for the selected date range', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await component.refreshAwsCosts();
     fixture.detectChanges();
 
     expect(service.refreshCalls).toEqual([
