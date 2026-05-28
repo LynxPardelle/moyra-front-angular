@@ -168,6 +168,11 @@ export type AiUsageDashboard = {
   settings: CostDashboardSettings;
 };
 
+export type CostDashboard = {
+  awsCost: AwsCostSummary;
+  settings: CostDashboardSettings;
+};
+
 export type AiAssistRequest = {
   surface: 'blog' | 'publications' | 'solutions' | 'configurations' | string;
   action: string;
@@ -209,6 +214,13 @@ export class AiUsageService {
   getDashboard(from: string, to: string): Observable<AiUsageDashboard> {
     return forkJoin({
       usage: this.getAiUsage(from, to),
+      awsCost: this.getAwsCosts(from, to),
+      settings: this.getCostSettings(),
+    });
+  }
+
+  getCostDashboard(from: string, to: string): Observable<CostDashboard> {
+    return forkJoin({
       awsCost: this.getAwsCosts(from, to),
       settings: this.getCostSettings(),
     });

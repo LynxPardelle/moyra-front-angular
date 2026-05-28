@@ -102,14 +102,29 @@ class FakeAiUsageService {
 
   updateCostRefreshIntervalCalls: string[] = [];
   refreshCalls: Array<{ from: string; to: string }> = [];
+  getDashboardCalls = 0;
+  getCostDashboardCalls = 0;
   shouldFail = false;
 
   getDashboard() {
+    this.getDashboardCalls += 1;
     if (this.shouldFail) {
       return throwError(() => ({ error: { message: 'No autorizado.' } }));
     }
 
     return of(this.dashboard);
+  }
+
+  getCostDashboard() {
+    this.getCostDashboardCalls += 1;
+    if (this.shouldFail) {
+      return throwError(() => ({ error: { message: 'No autorizado.' } }));
+    }
+
+    return of({
+      awsCost: this.dashboard.awsCost,
+      settings: this.dashboard.settings,
+    });
   }
 
   updateCostRefreshInterval(interval: any) {
@@ -148,7 +163,7 @@ describe('UsoComponent', () => {
     component.to = '2026-05-21';
   });
 
-  it('renders AI usage, AWS costs, and the selected refresh interval', async () => {
+  it('renders operational AWS costs and hides AI usage while disabled', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -156,10 +171,7 @@ describe('UsoComponent', () => {
     const text = fixture.nativeElement.textContent;
 
     expect(text).toContain('Uso y costos');
-    expect(text).toContain('8');
-    expect(text).toContain('USD 0.14');
     expect(text).toContain('USD 4.56');
-    expect(text).toContain('14998000 tokens disponibles');
     expect(text).toContain('Cada 6 horas');
     expect(text).toContain('Cada bimestre');
     expect(text).toContain('Cada trimestre');
@@ -169,6 +181,12 @@ describe('UsoComponent', () => {
     expect(text).toContain('AWS Secrets Manager');
     expect(text).toContain('Amazon S3');
     expect(text).not.toContain('Investigación web');
+    expect(text).not.toContain('Solicitudes IA');
+    expect(text).not.toContain('Costo estimado IA');
+    expect(text).not.toContain('Límite mensual IA');
+    expect(text).not.toContain('Uso por superficie');
+    expect(service.getDashboardCalls).toBe(0);
+    expect(service.getCostDashboardCalls).toBe(1);
     expect(text).toContain('El total principal se calcula');
   });
 

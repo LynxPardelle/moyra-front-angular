@@ -2,7 +2,7 @@
   <header class="admin-usage-page__header">
     <p>Administración</p>
     <h1>Uso y costos</h1>
-    <span>Seguimiento de IA, tokens y costos operativos.</span>
+    <span>Seguimiento de costos operativos de Moyra.</span>
   </header>
 
   <section class="admin-usage-toolbar">
@@ -34,7 +34,7 @@
   </div>
 
   <ng-container *ngIf="!loading && hasDashboardData">
-    <section class="admin-usage-grid">
+    <section class="admin-usage-grid" *ngIf="aiUsageEnabled">
       <article class="admin-usage-card admin-usage-metric">
         <span>Solicitudes IA</span>
         <strong>{{ usage?.totalRequests || 0 }}</strong>
@@ -68,7 +68,7 @@
       </article>
     </section>
 
-    <p class="admin-usage-note" *ngIf="usage?.monthlyTokenBudgetPricingNote">
+    <p class="admin-usage-note" *ngIf="aiUsageEnabled && usage?.monthlyTokenBudgetPricingNote">
       {{ usage?.monthlyTokenBudgetPricingNote }}
     </p>
 
@@ -203,7 +203,7 @@
       </p>
     </section>
 
-    <section class="admin-usage-card">
+    <section class="admin-usage-card" *ngIf="aiUsageEnabled">
       <div class="admin-usage-card__heading">
         <div>
           <h2>Uso por superficie</h2>

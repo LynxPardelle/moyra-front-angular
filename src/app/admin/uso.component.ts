@@ -11,6 +11,10 @@ import {
   CostRefreshInterval,
 } from '../services/ai-usage.service';
 
+// Hidden while the public/admin AI assistant remains disabled by Bedrock quota limits.
+// Keep the cost dashboard operational without calling AI usage endpoints.
+export const AI_USAGE_DASHBOARD_FEATURE_ENABLED = false;
+
 @Component({
   selector: 'admin-uso',
   imports: [CommonModule, FormsModule],
@@ -20,6 +24,7 @@ import {
 export class UsoComponent implements OnInit {
   public readonly intervals = COST_REFRESH_INTERVALS;
   public readonly intervalLabels = COST_REFRESH_INTERVAL_LABELS;
+  public readonly aiUsageEnabled = AI_USAGE_DASHBOARD_FEATURE_ENABLED;
 
   public from = '';
   public to = '';
@@ -52,10 +57,10 @@ export class UsoComponent implements OnInit {
     this.awsCost = null;
 
     try {
-      const dashboard = await this._aiUsageService
-        .getDashboard(this.from, this.to)
-        .toPromise();
-      this.usage = dashboard?.usage || null;
+      const dashboard = this.aiUsageEnabled
+        ? await this._aiUsageService.getDashboard(this.from, this.to).toPromise()
+        : await this._aiUsageService.getCostDashboard(this.from, this.to).toPromise();
+      this.usage = this.aiUsageEnabled ? (dashboard as any)?.usage || null : null;
       this.awsCost = dashboard?.awsCost || null;
       this.selectedInterval = dashboard?.settings?.awsCostRefreshInterval || '6 hours';
     } catch (error: any) {

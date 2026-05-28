@@ -128,6 +128,27 @@ describe('AiUsageService', () => {
     settingsReq.flush({ awsCostRefreshInterval: '6 hours' });
   });
 
+  it('loads operational cost dashboard without requesting AI usage', () => {
+    service.getCostDashboard('2026-05-01', '2026-05-21').subscribe((dashboard) => {
+      expect(dashboard.awsCost.status).toBe('cached');
+      expect(dashboard.settings.awsCostRefreshInterval).toBe('6 hours');
+    });
+
+    const costReq = http.expectOne(
+      apiUrl('/costs/aws?from=2026-05-01&to=2026-05-21')
+    );
+    const settingsReq = http.expectOne(apiUrl('/costs/settings'));
+    http.expectNone(apiUrl('/ai/usage?from=2026-05-01&to=2026-05-21'));
+
+    expect(costReq.request.method).toBe('GET');
+    expect(settingsReq.request.method).toBe('GET');
+    expect(costReq.request.headers.get('Authorization')).toBe(token);
+    expect(settingsReq.request.headers.get('Authorization')).toBe(token);
+
+    costReq.flush({ status: 'cached', services: [] });
+    settingsReq.flush({ awsCostRefreshInterval: '6 hours' });
+  });
+
   it('uses the current auth store token before refresh-session persistence finishes', () => {
     const refreshedToken = validToken();
     localStorage.clear();
