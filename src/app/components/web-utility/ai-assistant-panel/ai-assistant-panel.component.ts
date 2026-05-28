@@ -9,6 +9,10 @@ import {
   AiUsageService,
 } from '../../../services/ai-usage.service';
 
+// Disabled intentionally while Bedrock keeps regional model daily token quotas at 0.
+// Keep the panel code in place so it can be re-enabled after AWS grants usable quota.
+export const AI_ASSISTANT_FEATURE_ENABLED = false;
+
 type AssistantAction = {
   value: string;
   label: string;
@@ -53,6 +57,7 @@ export class AiAssistantPanelComponent implements OnInit {
   @Input() surface = 'blog';
   @Input() context: Record<string, unknown> = {};
 
+  public readonly featureEnabled = AI_ASSISTANT_FEATURE_ENABLED;
   public catalog: AiModelCatalog | null = null;
   public selectedAction = '';
   public selectedModel = '';
@@ -72,6 +77,9 @@ export class AiAssistantPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.selectedAction = this.actions[0]?.value || 'seo-metadata';
+    if (!this.featureEnabled) {
+      return;
+    }
     void this.loadCatalog();
   }
 
@@ -119,6 +127,10 @@ export class AiAssistantPanelComponent implements OnInit {
   }
 
   async generate(): Promise<void> {
+    if (!this.featureEnabled) {
+      return;
+    }
+
     if (!this.selectedModel || !this.selectedAction) {
       return;
     }

@@ -5,7 +5,12 @@ import { AiUsageService } from '../../../services/ai-usage.service';
 import { AiAssistantPanelComponent } from './ai-assistant-panel.component';
 
 class FakeAiUsageService {
+  getModelCatalogCalls = 0;
+  getAiUsageCalls = 0;
+  requestAssistanceCalls = 0;
+
   getModelCatalog() {
+    this.getModelCatalogCalls += 1;
     return of({
       defaultModel: 'amazon.nova-micro-v1:0',
       models: [
@@ -23,6 +28,7 @@ class FakeAiUsageService {
   }
 
   getAiUsage() {
+    this.getAiUsageCalls += 1;
     return of({
       totalRequests: 2,
       totalInputTokens: 1200,
@@ -36,6 +42,7 @@ class FakeAiUsageService {
   }
 
   requestAssistance() {
+    this.requestAssistanceCalls += 1;
     return of({
       status: 'success',
       requestId: 'usage-123',
@@ -53,6 +60,7 @@ class FakeAiUsageService {
 describe('AiAssistantPanelComponent', () => {
   let component: AiAssistantPanelComponent;
   let fixture: ComponentFixture<AiAssistantPanelComponent>;
+  let aiUsageService: FakeAiUsageService;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -60,6 +68,7 @@ describe('AiAssistantPanelComponent', () => {
       providers: [{ provide: AiUsageService, useClass: FakeAiUsageService }],
     }).compileComponents();
 
+    aiUsageService = TestBed.inject(AiUsageService) as unknown as FakeAiUsageService;
     fixture = TestBed.createComponent(AiAssistantPanelComponent);
     component = fixture.componentInstance;
     component.surface = 'blog';
@@ -69,29 +78,22 @@ describe('AiAssistantPanelComponent', () => {
     fixture.detectChanges();
   });
 
-  it('renders Bedrock model costs and monthly token usage', () => {
+  it('hides the assistant while Bedrock quotas block usable generation', () => {
     const text = fixture.nativeElement.textContent;
 
-    expect(text).toContain('Asistente IA');
-    expect(text).toContain('Amazon Nova Micro');
-    expect(text).toContain('Tokens mensuales');
-    expect(text).toContain('2,000 de 15,000,000');
-    expect(text).toContain('tope aprox.');
-    expect(text).not.toContain('Investigación en internet');
+    expect(text).not.toContain('Asistente IA');
+    expect(fixture.nativeElement.querySelector('.ai-assistant-panel')).toBeNull();
+    expect(aiUsageService.getModelCatalogCalls).toBe(0);
+    expect(aiUsageService.getAiUsageCalls).toBe(0);
   });
 
-  it('generates and displays an editable suggestion with cost', async () => {
+  it('does not call the AI backend while the feature is hidden', async () => {
     await component.generate();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const text = fixture.nativeElement.textContent;
-    expect(text).toContain('USD 0.00');
-    const textarea = fixture.nativeElement.querySelector(
-      '.ai-assistant-panel__field--output textarea'
-    ) as HTMLTextAreaElement;
-    expect(textarea.value).toBe('Título sugerido');
-    expect(component.outputText).toBe('Título sugerido');
+    expect(aiUsageService.requestAssistanceCalls).toBe(0);
+    expect(component.outputText).toBe('');
   });
 });
