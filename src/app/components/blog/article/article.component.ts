@@ -24,7 +24,7 @@ import {
   fileKindSummary,
   isImageFile,
 } from '../../../utils/file-kind';
-import { hasHtmlMarkup } from '../../../utils/rich-content';
+import { hasHtmlMarkup, richContentPlainText, richTextWordCount } from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
 import { AiAssistantPanelComponent } from '../../web-utility/ai-assistant-panel/ai-assistant-panel.component';
 import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
@@ -683,7 +683,7 @@ export class ArticleComponent implements OnInit {
       ...this.articleSections.map((section) => section.text),
       this.article.outro,
     ].join(' ');
-    return stripHtml(content).replace(/\s+/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+    return richTextWordCount(content);
   }
 
   readingMinutes(): number {
@@ -834,14 +834,10 @@ function normalizeSlug(value: string): string {
 }
 
 function excerpt(text: string, length: number): string {
-  const cleanText = stripHtml(text || '').replace(/\s+/g, ' ').trim();
+  const cleanText = richContentPlainText(text).replace(/\s+/g, ' ').trim();
   if (cleanText.length <= length) {
     return cleanText;
   }
 
   return cleanText.slice(0, length - 1).trimEnd() + '...';
-}
-
-function stripHtml(value: string): string {
-  return value.replace(/<[^>]*>/g, ' ');
 }

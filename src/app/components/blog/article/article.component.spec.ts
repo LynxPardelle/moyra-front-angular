@@ -37,4 +37,17 @@ describe('ArticleComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('counts visible words across rich HTML intro, sections, and outro', () => {
+    component.article.intro = '<p>Intro&nbsp;del&nbsp;artículo</p>';
+    component.articleSections = [
+      {
+        title: 'Sección',
+        text: '<h3>Este&nbsp;es&nbsp;un&nbsp;título</h3><p>Esto&nbsp;no&nbsp;es&nbsp;un&nbsp;título</p>',
+      } as any,
+    ];
+    component.article.outro = '<p>Cierre&nbsp;final</p>';
+
+    expect(component.contentWordCount()).toBe(14);
+  });
 });

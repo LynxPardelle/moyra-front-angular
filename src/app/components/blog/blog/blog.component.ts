@@ -16,7 +16,7 @@ import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { SafeEmbedFrameComponent } from '../../web-utility/safe-embed-frame/safe-embed-frame.component';
 import { buildEmbedItems, EmbedItem, embedTrackKey } from '../../../utils/embeds';
 import { FileKindBadge, fileKindBadges, fileKindSummary } from '../../../utils/file-kind';
-import { hasHtmlMarkup } from '../../../utils/rich-content';
+import { hasHtmlMarkup, richContentPlainText, richTextWordCount } from '../../../utils/rich-content';
 
 // Extras
 import Swal from 'sweetalert2';
@@ -206,7 +206,7 @@ export class BlogComponent implements OnInit {
   }
 
   excerpt(text: string, length: number = 220): string {
-    const cleanText = stripHtml(text || '').replace(/\s+/g, ' ').trim();
+    const cleanText = richContentPlainText(text).replace(/\s+/g, ' ').trim();
     if (cleanText.length <= length) {
       return cleanText;
     }
@@ -322,12 +322,8 @@ function normalizeArticleSection(section: any, articleId: string): ArticleSectio
 }
 
 function readingMinutes(text: string): number {
-  const words = stripHtml(text || '').replace(/\s+/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+  const words = richTextWordCount(text);
   return Math.max(1, Math.ceil(words / 220));
-}
-
-function stripHtml(value: string): string {
-  return value.replace(/<[^>]*>/g, ' ');
 }
 
 function escapeHtml(value: string): string {

@@ -16,6 +16,7 @@ This file is for durable agent memory only. Dated implementation history belongs
 - The global site brand/header is visual identity only and must not use `h1`/`h2`; each routed page owns its own document heading hierarchy.
 - Header and footer remain fixed; `.site-main` is the scroll container between them so visible content does not sit under fixed chrome.
 - Rich text editing is shared through the Quill-based rich text editor. Long-form content should preserve headings, emphasis, links, lists, quotes, YouTube embeds, and safe insertions.
+- Word counts and reading-time calculations for Quill rich text should use `richTextWordCount` from `src/app/utils/rich-content.ts`; ad hoc `stripHtml` misses HTML space entities such as `&nbsp;`.
 - Publications and home should reuse the same publication-card presentation where practical.
 - Local embed QA should run under `localhost`, not `127.0.0.1`; some YouTube privacy embeds show unavailable under `127.0.0.1`. The browser entry redirects `127.0.0.1` to `localhost` for local development.
 
