@@ -120,6 +120,31 @@ describe('UserService auth transport', () => {
     );
   });
 
+  it('falls back to Cognito direct reset when the auth API route fails before CORS exposes a status', (done) => {
+    service.requestPasswordReset('missing@example.com').subscribe((response) => {
+      expect(response.status).toBe('success');
+      done();
+    });
+
+    const apiRequest = http.expectOne(apiUrl('/auth/forgot-password'));
+    apiRequest.error(new ProgressEvent('error'), {
+      status: 0,
+      statusText: 'Unknown Error',
+    });
+
+    const cognitoRequest = http.expectOne(COGNITO_ENDPOINT);
+    expect(cognitoRequest.request.method).toBe('POST');
+    expect(cognitoRequest.request.headers.get('X-Amz-Target')).toBe(
+      'AWSCognitoIdentityProviderService.ForgotPassword'
+    );
+    expect(cognitoRequest.request.body.Username).toBe('missing@example.com');
+
+    cognitoRequest.flush(
+      { __type: 'UserNotFoundException' },
+      { status: 400, statusText: 'Bad Request' }
+    );
+  });
+
   it('confirms a Cognito password reset through the auth API', () => {
     service
       .confirmPasswordReset('admin@example.com', '123456', 'new-password')

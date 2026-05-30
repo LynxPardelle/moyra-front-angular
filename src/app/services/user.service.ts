@@ -323,7 +323,11 @@ export class UserService {
   }
 
   private shouldFallbackToCognito(error: HttpErrorResponse): boolean {
-    return ApiRuntime.isV2 && error.status === 404 && Boolean(CognitoRuntime.userPoolClientId);
+    return (
+      ApiRuntime.isV2 &&
+      Boolean(CognitoRuntime.userPoolClientId) &&
+      (error.status === 404 || error.status === 0)
+    );
   }
 
   private isCognitoAccessToken(token: string | null | undefined): boolean {
