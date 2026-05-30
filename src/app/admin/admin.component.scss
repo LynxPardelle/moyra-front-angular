@@ -1,0 +1,15 @@
+.admin-menu__logout {
+  background: transparent;
+  border: 0;
+  color: #4b8ff5;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.admin-menu__logout:hover,
+.admin-menu__logout:focus-visible {
+  color: #29303b;
+  outline: none;
+  text-decoration: underline;
+}

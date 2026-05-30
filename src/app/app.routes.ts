@@ -22,6 +22,7 @@ import { BlogComponent } from './components/blog/blog/blog.component';
 import { ArticleComponent } from './components/blog/article/article.component';
 
 /* User */
+import { ChangePasswordComponent } from './components/user/change-password/change-password.component';
 import { LoginComponent } from './components/user/login/login.component';
 
 export const routes: Routes = [
@@ -66,6 +67,7 @@ export const routes: Routes = [
 
   // User
   { path: 'login', component: LoginComponent },
+  { path: 'cambiar-contrasena', component: ChangePasswordComponent },
 
   // Error
   { path: '**', component: ErrorComponent },

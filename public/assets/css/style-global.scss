@@ -364,8 +364,12 @@ body {
     margin-block: 0 !important;
   }
 
-  .offcanvas-body a {
+  .offcanvas-body a,
+  .offcanvas-body button {
+    background: transparent;
+    border: 0;
     color: $titleM !important;
+    cursor: pointer;
     font-size: 1.08rem;
     font-weight: 750;
     letter-spacing: 0;
@@ -424,10 +428,16 @@ body {
     grid-column: 3;
     justify-content: flex-end;
 
-    a {
+    a,
+    button {
       align-items: center;
+      background: transparent;
       border-bottom: 2px solid transparent;
+      border-left: 0;
+      border-right: 0;
+      border-top: 0;
       color: rgba(41, 48, 59, 0.78);
+      cursor: pointer;
       display: inline-flex;
       font-size: 0.78rem;
       font-weight: 750;
@@ -637,6 +647,13 @@ body {
   .swal2-icon.swal2-success {
     border-color: rgba(72, 192, 45, 0.42) !important;
     color: $whatsApp !important;
+    overflow: hidden;
+  }
+
+  .swal2-icon.swal2-success .swal2-success-circular-line-left,
+  .swal2-icon.swal2-success .swal2-success-circular-line-right,
+  .swal2-icon.swal2-success .swal2-success-fix {
+    background: transparent !important;
   }
 
   .swal2-icon.swal2-error {

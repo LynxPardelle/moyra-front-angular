@@ -15,6 +15,12 @@ const API_BASE_URL_BY_HOST: Record<string, string> = {
   'www.moyra.org': 'https://api.moyra.org/api/v2',
 };
 
+const COGNITO_CLIENT_ID_BY_HOST: Record<string, string> = {
+  'test.moyra.org': '37gd7nje2slqpdr83o3jikd24r',
+  'moyra.org': '9h7btlgpjq2fgke89coop7kha',
+  'www.moyra.org': '9h7btlgpjq2fgke89coop7kha',
+};
+
 function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, '');
 }
@@ -55,11 +61,36 @@ function resolveApiBaseUrl(): string {
   return trimTrailingSlash(environment.apiBaseUrl);
 }
 
+function resolveCognitoUserPoolClientId(): string {
+  const configuredClientId =
+    runtimeEnv('MOYRA_COGNITO_USER_POOL_CLIENT_ID') ||
+    runtimeEnv('COGNITO_USER_POOL_CLIENT_ID') ||
+    runtimeEnv('PUBLIC_COGNITO_USER_POOL_CLIENT_ID');
+
+  if (configuredClientId) {
+    return configuredClientId;
+  }
+
+  const host = browserHost();
+  if (host && COGNITO_CLIENT_ID_BY_HOST[host]) {
+    return COGNITO_CLIENT_ID_BY_HOST[host];
+  }
+
+  return environment.cognitoUserPoolClientId || '';
+}
+
 const web = resolveApiBaseUrl();
+const cognitoRegion = environment.cognitoRegion || 'us-east-1';
 
 export const ApiRuntime = {
   url: web,
   isV2: /\/api\/v2$/.test(web),
+};
+
+export const CognitoRuntime = {
+  endpoint: `https://cognito-idp.${cognitoRegion}.amazonaws.com/`,
+  region: cognitoRegion,
+  userPoolClientId: resolveCognitoUserPoolClientId(),
 };
 
 export const Global = {

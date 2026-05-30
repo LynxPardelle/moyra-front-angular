@@ -44,8 +44,23 @@
     <a href="/we" [routerLink]="['/we']">Nosotros</a>
     <a href="/publications" [routerLink]="['/publications']">Publicaciones</a>
     <a href="/blog" [routerLink]="['/blog']">Blog</a>
-    <a *ngIf="!isAdminUser()" href="/login" [routerLink]="['/login']">Acceso</a>
+    <a *ngIf="!isAuthenticatedUser()" href="/login" [routerLink]="['/login']">Acceso</a>
+    <a
+      *ngIf="isAuthenticatedUser()"
+      href="/cambiar-contrasena"
+      [routerLink]="['/cambiar-contrasena']"
+    >
+      Cambiar contraseña
+    </a>
     <a *ngIf="isAdminUser()" href="/admin" [routerLink]="['/admin']">Panel</a>
+    <button
+      *ngIf="isAuthenticatedUser()"
+      type="button"
+      data-testid="site-logout"
+      (click)="logout()"
+    >
+      Cerrar sesión
+    </button>
   </nav>
 
   <!-- Menu -->
@@ -145,7 +160,7 @@
           </a>
         </li>
         <li
-          *ngIf="!isAdminUser()"
+          *ngIf="!isAuthenticatedUser()"
           class="text-center my-4 h3"
         >
           <a
@@ -155,6 +170,19 @@
             data-bs-dismiss="offcanvas"
           >
             Acceso
+          </a>
+        </li>
+        <li
+          *ngIf="isAuthenticatedUser()"
+          class="text-center my-4 h3"
+        >
+          <a
+            class="d-block mx-auto ank ank-text-linkM text-decoration-none"
+            href="/cambiar-contrasena"
+            [routerLink]="['/cambiar-contrasena']"
+            data-bs-dismiss="offcanvas"
+          >
+            Cambiar contraseña
           </a>
         </li>
         <li
@@ -169,6 +197,20 @@
           >
             Panel de administración
           </a>
+        </li>
+        <li
+          *ngIf="isAuthenticatedUser()"
+          class="text-center my-4 h3"
+        >
+          <button
+            class="d-block mx-auto ank ank-text-linkM text-decoration-none"
+            type="button"
+            data-testid="site-logout-offcanvas"
+            data-bs-dismiss="offcanvas"
+            (click)="logout()"
+          >
+            Cerrar sesión
+          </button>
         </li>
       </ul>
     </div>
