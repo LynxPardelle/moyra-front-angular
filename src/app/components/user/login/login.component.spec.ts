@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { ActivatedRoute, convertToParamMap, ParamMap, provideRouter, Router } from '@angular/router';
+import { BehaviorSubject, of } from 'rxjs';
 
 import { LoginComponent } from './login.component';
 import { AuthFacade } from '../../../store/auth/auth.facade';
@@ -11,12 +11,14 @@ describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let queryParams: Record<string, string>;
+  let queryParamMapSubject: BehaviorSubject<ParamMap>;
   let loginSpy: jasmine.Spy;
   let requestPasswordResetSpy: jasmine.Spy;
   let confirmPasswordResetSpy: jasmine.Spy;
 
   beforeEach(async () => {
     queryParams = {};
+    queryParamMapSubject = new BehaviorSubject(convertToParamMap(queryParams));
     loginSpy = jasmine.createSpy('login').and.returnValue(
       of({
         user: { email: 'dev@example.com' },
@@ -37,6 +39,7 @@ describe('LoginComponent', () => {
         {
           provide: ActivatedRoute,
           useValue: {
+            queryParamMap: queryParamMapSubject.asObservable(),
             snapshot: {
               get queryParamMap() {
                 return convertToParamMap(queryParams);
@@ -87,9 +90,16 @@ describe('LoginComponent', () => {
   });
 
   it('shows a logged-out confirmation when redirected after logout', () => {
-    queryParams = { auth: 'loggedout' };
+    setQueryParams({ auth: 'loggedout' });
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Sesión cerrada correctamente');
+  });
+
+  it('updates the access notice when login query params change on a reused route', () => {
+    setQueryParams({ auth: 'loggedout' });
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Sesión cerrada correctamente');
@@ -157,7 +167,7 @@ describe('LoginComponent', () => {
   });
 
   it('returns admins to the requested account route after login', async () => {
-    queryParams = { returnUrl: '/cambiar-contrasena' };
+    setQueryParams({ returnUrl: '/cambiar-contrasena' });
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -170,6 +180,11 @@ describe('LoginComponent', () => {
 
     expect(navigateByUrlSpy).toHaveBeenCalledWith('/cambiar-contrasena');
   });
+
+  function setQueryParams(params: Record<string, string>): void {
+    queryParams = params;
+    queryParamMapSubject.next(convertToParamMap(params));
+  }
 });
 
 function jwt(payload: Record<string, any>): string {

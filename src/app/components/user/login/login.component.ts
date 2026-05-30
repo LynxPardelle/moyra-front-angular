@@ -1,5 +1,6 @@
 import {
   Component,
+  OnDestroy,
   OnInit,
   Input
 } from '@angular/core';
@@ -7,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
+import { Subscription } from 'rxjs';
 
 
 // Services
@@ -30,7 +32,7 @@ import Swal from 'sweetalert2';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
   public user: User = new User('', '', '', '', '', new Date());
   public identity: any;
   public token: any;
@@ -50,6 +52,7 @@ export class LoginComponent implements OnInit {
   public document: string = 'login.component.ts';
   public customConsoleCSS =
     'background-color: red; color: white; padding: 1em;';
+  private queryParamSubscription?: Subscription;
 
   constructor(
     private _userService: UserService,
@@ -61,7 +64,13 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.accessNotice = this.resolveAccessNotice();
+    this.queryParamSubscription = this._route.queryParamMap.subscribe(() => {
+      this.accessNotice = this.resolveAccessNotice();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.queryParamSubscription?.unsubscribe();
   }
 
   async onSubmit() {
