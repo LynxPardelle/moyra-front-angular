@@ -37,4 +37,11 @@ describe('PublicationComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('counts visible words in rich HTML content with non-breaking spaces', () => {
+    component.publication.text =
+      '<h2>Este&nbsp;es&nbsp;un&nbsp;título</h2><p>Esto&nbsp;no&nbsp;es&nbsp;un&nbsp;título</p>';
+
+    expect(component.contentWordCount()).toBe(9);
+  });
 });
