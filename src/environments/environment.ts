@@ -4,7 +4,9 @@
 
 export const environment = {
   production: false,
-  apiBaseUrl: 'https://bna63emr73.execute-api.us-east-1.amazonaws.com/api/v2',
+  apiBaseUrl: '/api/v2',
+  cognitoRegion: 'us-east-1',
+  cognitoUserPoolClientId: '4enfk4kbskekcodme7n80d10ju',
 };
 
 /*

@@ -207,6 +207,26 @@
             Crear nuevo artículo
           </a>
         </li>
+        <li>
+          <a
+            href="/cambiar-contrasena"
+            [routerLink]="['/cambiar-contrasena']"
+            class="admin-menu__logout text-decoration-none"
+            data-testid="admin-change-password-link"
+          >
+            Cambiar contraseña
+          </a>
+        </li>
+        <li>
+          <button
+            type="button"
+            class="admin-menu__logout text-decoration-none"
+            data-testid="admin-logout"
+            (click)="logout()"
+          >
+            Cerrar sesión
+          </button>
+        </li>
       </ul>
     </div>
   </aside>

@@ -1,5 +1,6 @@
 import {
   Component,
+  OnDestroy,
   OnInit,
   Input
 } from '@angular/core';
@@ -7,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
+import { Subscription } from 'rxjs';
 
 
 // Services
@@ -30,16 +32,27 @@ import Swal from 'sweetalert2';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
   public user: User = new User('', '', '', '', '', new Date());
   public identity: any;
   public token: any;
   public accessNotice: string | null = null;
+  public showPasswordRecovery: boolean = false;
+  public passwordResetStep: 'request' | 'confirm' = 'request';
+  public passwordResetPending: boolean = false;
+  public passwordResetMessage: string | null = null;
+  public passwordReset = {
+    email: '',
+    code: '',
+    newPassword: '',
+    confirmPassword: '',
+  };
 
   // Console Settings
   public document: string = 'login.component.ts';
   public customConsoleCSS =
     'background-color: red; color: white; padding: 1em;';
+  private queryParamSubscription?: Subscription;
 
   constructor(
     private _userService: UserService,
@@ -51,13 +64,21 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.accessNotice = this.resolveAccessNotice();
+    this.queryParamSubscription = this._route.queryParamMap.subscribe(() => {
+      this.accessNotice = this.resolveAccessNotice();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.queryParamSubscription?.unsubscribe();
   }
 
   async onSubmit() {
     try {
       const returnUrl = this._route.snapshot.queryParamMap.get('returnUrl');
       const wantsAdmin = Boolean(returnUrl && returnUrl.startsWith('/admin'));
+      const safeReturnUrl =
+        returnUrl && returnUrl.startsWith('/') ? returnUrl : null;
       let auth = await this.loginWithCognitoChallengeSupport();
       if (!auth || !auth.user) {
         throw new Error('No se encontró el usuario.');
@@ -78,10 +99,8 @@ export class LoginComponent implements OnInit {
       }
 
       this._authFacade.setCredentials(authSession.identity, authSession.token);
-      const adminTarget =
-        returnUrl && returnUrl.startsWith('/admin') ? returnUrl : '/admin';
       if (authSession.role === 'ROLE_ADMIN') {
-        this._router.navigateByUrl(adminTarget);
+        this._router.navigateByUrl(safeReturnUrl || '/admin');
       } else if (wantsAdmin) {
         this._router.navigate(['/inicio']);
         Swal.fire({
@@ -97,7 +116,7 @@ export class LoginComponent implements OnInit {
         });
         return;
       } else {
-        this._router.navigate(['/inicio']);
+        this._router.navigateByUrl(safeReturnUrl || '/inicio');
       }
 
       //Alerta
@@ -129,6 +148,99 @@ export class LoginComponent implements OnInit {
           confirmButton: 'bg-titleM',
         }
       });
+    }
+  }
+
+  openPasswordRecovery(): void {
+    this.showPasswordRecovery = true;
+    this.passwordResetStep = 'request';
+    this.passwordResetMessage = null;
+    this.passwordReset.email = this.user.email || this.passwordReset.email;
+  }
+
+  cancelPasswordRecovery(): void {
+    this.showPasswordRecovery = false;
+    this.passwordResetPending = false;
+    this.passwordResetMessage = null;
+    this.passwordResetStep = 'request';
+    this.passwordReset.code = '';
+    this.passwordReset.newPassword = '';
+    this.passwordReset.confirmPassword = '';
+  }
+
+  async requestPasswordReset(): Promise<void> {
+    if (!this.passwordReset.email) {
+      this.passwordResetMessage = 'Ingresa tu correo electrónico.';
+      return;
+    }
+
+    this.passwordResetPending = true;
+    this.passwordResetMessage = null;
+
+    try {
+      await this._userService
+        .requestPasswordReset(this.passwordReset.email)
+        .toPromise();
+      this.passwordResetStep = 'confirm';
+      this.passwordResetMessage =
+        'Si el correo existe, enviaremos un código de recuperación.';
+    } catch (e: any) {
+      this.passwordResetMessage =
+        e?.error?.message || 'No pudimos iniciar la recuperación.';
+    } finally {
+      this.passwordResetPending = false;
+    }
+  }
+
+  async confirmPasswordReset(): Promise<void> {
+    if (
+      !this.passwordReset.email ||
+      !this.passwordReset.code ||
+      !this.passwordReset.newPassword
+    ) {
+      this.passwordResetMessage = 'Completa correo, código y nueva contraseña.';
+      return;
+    }
+
+    if (this.passwordReset.newPassword !== this.passwordReset.confirmPassword) {
+      this.passwordResetMessage = 'Las contraseñas no coinciden.';
+      return;
+    }
+
+    this.passwordResetPending = true;
+    this.passwordResetMessage = null;
+
+    try {
+      await this._userService
+        .confirmPasswordReset(
+          this.passwordReset.email,
+          this.passwordReset.code,
+          this.passwordReset.newPassword
+        )
+        .toPromise();
+      this.user.email = this.passwordReset.email;
+      this.passwordResetMessage = 'Contraseña actualizada. Ya puedes iniciar sesión.';
+      this.passwordResetStep = 'request';
+      this.showPasswordRecovery = false;
+      this.passwordReset.code = '';
+      this.passwordReset.newPassword = '';
+      this.passwordReset.confirmPassword = '';
+      Swal.fire({
+        title: 'Contraseña actualizada',
+        html: 'Ya puedes iniciar sesión con tu nueva contraseña.',
+        icon: 'success',
+        customClass: {
+          popup: 'bg-bg1M',
+          title: 'text-bg-whatsApp',
+          closeButton: 'bg-whatsApp',
+          confirmButton: 'bg-whatsApp',
+        },
+      });
+    } catch (e: any) {
+      this.passwordResetMessage =
+        e?.error?.message || 'No pudimos actualizar la contraseña.';
+    } finally {
+      this.passwordResetPending = false;
     }
   }
 
@@ -190,6 +302,10 @@ export class LoginComponent implements OnInit {
 
     if (authReason === 'invalid') {
       return 'No pudimos validar la sesión guardada. Vuelve a iniciar sesión para continuar.';
+    }
+
+    if (authReason === 'loggedout') {
+      return 'Sesión cerrada correctamente.';
     }
 
     if (returnUrl && returnUrl.startsWith('/admin')) {

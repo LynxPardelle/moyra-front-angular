@@ -246,6 +246,14 @@ export class App implements OnDestroy, OnInit {
     return this._authFacade.isAdmin();
   }
 
+  isAuthenticatedUser(): boolean {
+    return this._authFacade.isAuthenticated();
+  }
+
+  logout(): void {
+    this._authFacade.logout();
+  }
+
   private refreshSessionFromCookie(): void {
     if (!isPlatformBrowser(this.platformId) || !ApiRuntime.isV2) {
       return;

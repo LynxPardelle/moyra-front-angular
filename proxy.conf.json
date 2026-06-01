@@ -1,0 +1,7 @@
+{
+  "/api/v2": {
+    "target": "https://bna63emr73.execute-api.us-east-1.amazonaws.com",
+    "secure": true,
+    "changeOrigin": true
+  }
+}

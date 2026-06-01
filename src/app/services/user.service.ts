@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { Observable, catchError, of, switchMap, throwError } from 'rxjs';
 import {
   ApiRuntime,
+  CognitoRuntime,
   GlobalUser,
   apiUrl,
   jsonAuthHeaders,
@@ -10,6 +11,7 @@ import {
   supportsCredentialedAuthCookies,
 } from './global';
 import { readStoredAuthSession } from '../store/auth/auth.storage';
+import { decodeJwtPayload } from '../utils/auth-token';
 
 @Injectable({
   providedIn: 'root',
@@ -128,6 +130,57 @@ export class UserService {
     });
   }
 
+  requestPasswordReset(email: string): Observable<any> {
+    const body = JSON.stringify({ email });
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    return this._http.post(apiUrl('/auth/forgot-password'), body, {
+      headers,
+      withCredentials: false,
+    }).pipe(
+      catchError((error: HttpErrorResponse) =>
+        this.shouldFallbackToCognito(error)
+          ? this.requestPasswordResetWithCognito(email)
+          : throwError(() => error)
+      )
+    );
+  }
+
+  confirmPasswordReset(
+    email: string,
+    code: string,
+    newPassword: string
+  ): Observable<any> {
+    const body = JSON.stringify({ email, code, newPassword });
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    return this._http.post(apiUrl('/auth/confirm-forgot-password'), body, {
+      headers,
+      withCredentials: false,
+    }).pipe(
+      catchError((error: HttpErrorResponse) =>
+        this.shouldFallbackToCognito(error)
+          ? this.confirmPasswordResetWithCognito(email, code, newPassword)
+          : throwError(() => error)
+      )
+    );
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<any> {
+    const body = JSON.stringify({ currentPassword, newPassword });
+    const headers = this.authHeaders();
+
+    return this._http.post(apiUrl('/auth/change-password'), body, {
+      headers,
+    }).pipe(
+      catchError((error: HttpErrorResponse) =>
+        this.shouldFallbackToCognito(error)
+          ? this.changePasswordWithCognito(currentPassword, newPassword)
+          : throwError(() => error)
+      )
+    );
+  }
+
   updateUser(id: string, user: any): Observable<any> {
     const body = JSON.stringify(user);
     const headers = this.authHeaders();
@@ -157,5 +210,159 @@ export class UserService {
 
   private authHeaders(): HttpHeaders {
     return new HttpHeaders(jsonAuthHeaders(this.getToken()));
+  }
+
+  private requestPasswordResetWithCognito(email: string): Observable<any> {
+    return this._http.post(
+      CognitoRuntime.endpoint,
+      {
+        ClientId: CognitoRuntime.userPoolClientId,
+        Username: email,
+      },
+      {
+        headers: this.cognitoHeaders('ForgotPassword'),
+      }
+    ).pipe(
+      catchError((error: HttpErrorResponse) =>
+        this.isCognitoAccountLookupError(error)
+          ? of(this.passwordResetRequestedResponse())
+          : throwError(() => error)
+      )
+    );
+  }
+
+  private confirmPasswordResetWithCognito(
+    email: string,
+    code: string,
+    newPassword: string
+  ): Observable<any> {
+    return this._http.post(
+      CognitoRuntime.endpoint,
+      {
+        ClientId: CognitoRuntime.userPoolClientId,
+        Username: email,
+        ConfirmationCode: code,
+        Password: newPassword,
+      },
+      {
+        headers: this.cognitoHeaders('ConfirmForgotPassword'),
+      }
+    );
+  }
+
+  private changePasswordWithCognito(
+    currentPassword: string,
+    newPassword: string
+  ): Observable<any> {
+    return this.cognitoAccessTokenForPasswordChange(currentPassword).pipe(
+      switchMap((accessToken) =>
+        this.sendCognitoChangePassword(accessToken, currentPassword, newPassword)
+      )
+    );
+  }
+
+  private sendCognitoChangePassword(
+    accessToken: string,
+    currentPassword: string,
+    newPassword: string
+  ): Observable<any> {
+    return this._http.post(
+      CognitoRuntime.endpoint,
+      {
+        AccessToken: accessToken,
+        PreviousPassword: currentPassword,
+        ProposedPassword: newPassword,
+      },
+      {
+        headers: this.cognitoHeaders('ChangePassword'),
+      }
+    );
+  }
+
+  private cognitoAccessTokenForPasswordChange(
+    currentPassword: string
+  ): Observable<string> {
+    const token = this.getToken();
+    if (this.isCognitoAccessToken(token)) {
+      return of(String(token));
+    }
+
+    const username = this.currentUsername();
+    if (!username) {
+      return throwError(() => new Error('No pudimos identificar la cuenta.'));
+    }
+
+    return this._http.post<any>(
+      CognitoRuntime.endpoint,
+      {
+        AuthFlow: 'USER_PASSWORD_AUTH',
+        ClientId: CognitoRuntime.userPoolClientId,
+        AuthParameters: {
+          USERNAME: username,
+          PASSWORD: currentPassword,
+        },
+      },
+      {
+        headers: this.cognitoHeaders('InitiateAuth'),
+      }
+    ).pipe(
+      switchMap((response) => {
+        const accessToken = response?.AuthenticationResult?.AccessToken;
+        return accessToken
+          ? of(accessToken)
+          : throwError(() => new Error('No pudimos renovar la sesión.'));
+      })
+    );
+  }
+
+  private cognitoHeaders(action: string): HttpHeaders {
+    return new HttpHeaders({
+      'Content-Type': 'application/x-amz-json-1.1',
+      'X-Amz-Target': `AWSCognitoIdentityProviderService.${action}`,
+    });
+  }
+
+  private shouldFallbackToCognito(error: HttpErrorResponse): boolean {
+    return (
+      ApiRuntime.isV2 &&
+      Boolean(CognitoRuntime.userPoolClientId) &&
+      (error.status === 404 || error.status === 0)
+    );
+  }
+
+  private isCognitoAccessToken(token: string | null | undefined): boolean {
+    const payload = decodeJwtPayload(String(token || ''));
+    return payload?.['token_use'] === 'access';
+  }
+
+  private currentUsername(): string {
+    const identity = this.getIdentity();
+    const username =
+      identity?.email ||
+      identity?.mail ||
+      identity?.username ||
+      identity?.['cognito:username'];
+
+    return typeof username === 'string' ? username.trim() : '';
+  }
+
+  private isCognitoAccountLookupError(error: HttpErrorResponse): boolean {
+    const type = String(
+      error.error?.__type ||
+      error.headers?.get('x-amzn-ErrorType') ||
+      ''
+    );
+
+    return (
+      type.includes('UserNotFoundException') ||
+      type.includes('InvalidParameterException')
+    );
+  }
+
+  private passwordResetRequestedResponse(): any {
+    return {
+      status: 'success',
+      message: 'Si el correo existe, enviaremos un código de recuperación.',
+    };
   }
 }

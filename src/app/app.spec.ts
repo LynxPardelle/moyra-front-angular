@@ -10,7 +10,15 @@ import { AuthFacade } from './store/auth/auth.facade';
 import { NgxAngoraService } from 'ngx-angora-css';
 
 describe('App', () => {
+  let isAdmin: boolean;
+  let isAuthenticated: boolean;
+  let logoutSpy: jasmine.Spy;
+
   beforeEach(async () => {
+    isAdmin = false;
+    isAuthenticated = false;
+    logoutSpy = jasmine.createSpy('logout');
+
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
@@ -45,7 +53,9 @@ describe('App', () => {
           provide: AuthFacade,
           useValue: {
             hydrate: () => undefined,
-            isAdmin: () => false,
+            isAdmin: () => isAdmin,
+            isAuthenticated: () => isAuthenticated,
+            logout: logoutSpy,
             authStateOnceAfterHydration$: () => of({ isAuthenticated: false }),
           },
         },
@@ -73,6 +83,39 @@ describe('App', () => {
     expect(compiled.querySelector('.site-header h1')).toBeNull();
     expect(compiled.querySelector('.titleMontano__name')?.textContent).toContain(
       'Montaño'
+    );
+  });
+
+  it('lets an admin close the session from the main navigation', () => {
+    isAdmin = true;
+    isAuthenticated = true;
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const logoutButton = compiled.querySelector<HTMLButtonElement>(
+      '[data-testid="site-logout"]'
+    );
+
+    expect(logoutButton?.textContent).toContain('Cerrar sesión');
+
+    logoutButton?.click();
+
+    expect(logoutSpy).toHaveBeenCalled();
+  });
+
+  it('shows account actions to authenticated non-admin users', () => {
+    isAuthenticated = true;
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const links = Array.from(compiled.querySelectorAll('a')).map((link) =>
+      link.textContent?.trim()
+    );
+
+    expect(links).toContain('Cambiar contraseña');
+    expect(links).not.toContain('Panel');
+    expect(compiled.querySelector('[data-testid="site-logout"]')?.textContent).toContain(
+      'Cerrar sesión'
     );
   });
 });
