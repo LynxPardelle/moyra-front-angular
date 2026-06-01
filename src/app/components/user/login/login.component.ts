@@ -1,5 +1,7 @@
 import {
+  ChangeDetectorRef,
   Component,
+  NgZone,
   OnDestroy,
   OnInit,
   Input
@@ -60,7 +62,9 @@ export class LoginComponent implements OnInit, OnDestroy {
     private _route: ActivatedRoute,
     private _router: Router,
     private _webService: WebService,
-    private _authFacade: AuthFacade
+    private _authFacade: AuthFacade,
+    private _ngZone: NgZone,
+    private _changeDetector: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -181,14 +185,20 @@ export class LoginComponent implements OnInit, OnDestroy {
       await this._userService
         .requestPasswordReset(this.passwordReset.email)
         .toPromise();
-      this.passwordResetStep = 'confirm';
-      this.passwordResetMessage =
-        'Si el correo existe, enviaremos un código de recuperación.';
+      this.updatePasswordResetUi(() => {
+        this.passwordResetStep = 'confirm';
+        this.passwordResetMessage =
+          'Si el correo existe, enviaremos un código de recuperación.';
+      });
     } catch (e: any) {
-      this.passwordResetMessage =
-        e?.error?.message || 'No pudimos iniciar la recuperación.';
+      this.updatePasswordResetUi(() => {
+        this.passwordResetMessage =
+          e?.error?.message || 'No pudimos iniciar la recuperación.';
+      });
     } finally {
-      this.passwordResetPending = false;
+      this.updatePasswordResetUi(() => {
+        this.passwordResetPending = false;
+      });
     }
   }
 
@@ -218,13 +228,15 @@ export class LoginComponent implements OnInit, OnDestroy {
           this.passwordReset.newPassword
         )
         .toPromise();
-      this.user.email = this.passwordReset.email;
-      this.passwordResetMessage = 'Contraseña actualizada. Ya puedes iniciar sesión.';
-      this.passwordResetStep = 'request';
-      this.showPasswordRecovery = false;
-      this.passwordReset.code = '';
-      this.passwordReset.newPassword = '';
-      this.passwordReset.confirmPassword = '';
+      this.updatePasswordResetUi(() => {
+        this.user.email = this.passwordReset.email;
+        this.passwordResetMessage = 'Contraseña actualizada. Ya puedes iniciar sesión.';
+        this.passwordResetStep = 'request';
+        this.showPasswordRecovery = false;
+        this.passwordReset.code = '';
+        this.passwordReset.newPassword = '';
+        this.passwordReset.confirmPassword = '';
+      });
       Swal.fire({
         title: 'Contraseña actualizada',
         html: 'Ya puedes iniciar sesión con tu nueva contraseña.',
@@ -237,11 +249,22 @@ export class LoginComponent implements OnInit, OnDestroy {
         },
       });
     } catch (e: any) {
-      this.passwordResetMessage =
-        e?.error?.message || 'No pudimos actualizar la contraseña.';
+      this.updatePasswordResetUi(() => {
+        this.passwordResetMessage =
+          e?.error?.message || 'No pudimos actualizar la contraseña.';
+      });
     } finally {
-      this.passwordResetPending = false;
+      this.updatePasswordResetUi(() => {
+        this.passwordResetPending = false;
+      });
     }
+  }
+
+  private updatePasswordResetUi(update: () => void): void {
+    this._ngZone.run(() => {
+      update();
+      this._changeDetector.detectChanges();
+    });
   }
 
   private async loginWithCognitoChallengeSupport(): Promise<any> {
