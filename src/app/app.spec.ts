@@ -8,16 +8,23 @@ import { WebService } from './services/web.service';
 import { SharedService } from './services/shared.service';
 import { AuthFacade } from './store/auth/auth.facade';
 import { NgxAngoraService } from 'ngx-angora-css';
+import { CasesFeatureService } from './components/cases/cases-feature.service';
+import { CaseService } from './services/case.service';
+import { CaseWebPushService } from './components/notifications/case-web-push.service';
 
 describe('App', () => {
   let isAdmin: boolean;
   let isAuthenticated: boolean;
+  let casesEnabled: boolean;
   let logoutSpy: jasmine.Spy;
+  let startNotificationClickRoutingSpy: jasmine.Spy;
 
   beforeEach(async () => {
     isAdmin = false;
     isAuthenticated = false;
+    casesEnabled = false;
     logoutSpy = jasmine.createSpy('logout');
+    startNotificationClickRoutingSpy = jasmine.createSpy('startNotificationClickRouting');
 
     await TestBed.configureTestingModule({
       imports: [App],
@@ -57,6 +64,24 @@ describe('App', () => {
             isAuthenticated: () => isAuthenticated,
             logout: logoutSpy,
             authStateOnceAfterHydration$: () => of({ isAuthenticated: false }),
+          },
+        },
+        {
+          provide: CasesFeatureService,
+          useValue: {
+            isEnabled: () => casesEnabled,
+          },
+        },
+        {
+          provide: CaseService,
+          useValue: {
+            getUnreadNotificationCount: () => of({ status: 'success', count: 0 }),
+          },
+        },
+        {
+          provide: CaseWebPushService,
+          useValue: {
+            startNotificationClickRouting: startNotificationClickRoutingSpy,
           },
         },
         {
@@ -117,5 +142,30 @@ describe('App', () => {
     expect(compiled.querySelector('[data-testid="site-logout"]')?.textContent).toContain(
       'Cerrar sesión'
     );
+  });
+
+  it('shows the private cases link only when the feature is enabled for authenticated users', () => {
+    casesEnabled = true;
+    isAuthenticated = true;
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const links = Array.from(compiled.querySelectorAll('a')).map((link) =>
+      link.textContent?.trim()
+    );
+
+    expect(links).toContain('Casos');
+  });
+
+  it('starts private case notification click routing when the cases feature is enabled', async () => {
+    casesEnabled = true;
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await Promise.resolve();
+
+    expect(startNotificationClickRoutingSpy).toHaveBeenCalledTimes(1);
   });
 });

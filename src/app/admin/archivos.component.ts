@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FileService } from '../services/file.service';
@@ -6,7 +5,7 @@ import Swal from 'sweetalert2';
 
 @Component({
   selector: 'admin-archivos',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './archivos.component.html',
   styleUrls: ['./archivos.component.scss'],
 })
@@ -52,7 +51,9 @@ export class ArchivosComponent implements OnInit {
         file.location,
         file.category,
         file.id,
-        ...(file.usages || []).map((usage: any) => `${usage.resource} ${usage.label} ${usage.field}`),
+        ...(file.usages || []).map(
+          (usage: any) => `${usage.resource} ${usage.label} ${usage.field}`
+        ),
       ]
         .join(' ')
         .toLowerCase();
@@ -91,10 +92,7 @@ export class ArchivosComponent implements OnInit {
       const blockedByUsage = error?.status === 409;
       await Swal.fire({
         title: blockedByUsage ? 'El archivo está en uso' : 'Error',
-        html:
-          error?.error?.message ||
-          error?.message ||
-          'No se pudo eliminar el archivo.',
+        html: error?.error?.message || error?.message || 'No se pudo eliminar el archivo.',
         icon: blockedByUsage ? 'info' : 'error',
       });
     }

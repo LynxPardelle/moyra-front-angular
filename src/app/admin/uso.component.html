@@ -16,217 +16,222 @@
       <input type="date" [(ngModel)]="to" />
     </label>
 
-    <button class="admin-usage-button" type="button" (click)="loadDashboard()">
-      Consultar
-    </button>
+    <button class="admin-usage-button" type="button" (click)="loadDashboard()">Consultar</button>
   </section>
 
-  <div *ngIf="errorMessage" class="admin-usage-alert">
+  @if (errorMessage) {
+  <div class="admin-usage-alert">
     {{ errorMessage }}
   </div>
-
-  <div *ngIf="loading" class="admin-usage-card">
-    Cargando uso y costos...
-  </div>
-
-  <div *ngIf="!loading && !hasDashboardData && errorMessage" class="admin-usage-card">
+  } @if (loading) {
+  <div class="admin-usage-card">Cargando uso y costos...</div>
+  } @if (!loading && !hasDashboardData && errorMessage) {
+  <div class="admin-usage-card">
     No se cargaron datos de uso y costos. Vuelve a intentar después de renovar la sesión.
   </div>
-
-  <ng-container *ngIf="!loading && hasDashboardData">
-    <section class="admin-usage-grid" *ngIf="aiUsageEnabled">
-      <article class="admin-usage-card admin-usage-metric">
-        <span>Solicitudes IA</span>
-        <strong>{{ usage?.totalRequests || 0 }}</strong>
-        <small>{{ usage?.failedRequests || 0 }} fallidas</small>
-      </article>
-
-      <article class="admin-usage-card admin-usage-metric">
-        <span>Costo estimado IA</span>
-        <strong>{{ formatUsd(usage?.estimatedModelCostUsd) }}</strong>
-        <small>Promedio {{ formatUsd(usage?.averageCostPerRequestUsd) }}</small>
-      </article>
-
-      <article class="admin-usage-card admin-usage-metric">
-        <span>Tokens</span>
-        <strong>{{ (usage?.totalInputTokens || 0) + (usage?.totalOutputTokens || 0) }}</strong>
-        <small>
-          Entrada {{ usage?.totalInputTokens || 0 }} · salida {{ usage?.totalOutputTokens || 0 }}
-        </small>
-      </article>
-
-      <article class="admin-usage-card admin-usage-metric">
-        <span>Límite mensual IA</span>
-        <strong>{{ usage?.monthlyTokenBudget || 0 }}</strong>
-        <small>
-          {{ usage?.monthlyTokenRemaining || 0 }} tokens disponibles ·
-          tope aprox. {{ formatUsd(usage?.monthlyTokenBudgetEstimatedCostUsd) }}
-        </small>
-        <small>
-          usados aprox. {{ formatUsd(usedTokenCost) }}
-        </small>
-      </article>
-    </section>
-
-    <p class="admin-usage-note" *ngIf="aiUsageEnabled && usage?.monthlyTokenBudgetPricingNote">
-      {{ usage?.monthlyTokenBudgetPricingNote }}
-    </p>
-
-    <section class="admin-usage-card admin-usage-costs">
-      <div class="admin-usage-card__heading">
-        <div>
-          <h2>Costos AWS de Moyra</h2>
-          <p>
-            El total principal se calcula por recursos de Moyra en producción, testing y
-            development. No incluye EC2 del frontend porque vive en tu servidor personal.
-          </p>
-        </div>
-
-        <button
-          class="admin-usage-button admin-usage-button--secondary"
-          type="button"
-          [disabled]="refreshingCosts"
-          (click)="refreshAwsCosts()"
-        >
-          {{ refreshingCosts ? 'Refrescando...' : 'Refrescar ahora' }}
-        </button>
-      </div>
-
-      <div class="admin-usage-settings">
-        <label class="admin-usage-field">
-          <span>Intervalo de actualización</span>
-          <select class="admin-usage-select" [(ngModel)]="selectedInterval">
-            <option *ngFor="let interval of intervals" [ngValue]="interval">
-              {{ intervalLabels[interval] }}
-            </option>
-          </select>
-        </label>
-
-        <button
-          class="admin-usage-button"
-          type="button"
-          [disabled]="savingInterval"
-          (click)="saveRefreshInterval()"
-        >
-          {{ savingInterval ? 'Guardando...' : 'Guardar intervalo' }}
-        </button>
-      </div>
-
-      <div class="admin-usage-summary">
-        <span>Estado: {{ awsCost?.status || 'sin datos' }}</span>
-        <span>Total Moyra del periodo: {{ formatUsd(awsCost?.periodTotalUsd || awsCost?.totalUsd) }}</span>
-        <span>Base mensual Moyra: {{ formatUsd(awsCost?.estimatedPersistentMonthlyUsd) }}</span>
-        <span *ngIf="awsCost?.costExplorerApiRequestCount">
-          Cost Explorer API: {{ awsCost?.costExplorerApiRequestCount }} refresh ·
-          {{ formatUsd(awsCost?.costExplorerApiCostUsd) }}
-        </span>
-      </div>
-
-      <section class="admin-usage-estimates" *ngIf="computedEnvironments.length > 0">
-        <h3>Cálculo por ambiente</h3>
+  } @if (!loading && hasDashboardData) { @if (aiUsageEnabled) {
+  <section class="admin-usage-grid">
+    <article class="admin-usage-card admin-usage-metric">
+      <span>Solicitudes IA</span>
+      <strong>{{ usage?.totalRequests || 0 }}</strong>
+      <small>{{ usage?.failedRequests || 0 }} fallidas</small>
+    </article>
+    <article class="admin-usage-card admin-usage-metric">
+      <span>Costo estimado IA</span>
+      <strong>{{ formatUsd(usage?.estimatedModelCostUsd) }}</strong>
+      <small>Promedio {{ formatUsd(usage?.averageCostPerRequestUsd) }}</small>
+    </article>
+    <article class="admin-usage-card admin-usage-metric">
+      <span>Tokens</span>
+      <strong>{{ (usage?.totalInputTokens || 0) + (usage?.totalOutputTokens || 0) }}</strong>
+      <small>
+        Entrada {{ usage?.totalInputTokens || 0 }} · salida {{ usage?.totalOutputTokens || 0 }}
+      </small>
+    </article>
+    <article class="admin-usage-card admin-usage-metric">
+      <span>Límite mensual IA</span>
+      <strong>{{ usage?.monthlyTokenBudget || 0 }}</strong>
+      <small>
+        {{ usage?.monthlyTokenRemaining || 0 }} tokens disponibles · tope aprox.
+        {{ formatUsd(usage?.monthlyTokenBudgetEstimatedCostUsd) }}
+      </small>
+      <small> usados aprox. {{ formatUsd(usedTokenCost) }} </small>
+    </article>
+  </section>
+  } @if (aiUsageEnabled && usage?.monthlyTokenBudgetPricingNote) {
+  <p class="admin-usage-note">
+    {{ usage?.monthlyTokenBudgetPricingNote }}
+  </p>
+  }
+  <section class="admin-usage-card admin-usage-costs">
+    <div class="admin-usage-card__heading">
+      <div>
+        <h2>Costos AWS de Moyra</h2>
         <p>
-          Estimación propia de recursos Moyra. Los importes se calculan aunque AWS los absorba
-          por free tier o créditos.
+          El total principal se calcula por recursos de Moyra en producción, testing y development.
+          No incluye EC2 del frontend porque vive en tu servidor personal.
         </p>
-        <article
-          class="admin-usage-environment"
-          *ngFor="let environment of computedEnvironments"
-        >
-          <div class="admin-usage-environment__heading">
-            <strong>{{ environment.environmentLabel }}</strong>
-            <span>
-              Periodo {{ formatUsd(environment.totalUsd) }} · base mensual
-              {{ formatUsd(environment.monthlyBaseUsd) }}
-            </span>
-          </div>
-
-          <table class="admin-usage-table">
-            <thead>
-              <tr>
-                <th>Servicio</th>
-                <th>Para qué se usa</th>
-                <th>Uso medido</th>
-                <th>Costo</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let serviceCost of environment.services">
-                <td>{{ serviceCost.service }}</td>
-                <td>
-                  {{ serviceCost.purpose }}
-                  <small *ngIf="serviceCost.basis">{{ serviceCost.basis }}</small>
-                </td>
-                <td>{{ serviceCost.usageLabel || '-' }}</td>
-                <td>{{ formatUsd(serviceCost.amountUsd) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </article>
-      </section>
-
-      <section class="admin-usage-estimates" *ngIf="billableServices.length > 0">
-        <h3>Referencia Cost Explorer</h3>
-        <p>
-          Vista cacheada por servicio de la cuenta AWS, filtrada a servicios que usa Moyra.
-          No se usa como total principal porque no separa bien ambientes ni recursos externos.
-        </p>
-        <div class="admin-usage-summary">
-          <span>Cost Explorer filtrado: {{ formatUsd(awsCost?.costExplorerTotalUsd) }}</span>
+      </div>
+      <button
+        class="admin-usage-button admin-usage-button--secondary"
+        type="button"
+        [disabled]="refreshingCosts"
+        (click)="refreshAwsCosts()"
+      >
+        {{ refreshingCosts ? 'Refrescando...' : 'Refrescar ahora' }}
+      </button>
+    </div>
+    <div class="admin-usage-settings">
+      <label class="admin-usage-field">
+        <span>Intervalo de actualización</span>
+        <select class="admin-usage-select" [(ngModel)]="selectedInterval">
+          @for (interval of intervals; track interval) {
+          <option [ngValue]="interval">
+            {{ intervalLabels[interval] }}
+          </option>
+          }
+        </select>
+      </label>
+      <button
+        class="admin-usage-button"
+        type="button"
+        [disabled]="savingInterval"
+        (click)="saveRefreshInterval()"
+      >
+        {{ savingInterval ? 'Guardando...' : 'Guardar intervalo' }}
+      </button>
+    </div>
+    <div class="admin-usage-summary">
+      <span>Estado: {{ awsCost?.status || 'sin datos' }}</span>
+      <span
+        >Total Moyra del periodo:
+        {{ formatUsd(awsCost?.periodTotalUsd || awsCost?.totalUsd) }}</span
+      >
+      <span>Base mensual Moyra: {{ formatUsd(awsCost?.estimatedPersistentMonthlyUsd) }}</span>
+      @if (awsCost?.costExplorerApiRequestCount) {
+      <span>
+        Cost Explorer API: {{ awsCost?.costExplorerApiRequestCount }} refresh ·
+        {{ formatUsd(awsCost?.costExplorerApiCostUsd) }}
+      </span>
+      }
+    </div>
+    @if (computedEnvironments.length > 0) {
+    <section class="admin-usage-estimates">
+      <h3>Cálculo por ambiente</h3>
+      <p>
+        Estimación propia de recursos Moyra. Los importes se calculan aunque AWS los absorba por
+        free tier o créditos.
+      </p>
+      @for (environment of computedEnvironments; track environment) {
+      <article class="admin-usage-environment">
+        <div class="admin-usage-environment__heading">
+          <strong>{{ environment.environmentLabel }}</strong>
+          <span>
+            Periodo {{ formatUsd(environment.totalUsd) }} · base mensual
+            {{ formatUsd(environment.monthlyBaseUsd) }}
+          </span>
         </div>
         <table class="admin-usage-table">
           <thead>
             <tr>
               <th>Servicio</th>
+              <th>Para qué se usa</th>
+              <th>Uso medido</th>
               <th>Costo</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let serviceCost of billableServices">
+            @for (serviceCost of environment.services; track serviceCost) {
+            <tr>
               <td>{{ serviceCost.service }}</td>
+              <td>
+                {{ serviceCost.purpose }}
+                @if (serviceCost.basis) {
+                <small>{{ serviceCost.basis }}</small>
+                }
+              </td>
+              <td>{{ serviceCost.usageLabel || '-' }}</td>
               <td>{{ formatUsd(serviceCost.amountUsd) }}</td>
             </tr>
+            }
           </tbody>
         </table>
-      </section>
-
-      <p class="admin-usage-note" *ngIf="billableServices.length === 0">
-        Cost Explorer no devolvió servicios Moyra con costo para este periodo.
-      </p>
-
-      <ul class="admin-usage-notes" *ngIf="(awsCost?.costSourceNotes || []).length > 0">
-        <li *ngFor="let note of awsCost?.costSourceNotes">{{ note }}</li>
-      </ul>
-
-      <p class="admin-usage-note">
-        Refrescar manualmente usa AWS Cost Explorer API y suma aprox. USD 0.01 por
-        refresh exitoso del rango consultado.
-      </p>
+      </article>
+      }
     </section>
-
-    <section class="admin-usage-card" *ngIf="aiUsageEnabled">
-      <div class="admin-usage-card__heading">
-        <div>
-          <h2>Uso por superficie</h2>
-          <p>Ayuda a decidir si el asistente se usa más en blog, publicaciones o contenido público.</p>
-        </div>
+    } @if (billableServices.length > 0) {
+    <section class="admin-usage-estimates">
+      <h3>Referencia Cost Explorer</h3>
+      <p>
+        Vista cacheada por servicio de la cuenta AWS, filtrada a servicios que usa Moyra. No se usa
+        como total principal porque no separa bien ambientes ni recursos externos.
+      </p>
+      <div class="admin-usage-summary">
+        <span>Cost Explorer filtrado: {{ formatUsd(awsCost?.costExplorerTotalUsd) }}</span>
       </div>
-
-      <table class="admin-usage-table" *ngIf="(usage?.bySurface || []).length > 0">
+      <table class="admin-usage-table">
         <thead>
           <tr>
-            <th>Área</th>
-            <th>Solicitudes</th>
-            <th>Costo estimado</th>
+            <th>Servicio</th>
+            <th>Costo</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let surface of usage?.bySurface">
-            <td>{{ surface.label }}</td>
-            <td>{{ surface.requests }}</td>
-            <td>{{ formatUsd(surface.estimatedCostUsd) }}</td>
+          @for (serviceCost of billableServices; track serviceCost) {
+          <tr>
+            <td>{{ serviceCost.service }}</td>
+            <td>{{ formatUsd(serviceCost.amountUsd) }}</td>
           </tr>
+          }
         </tbody>
       </table>
     </section>
-  </ng-container>
+    } @if (billableServices.length === 0) {
+    <p class="admin-usage-note">
+      Cost Explorer no devolvió servicios Moyra con costo para este periodo.
+    </p>
+    } @if ((awsCost?.costSourceNotes || []).length > 0) {
+    <ul class="admin-usage-notes">
+      @for (note of awsCost?.costSourceNotes; track note) {
+      <li>{{ note }}</li>
+      }
+    </ul>
+    }
+    <p class="admin-usage-note">
+      Refrescar manualmente usa AWS Cost Explorer API y suma aprox. USD 0.01 por refresh exitoso del
+      rango consultado.
+    </p>
+  </section>
+  @if (aiUsageEnabled) {
+  <section class="admin-usage-card">
+    <div class="admin-usage-card__heading">
+      <div>
+        <h2>Uso por superficie</h2>
+        <p>
+          Ayuda a decidir si el asistente se usa más en blog, publicaciones o contenido público.
+        </p>
+      </div>
+    </div>
+    @if ((usage?.bySurface || []).length > 0) {
+    <table class="admin-usage-table">
+      <thead>
+        <tr>
+          <th>Área</th>
+          <th>Solicitudes</th>
+          <th>Costo estimado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (surface of usage?.bySurface; track surface) {
+        <tr>
+          <td>{{ surface.label }}</td>
+          <td>{{ surface.requests }}</td>
+          <td>{{ formatUsd(surface.estimatedCostUsd) }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    }
+  </section>
+  } }
 </section>

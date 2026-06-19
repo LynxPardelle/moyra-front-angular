@@ -13,14 +13,7 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
-    "module": "preserve",
-    "lib": [
-      "es2018",
-      "dom",
-      "dom.iterable",
-      "es5",
-      "es6"
-    ]
+    "module": "preserve"
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

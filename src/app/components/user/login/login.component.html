@@ -2,9 +2,11 @@
   <div class="login-panel">
     <p class="login-panel__eyebrow">Administración</p>
     <h1 class="login-panel__title">Acceso</h1>
-    <p class="login-panel__notice" *ngIf="accessNotice">
+    @if (accessNotice) {
+    <p class="login-panel__notice">
       {{ accessNotice }}
     </p>
+    }
 
     <div class="login-field">
       <label class="login-field__label" for="email">Correo electrónico</label>
@@ -19,9 +21,9 @@
         autocomplete="email"
         required
       />
-      <span class="login-field__error" *ngIf="!email.valid && email.touched">
-        El correo electrónico es obligatorio.
-      </span>
+      @if (!email.valid && email.touched) {
+      <span class="login-field__error"> El correo electrónico es obligatorio. </span>
+      }
     </div>
 
     <div class="login-field">
@@ -37,9 +39,9 @@
         autocomplete="current-password"
         required
       />
-      <span class="login-field__error" *ngIf="!password.valid && password.touched">
-        La contraseña es obligatoria.
-      </span>
+      @if (!password.valid && password.touched) {
+      <span class="login-field__error"> La contraseña es obligatoria. </span>
+      }
     </div>
 
     <button
@@ -60,7 +62,8 @@
       Recuperar contraseña
     </button>
 
-    <div class="password-reset" *ngIf="showPasswordRecovery">
+    @if (showPasswordRecovery) {
+    <div class="password-reset">
       <div class="login-field">
         <label class="login-field__label" for="reset-email">Correo electrónico</label>
         <input
@@ -73,66 +76,61 @@
           required
         />
       </div>
-
-      <ng-container *ngIf="passwordResetStep === 'confirm'">
-        <div class="login-field">
-          <label class="login-field__label" for="reset-code">Código de recuperación</label>
-          <input
-            id="reset-code"
-            class="login-field__control"
-            type="text"
-            name="resetCode"
-            [(ngModel)]="passwordReset.code"
-            autocomplete="one-time-code"
-          />
-        </div>
-
-        <div class="login-field">
-          <label class="login-field__label" for="reset-password">Nueva contraseña</label>
-          <input
-            id="reset-password"
-            class="login-field__control"
-            type="password"
-            name="resetPassword"
-            [(ngModel)]="passwordReset.newPassword"
-            autocomplete="new-password"
-          />
-        </div>
-
-        <div class="login-field">
-          <label class="login-field__label" for="reset-confirm-password">Confirmar contraseña</label>
-          <input
-            id="reset-confirm-password"
-            class="login-field__control"
-            type="password"
-            name="resetConfirmPassword"
-            [(ngModel)]="passwordReset.confirmPassword"
-            autocomplete="new-password"
-          />
-        </div>
-      </ng-container>
-
-      <p class="password-reset__message" *ngIf="passwordResetMessage">
+      @if (passwordResetStep === 'confirm') {
+      <div class="login-field">
+        <label class="login-field__label" for="reset-code">Código de recuperación</label>
+        <input
+          id="reset-code"
+          class="login-field__control"
+          type="text"
+          name="resetCode"
+          [(ngModel)]="passwordReset.code"
+          autocomplete="one-time-code"
+        />
+      </div>
+      <div class="login-field">
+        <label class="login-field__label" for="reset-password">Nueva contraseña</label>
+        <input
+          id="reset-password"
+          class="login-field__control"
+          type="password"
+          name="resetPassword"
+          [(ngModel)]="passwordReset.newPassword"
+          autocomplete="new-password"
+        />
+      </div>
+      <div class="login-field">
+        <label class="login-field__label" for="reset-confirm-password">Confirmar contraseña</label>
+        <input
+          id="reset-confirm-password"
+          class="login-field__control"
+          type="password"
+          name="resetConfirmPassword"
+          [(ngModel)]="passwordReset.confirmPassword"
+          autocomplete="new-password"
+        />
+      </div>
+      } @if (passwordResetMessage) {
+      <p class="password-reset__message">
         {{ passwordResetMessage }}
       </p>
-
+      }
       <div class="password-reset__actions">
         <button
           class="password-reset__primary"
           type="button"
           [disabled]="passwordResetPending"
-          (click)="passwordResetStep === 'request' ? requestPasswordReset() : confirmPasswordReset()"
+          (click)="
+            passwordResetStep === 'request' ? requestPasswordReset() : confirmPasswordReset()
+          "
         >
           {{ passwordResetStep === 'request' ? 'Enviar código' : 'Actualizar contraseña' }}
         </button>
-        <button
-          class="password-reset__secondary"
-          type="button"
-          (click)="cancelPasswordRecovery()"
-        >
+        <button class="password-reset__secondary" type="button" (click)="cancelPasswordRecovery()">
           Cancelar
         </button>
       </div>
     </div>
+    }
   </div>
 </section>

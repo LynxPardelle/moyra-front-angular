@@ -349,10 +349,15 @@ Representative endpoints:
 - `GET /api/v2/cases/{caseId}/files`
 - `GET /api/v2/cases/{caseId}/files/{fileId}/download`
 - `PUT /api/v2/cases/{caseId}/files/{fileId}/visibility`
-- `GET /api/v2/notifications`
-- `PUT /api/v2/notifications/{notificationId}/read`
-- `POST /api/v2/push-subscriptions`
-- `DELETE /api/v2/push-subscriptions/{subscriptionId}`
+- `GET /api/v2/case-notifications`
+- `GET /api/v2/case-notifications/unread-count`
+- `POST /api/v2/case-notifications/{notificationId}/read`
+- `POST /api/v2/case-notifications/read-all`
+- `GET /api/v2/case-notification-preferences`
+- `PUT /api/v2/case-notification-preferences`
+- `GET /api/v2/case-push-subscriptions`
+- `POST /api/v2/case-push-subscriptions`
+- `DELETE /api/v2/case-push-subscriptions/{subscriptionId}`
 
 Every case-scoped endpoint must verify membership and effective permissions server-side.
 
@@ -592,6 +597,12 @@ Browser QA:
 
 ## Release Plan
 
+Planning vocabulary:
+
+- The phases below are product/release phases from the spec.
+- The implementation plan breaks these phases into smaller executable sprints.
+- A sprint is not a new product phase; it is a testable implementation slice inside one of these phases.
+
 Phase 1: Backend domain foundation
 
 - Data model and tables.
@@ -620,7 +631,7 @@ Phase 4: Notifications
 
 - Notification records and center.
 - SES email delivery.
-- Web Push subscriptions and delivery.
+- Web Push subscription storage first; Web Push delivery after Angular service worker integration.
 - User notification preferences.
 - Delivery logging and failure states.
 
@@ -632,6 +643,14 @@ Phase 5: Hardening and release
 - Testing environment deployment.
 - Production promotion only after test smoke and security review.
 
+Phase-to-sprint mapping:
+
+- Phase 1 maps to implementation Sprints 0-3.
+- Phase 2 maps to implementation Sprints 5-6.
+- Phase 3 maps to implementation Sprint 7.
+- Phase 4 maps to implementation Sprints 4 and 8.
+- Phase 5 maps to implementation Sprint 9.
+
 ## Open Implementation Decisions
 
 These decisions do not change the approved product design, but should be resolved during implementation planning or before production release as noted.
@@ -639,7 +658,7 @@ These decisions do not change the approved product design, but should be resolve
 - Exact SES subdomain name.
 - SES sandbox/production sending setup.
 - Whether product notification email should use SES v1 or SES v2 API.
-- Whether Web Push delivery uses a `web-push` library directly or an AWS-managed/alternate push delivery pattern.
+- Web Push sender integration details for Sprint 8. Sprint 4 selected `web-push` as the VAPID-compatible candidate after `npm view web-push version` returned `3.6.7`, but does not add the sender dependency yet.
 - Exact DynamoDB table split and GSI names after implementation query review.
 - Whether case file malware scanning is MVP or first hardening follow-up.
 - Whether internal comments need a separate internal-only note type.

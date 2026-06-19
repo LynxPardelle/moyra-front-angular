@@ -1,13 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
-import {
-  AiModelCatalog,
-  AiModelInfo,
-  AiUsageService,
-} from '../../../services/ai-usage.service';
+import { AiModelCatalog, AiModelInfo, AiUsageService } from '../../../services/ai-usage.service';
 
 // Disabled intentionally while Bedrock keeps regional model daily token quotas at 0.
 // Keep the panel code in place so it can be re-enabled after AWS grants usable quota.
@@ -49,7 +44,7 @@ const ACTIONS_BY_SURFACE: Record<string, AssistantAction[]> = {
 
 @Component({
   selector: 'app-ai-assistant-panel',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './ai-assistant-panel.component.html',
   styleUrls: ['./ai-assistant-panel.component.scss'],
 })
@@ -194,8 +189,7 @@ export class AiAssistantPanelComponent implements OnInit {
       );
       this.monthlyTokensUsed =
         Number(usage?.totalInputTokens || 0) + Number(usage?.totalOutputTokens || 0);
-      this.monthlyTokenBudget =
-        Number(usage?.monthlyTokenBudget || 0) || this.monthlyTokenBudget;
+      this.monthlyTokenBudget = Number(usage?.monthlyTokenBudget || 0) || this.monthlyTokenBudget;
       this.monthlyTokenBudgetEstimatedCostUsd = Number(
         usage?.monthlyTokenBudgetEstimatedCostUsd || 0
       );

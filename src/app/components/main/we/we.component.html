@@ -1,17 +1,8 @@
 <!-- Edit/Delete Buttons -->
-<div
-  class="we-floating-actions position-fixed ank ank-top-15per ank-top-md-10per end-0"
-  *ngIf="
-    canChange === true &&
-    isAdmin === true
-  "
->
-  <button
-    *ngIf="editSwitch == false"
-    class="we-icon-action"
-    (click)="switchEdit()"
-    aria-label="Editar página Nosotros"
-  >
+@if ( canChange === true && isAdmin === true ) {
+<div class="we-floating-actions position-fixed ank ank-top-15per ank-top-md-10per end-0">
+  @if (editSwitch == false) {
+  <button class="we-icon-action" (click)="switchEdit()" aria-label="Editar página Nosotros">
     <svg
       width="1em"
       height="1em"
@@ -29,41 +20,30 @@
       />
     </svg>
   </button>
-
-  <button
-    *ngIf="editSwitch == true"
-    class="we-icon-action"
-    (click)="switchEdit()"
-    aria-label="Cerrar edición"
-  >
-    X
-  </button>
+  } @if (editSwitch == true) {
+  <button class="we-icon-action" (click)="switchEdit()" aria-label="Cerrar edición">X</button>
+  }
 </div>
+}
 
 <section class="we-page">
-  <header
-    class="we-hero"
-    [class.we-hero--solo]="!(main && main.mainImg && main.mainImg.location)"
-  >
+  <header class="we-hero" [class.we-hero--solo]="!(main && main.mainImg && main.mainImg.location)">
     <div class="we-hero__content">
       <p class="we-eyebrow">Nosotros</p>
       <h1>Experiencia legal con criterio práctico</h1>
-      <div
-        *ngIf="main && main.desc && main.desc !== ''"
-        class="we-hero__copy"
-        [innerHTML]="richContent(main.desc) | safeRichHtml"
-      ></div>
+      @if (main && main.desc && main.desc !== '') {
+      <div class="we-hero__copy" [innerHTML]="richContent(main.desc) | safeRichHtml"></div>
+      }
     </div>
 
-    <figure
-      *ngIf="main && main.mainImg && main.mainImg.location"
-      class="we-hero__media"
-    >
+    @if (main && main.mainImg && main.mainImg.location) {
+    <figure class="we-hero__media">
       <img
-        [src]="main.mainImg.publicUrl || (urlMain + 'get-file/' + main.mainImg.location)"
+        [src]="main.mainImg.publicUrl || urlMain + 'get-file/' + main.mainImg.location"
         alt="{{ main.mainImg.title }}"
       />
     </figure>
+    }
   </header>
 
   <section class="we-principles" aria-label="Criterios de trabajo">
@@ -104,42 +84,33 @@
 </section>
 
 <!-- Edit Main Section -->
-<section class="we-admin-editor" *ngIf="editSwitch === true">
-  <h3 class="ank ank-text-titleM text-center mt-5">
-    Edición de configuración del sitio
-  </h3>
-
+@if (editSwitch === true) {
+<section class="we-admin-editor">
+  <h3 class="ank ank-text-titleM text-center mt-5">Edición de configuración del sitio</h3>
   <!-- Description Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="desc"
-      >Descripción</label
-    >
+    <label class="ank ank-text-textM mb-1 d-block" for="desc">Descripción</label>
     @defer (when editSwitch) {
-      <app-rich-text-editor
-        label="Descripción"
-        help="Texto principal de la página Nosotros."
-        placeholder="Descripción"
-        [(value)]="main.desc"
-      ></app-rich-text-editor>
+    <app-rich-text-editor
+      label="Descripción"
+      help="Texto principal de la página Nosotros."
+      placeholder="Descripción"
+      [(value)]="main.desc"
+    ></app-rich-text-editor>
     } @placeholder {
-      <textarea
-        class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
-        type="text"
-        name="desc"
-        #desc="ngModel"
-        [(ngModel)]="main.desc"
-        placeholder="Descripción"
-        required
-      ></textarea>
+    <textarea
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
+      type="text"
+      name="desc"
+      #desc="ngModel"
+      [(ngModel)]="main.desc"
+      placeholder="Descripción"
+      required
+    ></textarea>
+    } @if (!main.desc) {
+    <span class="ank ank-text-titleM font-weight-bold"> La descripción es obligatoria. </span>
     }
-    <span
-      class="ank ank-text-titleM font-weight-bold"
-      *ngIf="!main.desc"
-    >
-      La descripción es obligatoria.
-    </span>
   </div>
-
   <!-- FaceBook Edit -->
   <div class="d-block w-75 mx-auto my-3">
     <label class="ank-text-textM mb-1 d-block" for="FB">FaceBook Link</label>
@@ -152,20 +123,15 @@
       placeholder="FaceBook"
       required
     />
-    <a
-      *ngIf="main.mail"
-      class="admin-link-preview"
-      [href]="'mailto:' + main.mail"
-    >
+    @if (main.mail) {
+    <a class="admin-link-preview" [href]="'mailto:' + main.mail">
       {{ 'mailto:' + main.mail }}
     </a>
+    }
   </div>
-
   <!-- WhatsApp Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="whatsApp"
-      >WhatsApp</label
-    >
+    <label class="ank ank-text-textM mb-1 d-block" for="whatsApp">WhatsApp</label>
     <input
       class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
@@ -176,21 +142,19 @@
       required
     />
   </div>
-
   <!-- Twitter Edit -->
   <!-- <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="twitter">Twitter Link</label>
-    <input
-      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
-      type="text"
-      name="twitter"
-      #twitter="ngModel"
-      [(ngModel)]="main.twitter"
-      placeholder="Twitter"
-      required
-    />
-  </div> -->
-
+                <label class="ank ank-text-textM mb-1 d-block" for="twitter">Twitter Link</label>
+                <input
+                  class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
+                  type="text"
+                  name="twitter"
+                  #twitter="ngModel"
+                  [(ngModel)]="main.twitter"
+                  placeholder="Twitter"
+                  required
+                  />
+                </div> -->
   <!-- Email Edit -->
   <div class="d-block w-75 mx-auto my-3">
     <label class="ank ank-text-textM mb-1 d-block" for="FB">Email</label>
@@ -204,12 +168,9 @@
       required
     />
   </div>
-
   <!-- LinkedIn Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="linkedIn"
-      >LinkedIn Link</label
-    >
+    <label class="ank ank-text-textM mb-1 d-block" for="linkedIn">LinkedIn Link</label>
     <input
       class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
@@ -220,12 +181,9 @@
       required
     />
   </div>
-
   <!-- phoneNumber Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="FB"
-      >Número de teléfono</label
-    >
+    <label class="ank ank-text-textM mb-1 d-block" for="FB">Número de teléfono</label>
     <input
       class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
@@ -235,12 +193,9 @@
       placeholder="5554127879"
     />
   </div>
-
   <!-- ErrorMessage Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="errorMessage"
-      >Mensaje de error</label
-    >
+    <label class="ank ank-text-textM mb-1 d-block" for="errorMessage">Mensaje de error</label>
     <textarea
       class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
@@ -250,12 +205,9 @@
       placeholder="Mensaje de error"
     ></textarea>
   </div>
-
   <!-- SeoTags Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="seoTags"
-      >Palabras clave</label
-    >
+    <label class="ank ank-text-textM mb-1 d-block" for="seoTags">Palabras clave</label>
     <input
       class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="text"
@@ -265,7 +217,6 @@
       placeholder="Palabras clave"
     />
   </div>
-
   <!-- Submit Button -->
   <button
     (click)="onSubmit('main')"
@@ -273,11 +224,8 @@
   >
     Confirmar
   </button>
-
   <hr class="w-100 d-block mx-auto my-5" />
-
   <h3 class="ank ank-text-titleM text-center">Cambio de llave</h3>
-
   <!-- Key Edit -->
   <div class="d-block w-75 mx-auto my-3">
     <label class="ank ank-text-textM mb-1 d-block" for="key">Llave nueva</label>
@@ -291,12 +239,9 @@
       required
     />
   </div>
-
   <!-- KeyOld Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="keyOld"
-      >Llave vieja</label
-    >
+    <label class="ank ank-text-textM mb-1 d-block" for="keyOld">Llave vieja</label>
     <input
       class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
       type="password"
@@ -307,7 +252,6 @@
       required
     />
   </div>
-
   <!-- Submit Password -->
   <button
     (click)="onSubmit('main')"
@@ -315,23 +259,19 @@
   >
     Confirmar
   </button>
-
   <hr class="w-100 d-block mx-auto my-5" />
-
   <!-- Image Main Uploads -->
   <h3 class="ank ank-text-titleM text-center">Subida de imágenes</h3>
-
   <div class="d-flex flex-wrap justify-content-evenly my-3">
     <div class="w-50">
       <h4 class="ank ank-text-titleM text-center">Imagen principal</h4>
-
+      @if (main && main.mainImg && main.mainImg.location) {
       <img
-        *ngIf="main && main.mainImg && main.mainImg.location"
         class="ank ank-wmx-75per d-block mx-auto ank-hmx-25vh my-3"
-        [src]="main.mainImg.publicUrl || (urlMain + 'get-file/' + main.mainImg.location)"
+        [src]="main.mainImg.publicUrl || urlMain + 'get-file/' + main.mainImg.location"
         alt="{{ main.mainImg.title }}"
       />
-
+      }
       <app-file-uploader
         [type]="'main'"
         [typeMeta]="'one'"
@@ -343,17 +283,15 @@
         (recoverThing)="recoverThingFather($event)"
       ></app-file-uploader>
     </div>
-
     <div class="w-50">
       <h4 class="ank ank-text-titleM text-center">Logo</h4>
-
+      @if (main && main.logo && main.logo.location) {
       <img
-        *ngIf="main && main.logo && main.logo.location"
         class="ank ank-wmx-75per d-block mx-auto ank-hmx-25vh my-3"
-        [src]="main.logo.publicUrl || (urlMain + 'get-file/' + main.logo.location)"
+        [src]="main.logo.publicUrl || urlMain + 'get-file/' + main.logo.location"
         alt="{{ main.logo.title }}"
       />
-
+      }
       <app-file-uploader
         [type]="'main'"
         [typeMeta]="'one'"
@@ -367,28 +305,21 @@
     </div>
   </div>
 </section>
+}
 
 <!-- EquipMembers -->
-<section class="we-team" *ngIf="equips">
+@if (equips) {
+<section class="we-team">
   <div class="we-team__heading">
     <p class="we-eyebrow">Equipo</p>
     <h2>Profesionales especializados</h2>
   </div>
-
   <div class="we-team__grid">
-    <article
-      *ngFor="let equip of equips"
-      class="we-team-card"
-    >
+    @for (equip of equips; track equip) {
+    <article class="we-team-card">
       <!-- Edit/Delete Buttons -->
-      <div
-        class="we-team-card__actions"
-        *ngIf="
-          canChange === true &&
-          isAdmin === true &&
-          editSwitch === true
-        "
-      >
+      @if ( canChange === true && isAdmin === true && editSwitch === true ) {
+      <div class="we-team-card__actions">
         <button
           class="we-icon-action"
           (click)="switchEquip(equip)"
@@ -411,7 +342,6 @@
             />
           </svg>
         </button>
-
         <button
           class="we-icon-action we-icon-action--danger"
           (click)="deleteEquip(equip._id)"
@@ -432,42 +362,32 @@
           </svg>
         </button>
       </div>
-
-      <figure
-        *ngIf="equip.photo && equip.photo.location"
-        class="we-team-card__media"
-      >
+      } @if (equip.photo && equip.photo.location) {
+      <figure class="we-team-card__media">
         <img
-          [src]="equip.photo.publicUrl || (urlMain + 'get-file/' + equip.photo.location)"
+          [src]="equip.photo.publicUrl || urlMain + 'get-file/' + equip.photo.location"
           alt="{{ equip.photo.title }}"
         />
       </figure>
-
+      }
       <div class="we-team-card__body">
         <h3>{{ equip.name }}</h3>
-
-        <div
-          *ngIf="equip && equip.desc && equip.desc !== ''"
-          class="we-team-card__bio"
-          [innerHTML]="
-            richContent(equip.desc) | safeRichHtml
-          "
-        ></div>
+        @if (equip && equip.desc && equip.desc !== '') {
+        <div class="we-team-card__bio" [innerHTML]="richContent(equip.desc) | safeRichHtml"></div>
+        }
       </div>
     </article>
+    }
   </div>
 </section>
+}
 
 <!-- Edit Section -->
-<section class="we-admin-editor my-3" *ngIf="editSwitch === true">
+@if (editSwitch === true) {
+<section class="we-admin-editor my-3">
   <h3 class="ank ank-text-titleM text-center">
-    <ng-container *ngIf="equip._id === ''; else elseEquipIdTemplate">
-      Crear
-    </ng-container>
-    <ng-template #elseEquipIdTemplate> Editar </ng-template>
-    miembro del equipo
+    @if (equip._id === '') { Crear } @else { Editar } miembro del equipo
   </h3>
-
   <!-- Name Edit -->
   <div class="d-block w-75 mx-auto my-3">
     <label class="ank ank-text-textM mb-1 d-block" for="name">Nombre</label>
@@ -480,66 +400,50 @@
       placeholder="Nombre"
       required
     />
-    <span
-      class="ank ank-text-titleM font-weight-bold"
-      *ngIf="!name.valid && name.touched"
-    >
-      El nombre es obligatorio.
-    </span>
+    @if (!name.valid && name.touched) {
+    <span class="ank ank-text-titleM font-weight-bold"> El nombre es obligatorio. </span>
+    }
   </div>
-
   <!-- Desc Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="desc"
-      >Descripción</label
-    >
+    <label class="ank ank-text-textM mb-1 d-block" for="desc">Descripción</label>
     @defer (when editSwitch) {
-      <app-rich-text-editor
-        label="Descripción"
-        help="Perfil del miembro del equipo. Puedes usar listas, negritas y enlaces."
-        placeholder="Descripción"
-        [(value)]="equip.desc"
-      ></app-rich-text-editor>
+    <app-rich-text-editor
+      label="Descripción"
+      help="Perfil del miembro del equipo. Puedes usar listas, negritas y enlaces."
+      placeholder="Descripción"
+      [(value)]="equip.desc"
+    ></app-rich-text-editor>
     } @placeholder {
-      <textarea
-        class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
-        type="text"
-        name="desc"
-        #desc="ngModel"
-        [(ngModel)]="equip.desc"
-        placeholder="Descripción"
-        required
-      ></textarea>
+    <textarea
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
+      type="text"
+      name="desc"
+      #desc="ngModel"
+      [(ngModel)]="equip.desc"
+      placeholder="Descripción"
+      required
+    ></textarea>
+    } @if (!equip.desc) {
+    <span class="ank ank-text-titleM font-weight-bold"> La descripción es obligatoria. </span>
     }
-    <span
-      class="ank ank-text-titleM font-weight-bold"
-      *ngIf="!equip.desc"
-    >
-      La descripción es obligatoria.
-    </span>
   </div>
-
   <!-- Submit Button -->
-  <button
-    (click)="onSubmit('equip')"
-    class="btn bg-linkM text-bg1M mx-auto d-block my-3 w-75"
-  >
+  <button (click)="onSubmit('equip')" class="btn bg-linkM text-bg1M mx-auto d-block my-3 w-75">
     Enviar
   </button>
-
-  <div *ngIf="equip.desc !== '' && equip.name !== ''">
+  @if (equip.desc !== '' && equip.name !== '') {
+  <div>
     <hr class="w-100 d-block mx-auto my-5" />
-
     <!-- Photo Equip Member Upload -->
-    <h3 class="ank ank-text-titleM text-center">
-      Subida de la foto del miembro del equipo
-    </h3>
+    <h3 class="ank ank-text-titleM text-center">Subida de la foto del miembro del equipo</h3>
+    @if (equip && equip.photo && equip.photo.location) {
     <img
-      *ngIf="equip && equip.photo && equip.photo.location"
       class="ank ank-wmx-75per d-block mx-auto ank-hmx-25vh my-3"
-      [src]="equip.photo.publicUrl || (urlMain + 'get-file/' + equip.photo.location)"
+      [src]="equip.photo.publicUrl || urlMain + 'get-file/' + equip.photo.location"
       alt="{{ equip.photo.title }}"
     />
+    }
     <app-file-uploader
       [type]="'main'"
       [typeMeta]="'one'"
@@ -551,4 +455,6 @@
       (recoverThing)="recoverThingFather($event)"
     ></app-file-uploader>
   </div>
+  }
 </section>
+}

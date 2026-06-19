@@ -1,13 +1,8 @@
 <article class="article-detail ank ank-wmx-980px mx-auto px-3 py-4">
-  <div
-    class="admin-actions"
-    *ngIf="
-      canChange === true &&
-      isAdmin === true
-    "
-  >
+  @if ( canChange === true && isAdmin === true ) {
+  <div class="admin-actions">
+    @if (editSwitch === false) {
     <button
-      *ngIf="editSwitch === false"
       class="admin-actions__button"
       type="button"
       (click)="switchEdit()"
@@ -15,9 +10,8 @@
     >
       Editar
     </button>
-
+    } @if (editSwitch === true) {
     <button
-      *ngIf="editSwitch === true"
       class="admin-actions__button"
       type="button"
       (click)="switchEdit()"
@@ -25,9 +19,8 @@
     >
       Cerrar
     </button>
-
+    } @if (articleRecordId(article)) {
     <button
-      *ngIf="articleRecordId(article)"
       class="admin-actions__button admin-actions__button--danger"
       type="button"
       (click)="deleteArticle(articleRecordId(article))"
@@ -35,132 +28,121 @@
     >
       Borrar
     </button>
+    }
   </div>
-
-  <div *ngIf="loading" class="text-center my-5">Cargando artículo...</div>
-
-  <ng-container *ngIf="!loading && editSwitch === false">
-    <a
-      class="back-link text-decoration-none"
-      href="/blog"
-      [routerLink]="[isAdmin ? '/admin/blog' : '/blog']"
-    >
-      Volver al blog
-    </a>
-
-    <header class="article-detail__header text-center mx-auto mb-4">
-      <p class="article-detail__tags" *ngIf="article.tags">{{ article.tags }}</p>
-      <h1 class="article-detail__title" *ngIf="article.title">{{ article.title }}</h1>
-      <p class="article-detail__intro" *ngIf="article.intro">
-        {{ article.intro }}
-      </p>
-    </header>
-
-    <img
-      *ngIf="article.mainImg && fileUrl(article.mainImg) && isImage(article.mainImg)"
-      class="article-detail__hero mx-auto mb-4"
-      [src]="fileUrl(article.mainImg)"
-      [alt]="article.mainImg.title || article.title"
-      (click)="openImagePreview(article.mainImg)"
-    />
-
-    <section
-      *ngIf="articleSections && articleSections.length > 0"
-      class="article-sections mx-auto"
-    >
-      <section
-        *ngFor="let section of articleSections"
-        class="article-section"
-      >
-        <h3 class="article-section__title" *ngIf="section.title">
-          {{ section.title }}
-        </h3>
-
-        <img
-          *ngIf="section.mainFile && fileUrl(section.mainFile) && isImage(section.mainFile)"
-          class="article-section__image mx-auto mb-3"
-          [src]="fileUrl(section.mainFile)"
-          [alt]="section.mainFile.title || section.title"
-          (click)="openImagePreview(section.mainFile)"
-        />
-
-        <div
-          *ngIf="section.text"
-          class="article-section__content"
-          [innerHTML]="richContent(section.text, section) | safeRichHtml"
-        ></div>
-
-        <section *ngIf="sectionEmbedItems(section).length > 0" class="content-embeds">
-          <article
-            *ngFor="let embed of sectionEmbedItems(section); trackBy: trackEmbedItem"
-            class="content-embed"
-          >
-            <safe-embed-frame [embed]="embed"></safe-embed-frame>
-          </article>
-        </section>
-
-        <div
-          *ngIf="section.files && section.files.length > 0"
-          class="article-section-files"
-        >
-          <a
-            *ngFor="let file of section.files"
-            class="article-section-file text-decoration-none"
-            [href]="fileUrl(file)"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span
-              class="article-section-file__preview"
-              [class.article-section-file__preview--image]="isImage(file)"
-            >
-              <img
-                *ngIf="isImage(file); else articleDocumentPreview"
-                class="article-section-file__image"
-                [src]="fileUrl(file)"
-                [alt]="file.title || section.title"
-              />
-              <ng-template #articleDocumentPreview>
-                <span [class]="fileKindIconClass(file)" aria-hidden="true">
-                  <span>{{ fileKindIconText(file) }}</span>
-                </span>
-              </ng-template>
-            </span>
-            <span class="article-section-file__title">
-              {{ file.title || file.location || 'Archivo' }}
-            </span>
-            <small>{{ fileKindLabel(file) }}</small>
-          </a>
-        </div>
+  } @if (loading) {
+  <div class="text-center my-5">Cargando artículo...</div>
+  } @if (!loading && editSwitch === false) {
+  <a
+    class="back-link text-decoration-none"
+    href="/blog"
+    [routerLink]="[isAdmin ? '/admin/blog' : '/blog']"
+  >
+    Volver al blog
+  </a>
+  <header class="article-detail__header text-center mx-auto mb-4">
+    @if (article.tags) {
+    <p class="article-detail__tags">{{ article.tags }}</p>
+    } @if (article.title) {
+    <h1 class="article-detail__title">{{ article.title }}</h1>
+    } @if (article.intro) {
+    <p class="article-detail__intro">
+      {{ article.intro }}
+    </p>
+    }
+  </header>
+  @if (article.mainImg && fileUrl(article.mainImg) && isImage(article.mainImg)) {
+  <img
+    class="article-detail__hero mx-auto mb-4"
+    [src]="fileUrl(article.mainImg)"
+    [alt]="article.mainImg.title || article.title"
+    (click)="openImagePreview(article.mainImg)"
+  />
+  } @if (articleSections && articleSections.length > 0) {
+  <section class="article-sections mx-auto">
+    @for (section of articleSections; track section) {
+    <section class="article-section">
+      @if (section.title) {
+      <h3 class="article-section__title">
+        {{ section.title }}
+      </h3>
+      } @if (section.mainFile && fileUrl(section.mainFile) && isImage(section.mainFile)) {
+      <img
+        class="article-section__image mx-auto mb-3"
+        [src]="fileUrl(section.mainFile)"
+        [alt]="section.mainFile.title || section.title"
+        (click)="openImagePreview(section.mainFile)"
+      />
+      } @if (section.text) {
+      <div
+        class="article-section__content"
+        [innerHTML]="richContent(section.text, section) | safeRichHtml"
+      ></div>
+      } @if (sectionEmbedItems(section).length > 0) {
+      <section class="content-embeds">
+        @for (embed of sectionEmbedItems(section); track trackEmbedItem($index, embed)) {
+        <article class="content-embed">
+          <safe-embed-frame [embed]="embed"></safe-embed-frame>
+        </article>
+        }
       </section>
+      } @if (section.files && section.files.length > 0) {
+      <div class="article-section-files">
+        @for (file of section.files; track file) {
+        <a
+          class="article-section-file text-decoration-none"
+          [href]="fileUrl(file)"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span
+            class="article-section-file__preview"
+            [class.article-section-file__preview--image]="isImage(file)"
+          >
+            @if (isImage(file)) {
+            <img
+              class="article-section-file__image"
+              [src]="fileUrl(file)"
+              [alt]="file.title || section.title"
+            />
+            } @else {
+            <span [class]="fileKindIconClass(file)" aria-hidden="true">
+              <span>{{ fileKindIconText(file) }}</span>
+            </span>
+            }
+          </span>
+          <span class="article-section-file__title">
+            {{ file.title || file.location || 'Archivo' }}
+          </span>
+          <small>{{ fileKindLabel(file) }}</small>
+        </a>
+        }
+      </div>
+      }
     </section>
-
-    <div
-      *ngIf="article.outro"
-      class="article-detail__outro mx-auto my-4"
-      [innerHTML]="richContent(article.outro) | safeRichHtml"
-    ></div>
-  </ng-container>
-
-  <section *ngIf="!loading && editSwitch === true" class="article-editor mx-auto">
+    }
+  </section>
+  } @if (article.outro) {
+  <div
+    class="article-detail__outro mx-auto my-4"
+    [innerHTML]="richContent(article.outro) | safeRichHtml"
+  ></div>
+  } } @if (!loading && editSwitch === true) {
+  <section class="article-editor mx-auto">
     <header class="editor-heading">
       <p class="editor-heading__eyebrow">Editor de blog</p>
       <h1 class="editor-heading__title">
         {{ articleRecordId(article) ? 'Editar artículo' : 'Crear artículo' }}
       </h1>
     </header>
-
     <div class="content-editor__workflow" aria-label="Estado del artículo">
-      <article
-        *ngFor="let step of editorSteps()"
-        class="content-editor__step"
-        [class.content-editor__step--complete]="step.complete"
-      >
+      @for (step of editorSteps(); track step) {
+      <article class="content-editor__step" [class.content-editor__step--complete]="step.complete">
         <strong>{{ step.label }}</strong>
         <span>{{ step.detail }}</span>
       </article>
+      }
     </div>
-
     <section class="content-editor__dashboard">
       <article class="content-editor__metric">
         <span>Lectura estimada</span>
@@ -179,12 +161,7 @@
         <strong>{{ articleFileSummary() }}</strong>
       </article>
     </section>
-
-    <app-ai-assistant-panel
-      surface="blog"
-      [context]="aiContext()"
-    ></app-ai-assistant-panel>
-
+    <app-ai-assistant-panel surface="blog" [context]="aiContext()"></app-ai-assistant-panel>
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="title">Título</label>
       <input
@@ -198,7 +175,6 @@
         required
       />
     </div>
-
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="urltitle">
         link-del-articulo-sin-acentos-ni-espacios
@@ -213,7 +189,6 @@
         placeholder="link-del-articulo"
       />
     </div>
-
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="tags">Etiquetas</label>
       <input
@@ -225,53 +200,53 @@
         placeholder="Derecho corporativo, contratos, litigio"
       />
     </div>
-
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="intro">Introducción</label>
       @defer (when editSwitch) {
-        <app-rich-text-editor
-          label="Introducción"
-          help="Resumen visible en el blog y útil como descripción para compartir."
-          placeholder="Resumen visible en el blog y metadescripción."
-          minHeight="150px"
-          [(value)]="article.intro"
-        ></app-rich-text-editor>
+      <app-rich-text-editor
+        label="Introducción"
+        help="Resumen visible en el blog y útil como descripción para compartir."
+        placeholder="Resumen visible en el blog y metadescripción."
+        minHeight="150px"
+        [(value)]="article.intro"
+      ></app-rich-text-editor>
       } @placeholder {
-        <textarea
-          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-small-textarea"
-          id="intro"
-          name="intro"
-          [(ngModel)]="article.intro"
-          placeholder="Resumen visible en el blog y metadescripción."
-          required
-        ></textarea>
+      <textarea
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-small-textarea"
+        id="intro"
+        name="intro"
+        [(ngModel)]="article.intro"
+        placeholder="Resumen visible en el blog y metadescripción."
+        required
+      ></textarea>
       }
     </div>
-
     <div class="d-block w-100 mx-auto my-3">
       <label class="ank ank-text-textM mb-1 d-block" for="outro">Cierre</label>
       @defer (when editSwitch) {
-        <app-rich-text-editor
-          label="Cierre"
-          help="Texto largo del cierre del artículo."
-          placeholder="Cierre del artículo."
-          [(value)]="article.outro"
-        ></app-rich-text-editor>
+      <app-rich-text-editor
+        label="Cierre"
+        help="Texto largo del cierre del artículo."
+        placeholder="Cierre del artículo."
+        [(value)]="article.outro"
+      ></app-rich-text-editor>
       } @placeholder {
-        <textarea
-          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
-          id="outro"
-          name="outro"
-          [(ngModel)]="article.outro"
-          placeholder="Cierre del artículo."
-        ></textarea>
+      <textarea
+        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
+        id="outro"
+        name="outro"
+        [(ngModel)]="article.outro"
+        placeholder="Cierre del artículo."
+      ></textarea>
       }
     </div>
-
     <section class="seo-editor">
       <div class="seo-editor__heading">
         <h2>SEO y vista previa al compartir</h2>
-        <p>Textos que suelen usar Google, Facebook, WhatsApp, X y LinkedIn cuando se comparte este artículo.</p>
+        <p>
+          Textos que suelen usar Google, Facebook, WhatsApp, X y LinkedIn cuando se comparte este
+          artículo.
+        </p>
       </div>
       <label>
         <span>Título SEO</span>
@@ -308,51 +283,50 @@
         <p>{{ effectiveSeoDescription() }}</p>
       </div>
       <div class="content-editor__checks">
-        <article
-          *ngFor="let check of seoChecks()"
-          [class.content-editor__check--complete]="check.complete"
-        >
+        @for (check of seoChecks(); track check) {
+        <article [class.content-editor__check--complete]="check.complete">
           <span>{{ check.complete ? 'Listo' : 'Revisar' }}</span>
           <div>
             <strong>{{ check.label }}</strong>
             <small>{{ check.detail }}</small>
           </div>
         </article>
+        }
       </div>
     </section>
-
     <button
       class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-4 w-100"
       type="button"
       (click)="onSubmit()"
     >
-      {{ articleRecordId(article) ? 'Guardar cambios del artículo' : 'Crear borrador y habilitar multimedia' }}
+      {{
+        articleRecordId(article)
+          ? 'Guardar cambios del artículo'
+          : 'Crear borrador y habilitar multimedia'
+      }}
     </button>
-
-    <section *ngIf="!articleRecordId(article)" class="content-editor__asset-gate">
+    @if (!articleRecordId(article)) {
+    <section class="content-editor__asset-gate">
       <h3>Multimedia, secciones e inserciones</h3>
       <p>
-        Guarda el borrador con título, liga e introducción para habilitar imagen principal,
-        archivos relacionados, videos, formularios e inserciones seguras.
+        Guarda el borrador con título, liga e introducción para habilitar imagen principal, archivos
+        relacionados, videos, formularios e inserciones seguras.
       </p>
     </section>
-
-    <section *ngIf="articleRecordId(article)" class="article-upload mt-5">
+    } @if (articleRecordId(article)) {
+    <section class="article-upload mt-5">
       <h3 class="editor-section-title">Imagen principal</h3>
+      @if (article.mainImg && fileUrl(article.mainImg) && isImage(article.mainImg)) {
       <img
-        *ngIf="article.mainImg && fileUrl(article.mainImg) && isImage(article.mainImg)"
         class="article-upload__preview mx-auto mb-3"
         [src]="fileUrl(article.mainImg)"
         [alt]="article.mainImg.title || article.title"
       />
-      <button
-        *ngIf="article.mainImg"
-        class="file-reference-remove"
-        type="button"
-        (click)="clearArticleImage()"
-      >
+      } @if (article.mainImg) {
+      <button class="file-reference-remove" type="button" (click)="clearArticleImage()">
         Quitar imagen principal
       </button>
+      }
       <app-file-uploader
         [type]="'article'"
         [typeMeta]="'one'"
@@ -364,28 +338,18 @@
         (recoverThing)="recoverThingFather()"
       ></app-file-uploader>
     </section>
-
-    <section *ngIf="articleRecordId(article)" class="article-sections-editor mt-5">
+    } @if (articleRecordId(article)) {
+    <section class="article-sections-editor mt-5">
       <h3 class="editor-section-title">Secciones del artículo</h3>
-
-      <section
-        *ngFor="let section of articleSections; index as i"
-        class="section-editor"
-      >
+      @for (section of articleSections; track section; let i = $index) {
+      <section class="section-editor">
         <div class="section-editor__header">
           <h4 class="h6 m-0">Sección {{ i + 1 }}</h4>
-          <button
-            class="btn btn-warning py-1 px-3"
-            type="button"
-            (click)="deleteSection(section)"
-          >
+          <button class="btn btn-warning py-1 px-3" type="button" (click)="deleteSection(section)">
             Borrar
           </button>
         </div>
-
-        <label class="ank ank-text-textM mb-1 d-block" [for]="'section-title-' + i">
-          Título
-        </label>
+        <label class="ank ank-text-textM mb-1 d-block" [for]="'section-title-' + i"> Título </label>
         <input
           class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-input"
           type="text"
@@ -394,7 +358,6 @@
           [(ngModel)]="section.title"
           placeholder="Título de la sección"
         />
-
         <label class="ank ank-text-textM mb-1 mt-3 d-block" [for]="'section-order-' + i">
           Orden
         </label>
@@ -405,27 +368,25 @@
           [name]="'section-order-' + i"
           [(ngModel)]="section.order"
         />
-
         <label class="ank ank-text-textM mb-1 mt-3 d-block" [for]="'section-text-' + i">
           Contenido
         </label>
         @defer (when editSwitch) {
-          <app-rich-text-editor
-            label="Contenido"
-            help="Texto largo de esta sección."
-            placeholder="Contenido de la sección"
-            [(value)]="section.text"
-          ></app-rich-text-editor>
+        <app-rich-text-editor
+          label="Contenido"
+          help="Texto largo de esta sección."
+          placeholder="Contenido de la sección"
+          [(value)]="section.text"
+        ></app-rich-text-editor>
         } @placeholder {
-          <textarea
-            class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
-            [id]="'section-text-' + i"
-            [name]="'section-text-' + i"
-            [(ngModel)]="section.text"
-            placeholder="Contenido de la sección"
-          ></textarea>
+        <textarea
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
+          [id]="'section-text-' + i"
+          [name]="'section-text-' + i"
+          [(ngModel)]="section.text"
+          placeholder="Contenido de la sección"
+        ></textarea>
         }
-
         <label class="ank ank-text-textM mb-1 mt-3 d-block" [for]="'section-insertions-' + i">
           Inserciones
         </label>
@@ -437,17 +398,16 @@
           (ngModelChange)="updateInsertions(section, $event)"
           placeholder="Una inserción por línea. Puedes pegar links o código iframe de YouTube."
         ></textarea>
-
-        <section *ngIf="sectionEmbedItems(section).length > 0" class="content-editor__embed-preview">
+        @if (sectionEmbedItems(section).length > 0) {
+        <section class="content-editor__embed-preview">
           <h5>Vista previa de inserciones</h5>
-          <article
-            *ngFor="let embed of sectionEmbedItems(section); trackBy: trackEmbedItem"
-            class="content-editor__embed-item"
-          >
+          @for (embed of sectionEmbedItems(section); track trackEmbedItem($index, embed)) {
+          <article class="content-editor__embed-item">
             <safe-embed-frame [embed]="embed"></safe-embed-frame>
           </article>
+          }
         </section>
-
+        }
         <button
           class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-4 w-100"
           type="button"
@@ -455,23 +415,24 @@
         >
           Guardar sección
         </button>
-
-        <div *ngIf="articleSectionRecordId(section)" class="section-upload">
+        @if (articleSectionRecordId(section)) {
+        <div class="section-upload">
           <h5 class="h6 text-center mb-3">Imagen de la sección</h5>
+          @if (section.mainFile && fileUrl(section.mainFile) && isImage(section.mainFile)) {
           <img
-            *ngIf="section.mainFile && fileUrl(section.mainFile) && isImage(section.mainFile)"
             class="article-upload__preview mx-auto mb-3"
             [src]="fileUrl(section.mainFile)"
             [alt]="section.mainFile.title || section.title"
           />
+          } @if (section.mainFile) {
           <button
-            *ngIf="section.mainFile"
             class="file-reference-remove"
             type="button"
             (click)="clearSectionMainFile(section)"
           >
             Quitar imagen de la sección
           </button>
+          }
           <app-file-uploader
             [type]="'article'"
             [typeMeta]="'one'"
@@ -481,10 +442,11 @@
             [id]="articleSectionRecordId(section)"
             (recoverThing)="recoverThingFather()"
           ></app-file-uploader>
-
           <h5 class="h6 text-center my-3">Archivos relacionados</h5>
-          <div *ngIf="section.files && section.files.length > 0" class="file-reference-list">
-            <div *ngFor="let file of section.files" class="file-reference-item">
+          @if (section.files && section.files.length > 0) {
+          <div class="file-reference-list">
+            @for (file of section.files; track file) {
+            <div class="file-reference-item">
               <span>
                 <span [class]="fileKindIconClass(file)" aria-hidden="true">
                   <span>{{ fileKindIconText(file) }}</span>
@@ -492,12 +454,14 @@
                 {{ file.title || file.location || 'Archivo' }}
                 <small>{{ fileKindLabel(file) }}</small>
               </span>
-              <button *ngIf="isImage(file)" type="button" (click)="openImagePreview(file)">
-                Ver
-              </button>
+              @if (isImage(file)) {
+              <button type="button" (click)="openImagePreview(file)">Ver</button>
+              }
               <button type="button" (click)="removeSectionFile(section, file)">Quitar</button>
             </div>
+            }
           </div>
+          }
           <app-file-uploader
             [type]="'article'"
             [typeMeta]="'multi'"
@@ -508,14 +472,12 @@
             (recoverThing)="recoverThingFather()"
           ></app-file-uploader>
         </div>
+        }
       </section>
-
+      }
       <section class="section-editor section-editor--new">
         <h4 class="section-editor__new-title">Nueva sección</h4>
-
-        <label class="ank ank-text-textM mb-1 d-block" for="new-section-title">
-          Título
-        </label>
+        <label class="ank ank-text-textM mb-1 d-block" for="new-section-title"> Título </label>
         <input
           class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-input"
           type="text"
@@ -524,10 +486,7 @@
           [(ngModel)]="sectionDraft.title"
           placeholder="Título de la sección"
         />
-
-        <label class="ank ank-text-textM mb-1 mt-3 d-block" for="new-section-order">
-          Orden
-        </label>
+        <label class="ank ank-text-textM mb-1 mt-3 d-block" for="new-section-order"> Orden </label>
         <input
           class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-input"
           type="number"
@@ -535,27 +494,25 @@
           name="new-section-order"
           [(ngModel)]="sectionDraft.order"
         />
-
         <label class="ank ank-text-textM mb-1 mt-3 d-block" for="new-section-text">
           Contenido
         </label>
         @defer (when editSwitch) {
-          <app-rich-text-editor
-            label="Contenido"
-            help="Texto largo de esta sección."
-            placeholder="Contenido de la sección"
-            [(value)]="sectionDraft.text"
-          ></app-rich-text-editor>
+        <app-rich-text-editor
+          label="Contenido"
+          help="Texto largo de esta sección."
+          placeholder="Contenido de la sección"
+          [(value)]="sectionDraft.text"
+        ></app-rich-text-editor>
         } @placeholder {
-          <textarea
-            class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
-            id="new-section-text"
-            name="new-section-text"
-            [(ngModel)]="sectionDraft.text"
-            placeholder="Contenido de la sección"
-          ></textarea>
+        <textarea
+          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
+          id="new-section-text"
+          name="new-section-text"
+          [(ngModel)]="sectionDraft.text"
+          placeholder="Contenido de la sección"
+        ></textarea>
         }
-
         <label class="ank ank-text-textM mb-1 mt-3 d-block" for="new-section-insertions">
           Inserciones
         </label>
@@ -567,17 +524,16 @@
           (ngModelChange)="updateInsertions(sectionDraft, $event)"
           placeholder="Una inserción por línea. Puedes pegar links o código iframe de YouTube."
         ></textarea>
-
-        <section *ngIf="sectionEmbedItems(sectionDraft).length > 0" class="content-editor__embed-preview">
+        @if (sectionEmbedItems(sectionDraft).length > 0) {
+        <section class="content-editor__embed-preview">
           <h5>Vista previa de inserciones</h5>
-          <article
-            *ngFor="let embed of sectionEmbedItems(sectionDraft); trackBy: trackEmbedItem"
-            class="content-editor__embed-item"
-          >
+          @for (embed of sectionEmbedItems(sectionDraft); track trackEmbedItem($index, embed)) {
+          <article class="content-editor__embed-item">
             <safe-embed-frame [embed]="embed"></safe-embed-frame>
           </article>
+          }
         </section>
-
+        }
         <button
           class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-4 w-100"
           type="button"
@@ -587,10 +543,10 @@
         </button>
       </section>
     </section>
+    }
   </section>
-
+  } @if (previewImage) {
   <div
-    *ngIf="previewImage"
     class="image-modal"
     role="dialog"
     aria-modal="true"
@@ -598,13 +554,12 @@
     (click)="closeImagePreview()"
   >
     <div class="image-modal__content" (click)="$event.stopPropagation()">
-      <button type="button" class="image-modal__close" (click)="closeImagePreview()">
-        Cerrar
-      </button>
+      <button type="button" class="image-modal__close" (click)="closeImagePreview()">Cerrar</button>
       <img [src]="fileUrl(previewImage)" [alt]="previewImage.title || article.title" />
       <a [href]="fileUrl(previewImage)" target="_blank" rel="noopener noreferrer">
         Abrir en otra pestaña
       </a>
     </div>
   </div>
+  }
 </article>

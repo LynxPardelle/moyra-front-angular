@@ -2,6 +2,7 @@ import { Component, Inject, OnInit, PLATFORM_ID, effect } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthFacade } from '../store/auth/auth.facade';
+import { CasesFeatureService } from '../components/cases/cases-feature.service';
 
 @Component({
   selector: 'app-admin',
@@ -14,6 +15,7 @@ export class AdminComponent implements OnInit {
 
   constructor(
     private _authFacade: AuthFacade,
+    private _casesFeature: CasesFeatureService,
     private _router: Router,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
@@ -37,5 +39,9 @@ export class AdminComponent implements OnInit {
 
   logout(): void {
     this._authFacade.logout();
+  }
+
+  casesFeatureEnabled(): boolean {
+    return this._casesFeature.isEnabled();
   }
 }

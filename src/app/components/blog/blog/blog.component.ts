@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 
@@ -16,7 +16,11 @@ import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { SafeEmbedFrameComponent } from '../../web-utility/safe-embed-frame/safe-embed-frame.component';
 import { buildEmbedItems, EmbedItem, embedTrackKey } from '../../../utils/embeds';
 import { FileKindBadge, fileKindBadges, fileKindSummary } from '../../../utils/file-kind';
-import { hasHtmlMarkup, richContentPlainText, richTextWordCount } from '../../../utils/rich-content';
+import {
+  hasHtmlMarkup,
+  richContentPlainText,
+  richTextWordCount,
+} from '../../../utils/rich-content';
 
 // Extras
 import Swal from 'sweetalert2';
@@ -36,7 +40,7 @@ type ArticleListItem = {
 
 @Component({
   selector: 'app-blog',
-  imports: [CommonModule, RouterLink, SafeRichHtmlPipe, SafeEmbedFrameComponent],
+  imports: [RouterLink, SafeRichHtmlPipe, SafeEmbedFrameComponent],
   templateUrl: './blog.component.html',
   styleUrls: ['./blog.component.scss'],
 })
@@ -280,12 +284,15 @@ export class BlogComponent implements OnInit {
 
   private setArticles(articles: Article[]): void {
     this.articles = Array.isArray(articles)
-      ? articles.map((article: any) => ({
-          ...article,
-          sections: Array.isArray(article?.sections) ? article.sections : [],
-          urltitle: article?.urltitle || article?.slug || '',
-          _id: article?._id || article?.id || '',
-        }) as Article)
+      ? articles.map(
+          (article: any) =>
+            ({
+              ...article,
+              sections: Array.isArray(article?.sections) ? article.sections : [],
+              urltitle: article?.urltitle || article?.slug || '',
+              _id: article?._id || article?.id || '',
+            } as Article)
+        )
       : [];
     this.articleItems = this.articles.map((article) => this.buildArticleItem(article));
   }
@@ -299,7 +306,8 @@ export class BlogComponent implements OnInit {
     this._meta.updateTag({ name: 'description', content: description });
     this._meta.updateTag({
       name: 'keywords',
-      content: 'blog legal, artículos legales, derecho corporativo, derecho civil, derecho mercantil, abogados en México',
+      content:
+        'blog legal, artículos legales, derecho corporativo, derecho civil, derecho mercantil, abogados en México',
     });
     this._meta.updateTag({ property: 'og:title', content: title });
     this._meta.updateTag({ property: 'og:description', content: description });

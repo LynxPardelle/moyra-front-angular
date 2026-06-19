@@ -42,7 +42,8 @@
     </div>
     <div class="modal-body bg-bg1M">
       <!-- File Upload -->
-      <div *ngIf="doneUploading === false">
+      @if (doneUploading === false) {
+      <div>
         <div
           [ngStyle]="{
             visibility: files && files[0] ? 'hidden' : 'initial',
@@ -52,15 +53,9 @@
         >
           <!-- Drag & Drop -->
           <div>
+            @if (typeMeta === 'multi') {
             <div
-              *ngIf="typeMeta === 'multi'"
-              class="
-                drop-container
-                ushadow-1
-                d-flex
-                align-items-center
-                justify-content-center
-              "
+              class="drop-container ushadow-1 d-flex align-items-center justify-content-center"
               ngFileDrop
               [options]="optionsMulti"
               (uploadOutput)="onUploadOutput($event)"
@@ -70,15 +65,9 @@
             >
               <h3>Arrastra archivos aquí</h3>
             </div>
+            } @if (typeMeta === 'one') {
             <div
-              *ngIf="typeMeta === 'one'"
-              class="
-                drop-container
-                ushadow-1
-                d-flex
-                align-items-center
-                justify-content-center
-              "
+              class="drop-container ushadow-1 d-flex align-items-center justify-content-center"
               ngFileDrop
               [options]="optionsOne"
               (uploadOutput)="onUploadOutput($event)"
@@ -88,28 +77,16 @@
             >
               <h3>Arrastra el archivo aquí</h3>
             </div>
+            }
           </div>
-
           <p class="file-upload-help">
             {{ acceptedFileSummary }}
           </p>
-
           <label
-            class="
-              btn
-              bg-linkM
-              w-75
-              text-bg1M
-              cursor-pointer
-              text-center
-              d-block
-              mx-auto
-              my-5
-              position-relative
-            "
+            class="btn bg-linkM w-75 text-bg1M cursor-pointer text-center d-block mx-auto my-5 position-relative"
           >
+            @if (typeMeta === 'multi') {
             <input
-              *ngIf="typeMeta === 'multi'"
               type="file"
               [attr.accept]="acceptedFileTypes"
               ngFileSelect
@@ -118,8 +95,8 @@
               [uploadInput]="uploadInput"
               multiple
             />
+            } @if (typeMeta === 'one') {
             <input
-              *ngIf="typeMeta === 'one'"
               type="file"
               [attr.accept]="acceptedFileTypes"
               ngFileSelect
@@ -128,35 +105,25 @@
               [uploadInput]="uploadInput"
               multiple
             />
-            o escoge archivo
+            } o escoge archivo
           </label>
         </div>
-
-        <div *ngIf="files && files[0]">
-          <div *ngFor="let file of files">
-            <p
-              class="d-block m-auto w-100"
-              *ngIf="
-                file.nativeFile && file.nativeFile.name && file.nativeFile.size
-              "
-            >
+        @if (files && files[0]) {
+        <div>
+          @for (file of files; track file) {
+          <div>
+            @if ( file.nativeFile && file.nativeFile.name && file.nativeFile.size ) {
+            <p class="d-block m-auto w-100">
               <span class="d-block m-auto w-75">
-                {{
-                  file.nativeFile.name + " " + toKBorMB(file.nativeFile.size)
-                }}
+                {{ file.nativeFile.name + ' ' + toKBorMB(file.nativeFile.size) }}
               </span>
-              <span class="d-block m-auto w-25" *ngIf="fileProgress">
-                <span
-                  class="d-block m-auto w-100"
-                  *ngFor="let fileProg of fileProgress"
-                >
+              @if (fileProgress) {
+              <span class="d-block m-auto w-25">
+                @for (fileProg of fileProgress; track fileProg) {
+                <span class="d-block m-auto w-100">
+                  @if ( fileProg.progress && fileProg.progress.data &&
+                  fileProg.progress.data.percentage && fileProg.name == file.name ) {
                   <span
-                    *ngIf="
-                      fileProg.progress &&
-                      fileProg.progress.data &&
-                      fileProg.progress.data.percentage &&
-                      fileProg.name == file.name
-                    "
                     class="d-block m-auto w-100 border border-white"
                     [ngStyle]="{
                       background: toLinearGradientProgress(
@@ -180,57 +147,60 @@
                       {{ fileProg.progress.data.percentage }}
                     </span>
                   </span>
+                  }
                 </span>
+                }
               </span>
+              }
               <br />
             </p>
+            }
           </div>
+          }
         </div>
-
-        <div *ngIf="messagesErrorFiles">
-          <div *ngFor="let mError of messagesErrorFiles">
+        } @if (messagesErrorFiles) {
+        <div>
+          @for (mError of messagesErrorFiles; track mError) {
+          <div>
             <p>{{ mError }}</p>
           </div>
+          }
         </div>
-
+        } @if (files && files[0]) {
         <button
-          *ngIf="files && files[0]"
           type="button"
-          class="
-            btn
-            bg-linkM
-            w-75
-            text-center text-bg1M
-            d-block
-            mx-auto
-          "
+          class="btn bg-linkM w-75 text-center text-bg1M d-block mx-auto"
           (click)="startUpload()"
         >
           Empieza a subir el archivo
         </button>
+        }
       </div>
+      }
 
       <!-- END: File Upload -->
-      <div *ngIf="doneUploading === true">
+      @if (doneUploading === true) {
+      <div>
         <p>
-          El archivo se ha subido correctamente
-          <span *ngIf="messagesErrorFiles && messagesErrorFiles[0]">
-            excepto por el siguiente:
-          </span>
+          El archivo se ha subido correctamente @if (messagesErrorFiles && messagesErrorFiles[0]) {
+          <span> excepto por el siguiente: </span>
+          }
         </p>
-        <div *ngIf="messagesErrorFiles && messagesErrorFiles[0]">
-          <div *ngFor="let mError of messagesErrorFiles">
+        @if (messagesErrorFiles && messagesErrorFiles[0]) {
+        <div>
+          @for (mError of messagesErrorFiles; track mError) {
+          <div>
             <p>{{ mError }}</p>
             <br />
           </div>
+          }
         </div>
-        <button
-          class="btn d-block m-auto bg-linkM text-bg1M"
-          (click)="closeEnd(modalRef)"
-        >
+        }
+        <button class="btn d-block m-auto bg-linkM text-bg1M" (click)="closeEnd(modalRef)">
           Aceptar
         </button>
       </div>
+      }
     </div>
   </div>
 </ng-template>

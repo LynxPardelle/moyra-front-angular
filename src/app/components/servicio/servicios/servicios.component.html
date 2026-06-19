@@ -4,75 +4,82 @@
       <p class="services-heading__eyebrow">{{ text('servicesEyebrow', 'Soluciones') }}</p>
       <h1 class="services-heading__title">{{ text('servicesTitle', 'Áreas de apoyo legal') }}</h1>
       <p class="services-heading__copy">
-        {{ text('servicesCopy', 'Servicios jurídicos estructurados para prevenir riesgos, ordenar decisiones y atender procedimientos con claridad.') }}
+        {{
+          text(
+            'servicesCopy',
+            'Servicios jurídicos estructurados para prevenir riesgos, ordenar decisiones y atender procedimientos con claridad.'
+          )
+        }}
       </p>
     </div>
 
-    <a
-      href="/admin/solucion"
-      [routerLink]="['/admin/solucion']"
-      class="services-heading__action"
-      *ngIf="canChange === true && isAdmin === true"
-    >
+    @if (canChange === true && isAdmin === true) {
+    <a href="/admin/solucion" [routerLink]="['/admin/solucion']" class="services-heading__action">
       Crear nuevo servicio
     </a>
+    }
   </header>
 
-  <div *ngIf="servicios.length === 0" class="services-empty">
+  @if (servicios.length === 0) {
+  <div class="services-empty">
     <h3>Soluciones en preparación</h3>
     <p>Esta sección ya está lista para publicar servicios desde el panel de administración.</p>
   </div>
-
-  <section class="service-grid" *ngIf="servicios.length > 0">
-    <article *ngFor="let servicio of servicios" class="service-card">
+  } @if (servicios.length > 0) {
+  <section class="service-grid">
+    @for (servicio of servicios; track servicio) {
+    <article class="service-card">
+      @if (servicio && servicio.mainImg && servicio.mainImg.location) {
       <a
         class="service-card__media"
-        *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
-        [attr.href]="isAdmin ? '/admin/solucion/' + servicio.urltitle : '/solucion/' + servicio.urltitle"
+        [attr.href]="
+          isAdmin ? '/admin/solucion/' + servicio.urltitle : '/solucion/' + servicio.urltitle
+        "
         [routerLink]="[isAdmin ? '/admin/solucion' : '/solucion', servicio.urltitle]"
         [queryParams]="isAdmin ? { edit: 'true' } : null"
       >
         <img
-          [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
+          [src]="
+            servicio.mainImg.publicUrl || urlServicio + 'get-file/' + servicio.mainImg.location
+          "
           [alt]="servicio.mainImg.title || servicio.title"
         />
       </a>
-
+      }
       <div class="service-card__body">
         <a
-          [attr.href]="isAdmin ? '/admin/solucion/' + servicio.urltitle : '/solucion/' + servicio.urltitle"
+          [attr.href]="
+            isAdmin ? '/admin/solucion/' + servicio.urltitle : '/solucion/' + servicio.urltitle
+          "
           class="service-card__title-link"
           [routerLink]="[isAdmin ? '/admin/solucion' : '/solucion', servicio.urltitle]"
           [queryParams]="isAdmin ? { edit: 'true' } : null"
         >
           <h2 class="service-card__title">{{ servicio.title }}</h2>
         </a>
-
+        @if (servicio.desc && servicio.desc !== '') {
         <div
-          *ngIf="servicio.desc && servicio.desc !== ''"
           class="service-card__text"
           [innerHTML]="Linkify(valuefy(reduceFy(servicio.desc)), '#29303b', '#4b8ff5') | safeHtml"
         ></div>
+        }
       </div>
-
       <div
         class="service-card__actions"
         [ngClass]="{
           'service-card__actions--admin': isAdmin === true
         }"
       >
-        <button
-          *ngIf="isAdmin === true"
-          (click)="deleteServicio(servicio._id)"
-          class="service-card__delete"
-          type="button"
-        >
+        @if (isAdmin === true) {
+        <button (click)="deleteServicio(servicio._id)" class="service-card__delete" type="button">
           Borrar
         </button>
-
+        }
         <a
           class="service-card__read"
-          [attr.href]="isAdmin ? '/admin/solucion/' + servicio.urltitle : '/solucion/' + servicio.urltitle"
+          [attr.href]="
+            isAdmin ? '/admin/solucion/' + servicio.urltitle : '/solucion/' + servicio.urltitle
+          "
           [routerLink]="[isAdmin ? '/admin/solucion' : '/solucion', servicio.urltitle]"
           [queryParams]="isAdmin ? { edit: 'true' } : null"
         >
@@ -80,5 +87,7 @@
         </a>
       </div>
     </article>
+    }
   </section>
+  }
 </section>

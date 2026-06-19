@@ -15,6 +15,7 @@ import { provideStoreDevtools } from '@ngrx/store-devtools';
 
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { provideServiceWorker } from '@angular/service-worker';
 import { environment } from '../environments/environment';
 import { ArticleService } from './services/article.service';
 import { FileService } from './services/file.service';
@@ -33,6 +34,14 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
+    ...(environment.caseServiceWorkerEnabled
+      ? [
+          provideServiceWorker('ngsw-worker.js', {
+            enabled: environment.production,
+            registrationStrategy: 'registerWhenStable:30000',
+          }),
+        ]
+      : []),
     provideHttpClient(withFetch(), withInterceptors([authRefreshInterceptor])),
     provideStore({ [authFeatureKey]: authReducer }),
     provideEffects([AuthEffects]),
@@ -53,13 +62,13 @@ export const appConfig: ApplicationConfig = {
         disableImageSizeWarning: true,
       },
     },
-    importProvidersFrom(ModalModule.forRoot()),
+    importProvidersFrom(ModalModule),
     ArticleService,
     FileService,
     MainService,
     PublicationService,
     ServicioService,
     UserService,
-    WebService
-  ]
+    WebService,
+  ],
 };

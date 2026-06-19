@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
@@ -12,7 +11,7 @@ import { PublicationsComponent } from '../../publication/publications/publicatio
 
 @Component({
   selector: 'app-home',
-  imports: [CommonModule, RouterLink, PublicationsComponent],
+  imports: [RouterLink, PublicationsComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
 })
@@ -23,8 +22,7 @@ export class HomeComponent implements OnInit {
   public articles: any[] = [];
   public loading = true;
 
-  private readonly consoleStyle =
-    'background-color: #29303b; color: white; padding: 1em;';
+  private readonly consoleStyle = 'background-color: #29303b; color: white; padding: 1em;';
 
   constructor(
     private _mainService: MainService,
@@ -47,7 +45,11 @@ export class HomeComponent implements OnInit {
     const [main, services, publications, articles] = await Promise.all([
       this.safeLoad(() => this._mainService.getMain().toPromise(), null, 'main'),
       this.safeLoad(() => this._servicioService.getServicios().toPromise(), null, 'services'),
-      this.safeLoad(() => this._publicationService.getPublications().toPromise(), null, 'publications'),
+      this.safeLoad(
+        () => this._publicationService.getPublications().toPromise(),
+        null,
+        'publications'
+      ),
       this.safeLoad(() => this._articleService.getArticles().toPromise(), null, 'articles'),
     ]);
 
@@ -76,7 +78,9 @@ export class HomeComponent implements OnInit {
   }
 
   excerpt(text: string, length = 180): string {
-    const cleanText = stripHtml(text || '').replace(/\s+/g, ' ').trim();
+    const cleanText = stripHtml(text || '')
+      .replace(/\s+/g, ' ')
+      .trim();
     if (cleanText.length <= length) {
       return cleanText;
     }
@@ -92,11 +96,7 @@ export class HomeComponent implements OnInit {
     try {
       return (await load()) || fallback;
     } catch (error: any) {
-      this._webService.consoleLog(
-        error,
-        `home.component.ts ${label}`,
-        this.consoleStyle
-      );
+      this._webService.consoleLog(error, `home.component.ts ${label}`, this.consoleStyle);
       return fallback;
     }
   }
@@ -110,7 +110,8 @@ export class HomeComponent implements OnInit {
     this._meta.updateTag({ name: 'description', content: description });
     this._meta.updateTag({
       name: 'keywords',
-      content: 'abogados en México, asesoría legal, derecho corporativo, derecho civil, derecho mercantil',
+      content:
+        'abogados en México, asesoría legal, derecho corporativo, derecho civil, derecho mercantil',
     });
     this._meta.updateTag({ property: 'og:title', content: title });
     this._meta.updateTag({ property: 'og:description', content: description });

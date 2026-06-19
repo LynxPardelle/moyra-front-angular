@@ -1,6 +1,9 @@
 <div class="rich-editor">
-  <span *ngIf="label" class="rich-editor__label">{{ label }}</span>
-  <small *ngIf="help" class="rich-editor__help">{{ help }}</small>
+  @if (label) {
+  <span class="rich-editor__label">{{ label }}</span>
+  } @if (help) {
+  <small class="rich-editor__help">{{ help }}</small>
+  }
   <quill-editor
     class="rich-editor__control"
     [ngModel]="value"

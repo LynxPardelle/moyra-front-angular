@@ -4,11 +4,21 @@
       <p class="home-hero__eyebrow">{{ text('homeHeroEyebrow', 'Firma legal en México') }}</p>
       <h1 class="home-hero__title">{{ text('homeHeroTitle', 'Montaño & Reyes Arrazola S.C.') }}</h1>
       <p class="home-hero__copy">
-        {{ excerpt(main?.desc || 'Asesoría jurídica clara para prevenir riesgos, resolver conflictos y tomar decisiones con respaldo legal.', 230) }}
+        {{
+          excerpt(
+            main?.desc ||
+              'Asesoría jurídica clara para prevenir riesgos, resolver conflictos y tomar decisiones con respaldo legal.',
+            230
+          )
+        }}
       </p>
 
       <div class="home-hero__actions">
-        <a class="home-button home-button--primary" href="/soluciones" [routerLink]="['/soluciones']">
+        <a
+          class="home-button home-button--primary"
+          href="/soluciones"
+          [routerLink]="['/soluciones']"
+        >
           {{ text('homeHeroServicesCta', 'Ver soluciones') }}
         </a>
         <a class="home-button home-button--secondary" href="/we" [routerLink]="['/we']">
@@ -17,23 +27,31 @@
       </div>
     </div>
 
-    <div class="home-hero__media" *ngIf="heroImage()">
-      <img [src]="heroImage()" [alt]="main?.seoImg?.title || main?.mainImg?.title || 'Montaño & Reyes Arrazola S.C.'" />
+    @if (heroImage()) {
+    <div class="home-hero__media">
+      <img
+        [src]="heroImage()"
+        [alt]="main?.seoImg?.title || main?.mainImg?.title || 'Montaño & Reyes Arrazola S.C.'"
+      />
     </div>
+    }
   </header>
 
-  <section class="home-section" *ngIf="services.length > 0">
+  @if (services.length > 0) {
+  <section class="home-section">
     <div class="home-section__heading">
       <p class="home-section__eyebrow">{{ text('homeServicesEyebrow', 'Soluciones') }}</p>
       <h2>{{ text('homeServicesTitle', 'Áreas de apoyo legal') }}</h2>
       <a href="/soluciones" [routerLink]="['/soluciones']">Ver todas</a>
     </div>
-
     <div class="home-grid home-grid--three">
-      <article class="home-card" *ngFor="let service of services">
-        <div class="home-card__media" *ngIf="service.mainImg && fileUrl(service.mainImg)">
+      @for (service of services; track service) {
+      <article class="home-card">
+        @if (service.mainImg && fileUrl(service.mainImg)) {
+        <div class="home-card__media">
           <img [src]="fileUrl(service.mainImg)" [alt]="service.mainImg.title || service.title" />
         </div>
+        }
         <div class="home-card__body">
           <h3>{{ service.title }}</h3>
           <p>{{ excerpt(service.desc, 150) }}</p>
@@ -42,23 +60,28 @@
           </a>
         </div>
       </article>
+      }
     </div>
   </section>
-
-  <section class="home-section" *ngIf="articles.length > 0">
+  } @if (articles.length > 0) {
+  <section class="home-section">
     <div class="home-section__heading">
       <p class="home-section__eyebrow">{{ text('homeBlogEyebrow', 'Blog') }}</p>
       <h2>{{ text('homeBlogTitle', 'Análisis y criterios prácticos') }}</h2>
       <a href="/blog" [routerLink]="['/blog']">Ver blog</a>
     </div>
-
     <div class="home-grid">
-      <article class="home-card" *ngFor="let article of articles">
-        <div class="home-card__media" *ngIf="article.mainImg && fileUrl(article.mainImg)">
+      @for (article of articles; track article) {
+      <article class="home-card">
+        @if (article.mainImg && fileUrl(article.mainImg)) {
+        <div class="home-card__media">
           <img [src]="fileUrl(article.mainImg)" [alt]="article.mainImg.title || article.title" />
         </div>
+        }
         <div class="home-card__body">
-          <p class="home-card__tag" *ngIf="article.tags">{{ article.tags }}</p>
+          @if (article.tags) {
+          <p class="home-card__tag">{{ article.tags }}</p>
+          }
           <h3>{{ article.title }}</h3>
           <p>{{ excerpt(article.intro, 165) }}</p>
           <a href="/articulo/{{ itemId(article) }}" [routerLink]="['/articulo', itemId(article)]">
@@ -66,17 +89,16 @@
           </a>
         </div>
       </article>
+      }
     </div>
-
   </section>
-
-  <section class="home-section home-section--split" *ngIf="publications.length > 0">
+  } @if (publications.length > 0) {
+  <section class="home-section home-section--split">
     <div class="home-section__heading">
       <p class="home-section__eyebrow">{{ text('homePublicationsEyebrow', 'Contenido legal') }}</p>
       <h2>{{ text('homePublicationsTitle', 'Publicaciones recientes') }}</h2>
       <a href="/publications" [routerLink]="['/publications']">Biblioteca legal</a>
     </div>
-
     <publications
       [embedded]="true"
       [maxItems]="3"
@@ -84,6 +106,6 @@
       [showEmptyState]="false"
       [showHeading]="false"
     ></publications>
-
   </section>
+  }
 </section>

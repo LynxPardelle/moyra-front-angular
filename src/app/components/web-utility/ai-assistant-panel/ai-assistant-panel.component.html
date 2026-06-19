@@ -1,4 +1,5 @@
-<section *ngIf="featureEnabled" class="ai-assistant-panel">
+@if (featureEnabled) {
+<section class="ai-assistant-panel">
   <div class="ai-assistant-panel__heading">
     <div>
       <p>Asistente IA</p>
@@ -6,41 +7,44 @@
       <span>Las sugerencias deben revisarse por un abogado antes de publicarse.</span>
     </div>
   </div>
-
-  <div *ngIf="errorMessage" class="ai-assistant-panel__alert">
+  @if (errorMessage) {
+  <div class="ai-assistant-panel__alert">
     {{ errorMessage }}
   </div>
-
-  <div *ngIf="statusMessage" class="ai-assistant-panel__notice">
+  } @if (statusMessage) {
+  <div class="ai-assistant-panel__notice">
     {{ statusMessage }}
   </div>
-
+  }
   <div class="ai-assistant-panel__grid">
     <label class="ai-assistant-panel__field">
       <span>Qué quieres generar</span>
       <select [(ngModel)]="selectedAction" [ngModelOptions]="{ standalone: true }">
-        <option *ngFor="let action of actions" [ngValue]="action.value">
+        @for (action of actions; track action) {
+        <option [ngValue]="action.value">
           {{ action.label }}
         </option>
+        }
       </select>
     </label>
-
     <label class="ai-assistant-panel__field">
       <span>Modelo</span>
       <select [(ngModel)]="selectedModel" [ngModelOptions]="{ standalone: true }">
-        <option *ngFor="let model of catalog?.models || []" [ngValue]="model.id">
+        @for (model of catalog?.models || []; track model) {
+        <option [ngValue]="model.id">
           {{ model.label }}
         </option>
+        }
       </select>
     </label>
   </div>
-
-  <p *ngIf="selectedModelInfo" class="ai-assistant-panel__model-note">
+  @if (selectedModelInfo) {
+  <p class="ai-assistant-panel__model-note">
     {{ selectedModelInfo.description }}
-    Entrada {{ formatUsd(selectedModelInfo.inputUsdPerMillionTokens) }} / 1M tokens,
-    salida {{ formatUsd(selectedModelInfo.outputUsdPerMillionTokens) }} / 1M tokens.
+    Entrada {{ formatUsd(selectedModelInfo.inputUsdPerMillionTokens) }} / 1M tokens, salida
+    {{ formatUsd(selectedModelInfo.outputUsdPerMillionTokens) }} / 1M tokens.
   </p>
-
+  }
   <div class="ai-assistant-panel__usage">
     <div>
       <span>Tokens mensuales</span>
@@ -52,11 +56,11 @@
     </div>
     <meter min="0" max="100" [value]="monthlyUsagePercent"></meter>
   </div>
-
-  <p *ngIf="monthlyTokenBudgetPricingNote" class="ai-assistant-panel__model-note">
+  @if (monthlyTokenBudgetPricingNote) {
+  <p class="ai-assistant-panel__model-note">
     {{ monthlyTokenBudgetPricingNote }}
   </p>
-
+  }
   <label class="ai-assistant-panel__field">
     <span>Instrucción adicional</span>
     <textarea
@@ -66,7 +70,6 @@
       placeholder="Ej. Más formal, enfocado en empresas, más claro para clientes."
     ></textarea>
   </label>
-
   <button
     class="ai-assistant-panel__button"
     type="button"
@@ -74,17 +77,15 @@
     (click)="generate()"
   >
     {{
-      loading
-        ? 'Generando...'
-        : assistantEnabled
-          ? 'Generar sugerencia'
-          : 'Backend de IA pendiente'
+      loading ? 'Generando...' : assistantEnabled ? 'Generar sugerencia' : 'Backend de IA pendiente'
     }}
   </button>
-
-  <label *ngIf="outputText" class="ai-assistant-panel__field ai-assistant-panel__field--output">
+  @if (outputText) {
+  <label class="ai-assistant-panel__field ai-assistant-panel__field--output">
     <span>Sugerencia editable</span>
     <textarea [(ngModel)]="outputText" [ngModelOptions]="{ standalone: true }" rows="8"></textarea>
     <small>Costo estimado de esta solicitud: {{ formatUsd(estimatedCostUsd) }}</small>
   </label>
+  }
 </section>
+}

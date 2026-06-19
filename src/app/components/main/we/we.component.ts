@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -23,13 +23,7 @@ import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich
 import Swal from 'sweetalert2';
 @Component({
   selector: 'we',
-  imports: [
-    CommonModule,
-    FormsModule,
-    SafeRichHtmlPipe,
-    FileUploaderComponent,
-    RichTextEditorComponent,
-  ],
+  imports: [FormsModule, SafeRichHtmlPipe, FileUploaderComponent, RichTextEditorComponent],
   templateUrl: './we.component.html',
   styleUrls: ['./we.component.scss'],
 })
@@ -49,8 +43,7 @@ export class WeComponent implements OnInit, OnDestroy {
 
   // Console Settings
   public document: string = 'we.component.ts';
-  public customConsoleCSS =
-    'background-color: yellow; color: black; padding: 1em;';
+  public customConsoleCSS = 'background-color: yellow; color: black; padding: 1em;';
   private sharedSubscription?: Subscription;
 
   constructor(
@@ -103,11 +96,7 @@ export class WeComponent implements OnInit, OnDestroy {
         await this.getEquips();
         await this.checkRoute();
       } catch (err: any) {
-        this._webService.consoleLog(
-          err,
-          this.document + ' 84',
-          this.customConsoleCSS
-        );
+        this._webService.consoleLog(err, this.document + ' 84', this.customConsoleCSS);
       }
     })();
   }
@@ -133,11 +122,7 @@ export class WeComponent implements OnInit, OnDestroy {
         });
       }
     } catch (err: any) {
-      this._webService.consoleLog(
-        err,
-        this.document + ' 108',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(err, this.document + ' 108', this.customConsoleCSS);
 
       let errorMessage = '';
       if (err.error) {
@@ -180,17 +165,9 @@ export class WeComponent implements OnInit, OnDestroy {
         this.isAdmin = true;
       }
 
-      this._webService.consoleLog(
-        this.isAdmin,
-        this.document + ' 88',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(this.isAdmin, this.document + ' 88', this.customConsoleCSS);
     } catch (err: any) {
-      this._webService.consoleLog(
-        err,
-        this.document + ' 98',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(err, this.document + ' 98', this.customConsoleCSS);
     }
   }
 
@@ -203,17 +180,9 @@ export class WeComponent implements OnInit, OnDestroy {
       }
 
       this.equips = equips.equips;
-      this._webService.consoleLog(
-        this.equips,
-        this.document + ' 79',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(this.equips, this.document + ' 79', this.customConsoleCSS);
     } catch (err) {
-      this._webService.consoleLog(
-        err,
-        this.document + ' 85',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(err, this.document + ' 85', this.customConsoleCSS);
     }
   }
 
@@ -242,9 +211,7 @@ export class WeComponent implements OnInit, OnDestroy {
             }
 
             if (result.isConfirmed) {
-              const newMain = await this._mainService
-                .updateMain(this.main)
-                .toPromise();
+              const newMain = await this._mainService.updateMain(this.main).toPromise();
 
               if (!newMain || !newMain.mainUpdated) {
                 throw new Error('Main no actualizado.');
@@ -284,8 +251,7 @@ export class WeComponent implements OnInit, OnDestroy {
           if (this.equip.name !== '' || this.equip.desc !== '') {
             if (this.equip._id !== '') {
               let result = await Swal.fire({
-                title:
-                  '¿Seguro que quieres hacer los cambios en el miembro del equipo?',
+                title: '¿Seguro que quieres hacer los cambios en el miembro del equipo?',
                 showDenyButton: true,
                 showCancelButton: true,
                 confirmButtonText: 'Si',
@@ -352,9 +318,7 @@ export class WeComponent implements OnInit, OnDestroy {
               }
 
               if (result.isConfirmed) {
-                const newEquip = await this._mainService
-                  .createEquip(this.equip)
-                  .toPromise();
+                const newEquip = await this._mainService.createEquip(this.equip).toPromise();
 
                 if (!newEquip || !newEquip.equip) {
                   throw new Error('Miembro del equipo no creado.');
@@ -404,11 +368,7 @@ export class WeComponent implements OnInit, OnDestroy {
           break;
       }
     } catch (err: any) {
-      this._webService.consoleLog(
-        err,
-        this.document + ' 108',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(err, this.document + ' 108', this.customConsoleCSS);
 
       let errorMessage = '';
       if (err.error) {
@@ -452,9 +412,7 @@ export class WeComponent implements OnInit, OnDestroy {
       }
 
       if (result.isConfirmed) {
-        const equipDeleted = await this._mainService
-          .deleteEquip(equipId)
-          .toPromise();
+        const equipDeleted = await this._mainService.deleteEquip(equipId).toPromise();
 
         if (!equipDeleted) {
           throw new Error('No hay miembro del equipo.');
@@ -462,11 +420,7 @@ export class WeComponent implements OnInit, OnDestroy {
 
         await this.getEquips();
 
-        this._webService.consoleLog(
-          equipDeleted,
-          this.document + ' 173',
-          this.customConsoleCSS
-        );
+        this._webService.consoleLog(equipDeleted, this.document + ' 173', this.customConsoleCSS);
 
         Swal.fire({
           title: 'El miembro del equipo se ha eliminado con éxito',
@@ -493,11 +447,7 @@ export class WeComponent implements OnInit, OnDestroy {
         });
       }
     } catch (err: any) {
-      this._webService.consoleLog(
-        err,
-        this.document + ' 108',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(err, this.document + ' 108', this.customConsoleCSS);
 
       let errorMessage = '';
       if (err.error) {
@@ -546,11 +496,7 @@ export class WeComponent implements OnInit, OnDestroy {
           break;
       }
     } catch (err: any) {
-      this._webService.consoleLog(
-        err,
-        this.document + ' 108',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(err, this.document + ' 108', this.customConsoleCSS);
 
       let errorMessage = '';
       if (err.error) {
@@ -582,10 +528,7 @@ export class WeComponent implements OnInit, OnDestroy {
   }
 
   switchEdit() {
-    this.editSwitch =
-      this.canChange === true && this.isAdmin === true
-        ? !this.editSwitch
-        : false;
+    this.editSwitch = this.canChange === true && this.isAdmin === true ? !this.editSwitch : false;
   }
 
   switchEquip(equip: Equip) {
@@ -596,11 +539,7 @@ export class WeComponent implements OnInit, OnDestroy {
     }
   }
 
-  Linkify(
-    text: string,
-    textcolor: string = '#ffffff',
-    linkcolor: string = '#f9c24f'
-  ) {
+  Linkify(text: string, textcolor: string = '#ffffff', linkcolor: string = '#f9c24f') {
     let value: any;
     value = {
       text: '',
@@ -628,9 +567,7 @@ export class WeComponent implements OnInit, OnDestroy {
 
   richContent(text: string): string {
     const content = this.valuefy(text || '');
-    return hasHtmlMarkup(content)
-      ? content
-      : this.Linkify(content, '#000', '#4b8ff5');
+    return hasHtmlMarkup(content) ? content : this.Linkify(content, '#000', '#4b8ff5');
   }
 
   text(key: string, fallback: string): string {

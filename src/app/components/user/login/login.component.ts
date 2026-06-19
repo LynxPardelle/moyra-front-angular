@@ -1,17 +1,9 @@
-import {
-  ChangeDetectorRef,
-  Component,
-  NgZone,
-  OnDestroy,
-  OnInit,
-  Input
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, Input } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
-
 
 // Services
 import { MainService } from '../../../services/main.service';
@@ -30,7 +22,7 @@ import Swal from 'sweetalert2';
 
 @Component({
   selector: 'login',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
@@ -52,8 +44,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   // Console Settings
   public document: string = 'login.component.ts';
-  public customConsoleCSS =
-    'background-color: red; color: white; padding: 1em;';
+  public customConsoleCSS = 'background-color: red; color: white; padding: 1em;';
   private queryParamSubscription?: Subscription;
 
   constructor(
@@ -81,8 +72,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     try {
       const returnUrl = this._route.snapshot.queryParamMap.get('returnUrl');
       const wantsAdmin = Boolean(returnUrl && returnUrl.startsWith('/admin'));
-      const safeReturnUrl =
-        returnUrl && returnUrl.startsWith('/') ? returnUrl : null;
+      const safeReturnUrl = returnUrl && returnUrl.startsWith('/') ? returnUrl : null;
       let auth = await this.loginWithCognitoChallengeSupport();
       if (!auth || !auth.user) {
         throw new Error('No se encontró el usuario.');
@@ -116,7 +106,7 @@ export class LoginComponent implements OnInit, OnDestroy {
             title: 'text-titleM',
             closeButton: 'bg-titleM',
             confirmButton: 'bg-titleM',
-          }
+          },
         });
         return;
       } else {
@@ -133,7 +123,7 @@ export class LoginComponent implements OnInit, OnDestroy {
           title: 'text-bg-whatsApp',
           closeButton: 'bg-whatsApp',
           confirmButton: 'bg-whatsApp',
-        }
+        },
       });
     } catch (e: any) {
       const message = e?.error?.message || 'Revisa tus credenciales.';
@@ -141,16 +131,14 @@ export class LoginComponent implements OnInit, OnDestroy {
       //Alerta
       Swal.fire({
         title: 'Usuario no logueado',
-        html:
-          'El usuario no se ha logueado correctamente. <br/> ' +
-          message,
+        html: 'El usuario no se ha logueado correctamente. <br/> ' + message,
         icon: 'error',
         customClass: {
           popup: 'bg-bg1M',
           title: 'text-titleM',
           closeButton: 'bg-titleM',
           confirmButton: 'bg-titleM',
-        }
+        },
       });
     }
   }
@@ -182,18 +170,14 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.passwordResetMessage = null;
 
     try {
-      await this._userService
-        .requestPasswordReset(this.passwordReset.email)
-        .toPromise();
+      await this._userService.requestPasswordReset(this.passwordReset.email).toPromise();
       this.updatePasswordResetUi(() => {
         this.passwordResetStep = 'confirm';
-        this.passwordResetMessage =
-          'Si el correo existe, enviaremos un código de recuperación.';
+        this.passwordResetMessage = 'Si el correo existe, enviaremos un código de recuperación.';
       });
     } catch (e: any) {
       this.updatePasswordResetUi(() => {
-        this.passwordResetMessage =
-          e?.error?.message || 'No pudimos iniciar la recuperación.';
+        this.passwordResetMessage = e?.error?.message || 'No pudimos iniciar la recuperación.';
       });
     } finally {
       this.updatePasswordResetUi(() => {
@@ -203,11 +187,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   async confirmPasswordReset(): Promise<void> {
-    if (
-      !this.passwordReset.email ||
-      !this.passwordReset.code ||
-      !this.passwordReset.newPassword
-    ) {
+    if (!this.passwordReset.email || !this.passwordReset.code || !this.passwordReset.newPassword) {
       this.passwordResetMessage = 'Completa correo, código y nueva contraseña.';
       return;
     }
@@ -250,8 +230,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       });
     } catch (e: any) {
       this.updatePasswordResetUi(() => {
-        this.passwordResetMessage =
-          e?.error?.message || 'No pudimos actualizar la contraseña.';
+        this.passwordResetMessage = e?.error?.message || 'No pudimos actualizar la contraseña.';
       });
     } finally {
       this.updatePasswordResetUi(() => {

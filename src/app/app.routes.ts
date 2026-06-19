@@ -21,6 +21,9 @@ import { ServicioComponent } from './components/servicio/servicio/servicio.compo
 import { BlogComponent } from './components/blog/blog/blog.component';
 import { ArticleComponent } from './components/blog/article/article.component';
 
+/* Casos */
+import { CasesGuard } from './components/cases/cases.guard';
+
 /* User */
 import { ChangePasswordComponent } from './components/user/change-password/change-password.component';
 import { LoginComponent } from './components/user/login/login.component';
@@ -64,6 +67,48 @@ export const routes: Routes = [
   { path: 'blog/:search/:page', component: BlogComponent },
   { path: 'articulo', component: ArticleComponent },
   { path: 'articulo/:id', component: ArticleComponent },
+
+  // Casos
+  {
+    path: 'casos',
+    loadComponent: () =>
+      import('./components/cases/cases-list.component').then(
+        (module) => module.CasesListComponent
+      ),
+    canActivate: [CasesGuard],
+  },
+  {
+    path: 'casos/:caseId',
+    loadComponent: () =>
+      import('./components/cases/case-detail.component').then(
+        (module) => module.CaseDetailComponent
+      ),
+    canActivate: [CasesGuard],
+  },
+  {
+    path: 'casos/:caseId/entrada/:entryId',
+    loadComponent: () =>
+      import('./components/cases/case-entry-detail.component').then(
+        (module) => module.CaseEntryDetailComponent
+      ),
+    canActivate: [CasesGuard],
+  },
+  {
+    path: 'notificaciones',
+    loadComponent: () =>
+      import('./components/notifications/notification-center.component').then(
+        (module) => module.NotificationCenterComponent
+      ),
+    canActivate: [CasesGuard],
+  },
+  {
+    path: 'notificaciones/preferencias',
+    loadComponent: () =>
+      import('./components/notifications/notification-preferences.component').then(
+        (module) => module.NotificationPreferencesComponent
+      ),
+    canActivate: [CasesGuard],
+  },
 
   // User
   { path: 'login', component: LoginComponent },

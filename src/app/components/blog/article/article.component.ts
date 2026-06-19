@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
@@ -24,7 +24,11 @@ import {
   fileKindSummary,
   isImageFile,
 } from '../../../utils/file-kind';
-import { hasHtmlMarkup, richContentPlainText, richTextWordCount } from '../../../utils/rich-content';
+import {
+  hasHtmlMarkup,
+  richContentPlainText,
+  richTextWordCount,
+} from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
 import { AiAssistantPanelComponent } from '../../web-utility/ai-assistant-panel/ai-assistant-panel.component';
 import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
@@ -36,7 +40,6 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'app-article',
   imports: [
-    CommonModule,
     FormsModule,
     RouterLink,
     SafeRichHtmlPipe,
@@ -62,8 +65,7 @@ export class ArticleComponent implements OnInit {
 
   private generatedSlug = '';
   private slugTouched = false;
-  private readonly consoleStyle =
-    'background-color: #244f7a; color: white; padding: 1em;';
+  private readonly consoleStyle = 'background-color: #244f7a; color: white; padding: 1em;';
 
   constructor(
     private _articleService: ArticleService,
@@ -116,11 +118,7 @@ export class ArticleComponent implements OnInit {
       this.editSwitch = this.shouldStartInEditMode();
       this.setSeo();
     } catch (err: any) {
-      this._webService.consoleLog(
-        err,
-        'article.component.ts loadArticle',
-        this.consoleStyle
-      );
+      this._webService.consoleLog(err, 'article.component.ts loadArticle', this.consoleStyle);
 
       if (this.isAdmin && this.canChange) {
         this.editSwitch = true;
@@ -219,10 +217,7 @@ export class ArticleComponent implements OnInit {
       }
     } catch (err: any) {
       const errorMessage =
-        err?.error?.message ||
-        err?.error?.errorMessage ||
-        err?.message ||
-        'Error desconocido.';
+        err?.error?.message || err?.error?.errorMessage || err?.message || 'Error desconocido.';
 
       this._webService.consoleLog(err, 'article.component.ts onSubmit', this.consoleStyle);
 
@@ -260,12 +255,8 @@ export class ArticleComponent implements OnInit {
 
       const sectionId = this.articleSectionRecordId(normalizedSection);
       const response = sectionId
-        ? await this._articleService
-            .updateArticleSection(sectionId, normalizedSection)
-            .toPromise()
-        : await this._articleService
-            .createArticleSection(normalizedSection, articleId)
-            .toPromise();
+        ? await this._articleService.updateArticleSection(sectionId, normalizedSection).toPromise()
+        : await this._articleService.createArticleSection(normalizedSection, articleId).toPromise();
 
       const savedSection = response?.articleSection || response?.articleSectionUpdated;
       if (!savedSection) {
@@ -457,9 +448,7 @@ export class ArticleComponent implements OnInit {
 
   switchEdit() {
     this.editSwitch =
-      this.canChange === true &&
-      this.isAdmin === true &&
-      this.articleRecordId(this.article) !== ''
+      this.canChange === true && this.isAdmin === true && this.articleRecordId(this.article) !== ''
         ? !this.editSwitch
         : this.canChange === true &&
           this.isAdmin === true &&
@@ -517,11 +506,7 @@ export class ArticleComponent implements OnInit {
     this.previewImage = null;
   }
 
-  Linkify(
-    text: string,
-    textcolor: string = '#29303b',
-    linkcolor: string = '#4b8ff5'
-  ) {
+  Linkify(text: string, textcolor: string = '#29303b', linkcolor: string = '#4b8ff5') {
     const value = this._webService.Linkify(text || '', textcolor, linkcolor);
     return value?.text || text || '';
   }
@@ -536,9 +521,7 @@ export class ArticleComponent implements OnInit {
 
   richContent(text: string, section?: ArticleSection): string {
     const content = this.valuefy(text, section);
-    return hasHtmlMarkup(content)
-      ? content
-      : this.Linkify(content, '#29303b', '#4b8ff5');
+    return hasHtmlMarkup(content) ? content : this.Linkify(content, '#29303b', '#4b8ff5');
   }
 
   sectionEmbedItems(section: ArticleSection): EmbedItem[] {
@@ -599,10 +582,9 @@ export class ArticleComponent implements OnInit {
   }
 
   sectionFiles(section: ArticleSection): any[] {
-    return [
-      section?.mainFile,
-      ...(Array.isArray(section?.files) ? section.files : []),
-    ].filter(Boolean);
+    return [section?.mainFile, ...(Array.isArray(section?.files) ? section.files : [])].filter(
+      Boolean
+    );
   }
 
   sectionFileSummary(section: ArticleSection): string {
@@ -627,7 +609,9 @@ export class ArticleComponent implements OnInit {
       },
       {
         label: 'Contenido',
-        detail: this.article.intro ? `${this.readingMinutes()} min de lectura` : 'Falta introducción',
+        detail: this.article.intro
+          ? `${this.readingMinutes()} min de lectura`
+          : 'Falta introducción',
         complete: Boolean(this.article.intro),
       },
       {
@@ -731,7 +715,12 @@ export class ArticleComponent implements OnInit {
   effectiveSeoDescription(): string {
     return (
       String(this.article.seoDescription || '').trim() ||
-      excerpt(this.article.intro || this.article.outro || 'Artículo legal de Montaño & Reyes Arrazola S.C.', 155)
+      excerpt(
+        this.article.intro ||
+          this.article.outro ||
+          'Artículo legal de Montaño & Reyes Arrazola S.C.',
+        155
+      )
     );
   }
 
@@ -757,7 +746,9 @@ export class ArticleComponent implements OnInit {
 
   private setSeo() {
     const isDetail = Boolean(this.article.title);
-    const title = isDetail ? this.effectiveSeoTitle() : 'Nuevo artículo | Montaño & Reyes Arrazola S.C.';
+    const title = isDetail
+      ? this.effectiveSeoTitle()
+      : 'Nuevo artículo | Montaño & Reyes Arrazola S.C.';
     const description = isDetail
       ? this.effectiveSeoDescription()
       : 'Artículo legal de Montaño & Reyes Arrazola S.C.';

@@ -3,4 +3,8 @@ export const environment = {
   apiBaseUrl: 'https://api.moyra.org/api/v2',
   cognitoRegion: 'us-east-1',
   cognitoUserPoolClientId: '9h7btlgpjq2fgke89coop7kha',
+  casesFeatureEnabled: false,
+  caseFeatureEnabledHosts: ['test.moyra.org'],
+  caseServiceWorkerEnabled: false,
+  caseWebPushPublicKey: '',
 };

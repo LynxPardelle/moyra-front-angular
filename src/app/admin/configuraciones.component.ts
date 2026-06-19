@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MainService } from '../services/main.service';
@@ -29,12 +28,9 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
     'Textos que aparecen sobre la lista de artículos recientes en la página de inicio.',
   'Inicio - publicaciones':
     'Textos que aparecen sobre las publicaciones recientes en la página de inicio.',
-  Soluciones:
-    'Textos del encabezado de la página donde se listan todas las áreas de apoyo legal.',
-  Blog:
-    'Textos del encabezado de la página pública del blog legal.',
-  Publicaciones:
-    'Textos del encabezado de la página pública de publicaciones y recursos.',
+  Soluciones: 'Textos del encabezado de la página donde se listan todas las áreas de apoyo legal.',
+  Blog: 'Textos del encabezado de la página pública del blog legal.',
+  Publicaciones: 'Textos del encabezado de la página pública de publicaciones y recursos.',
   'Nosotros - criterios de trabajo':
     'Textos de las tres tarjetas que aparecen debajo de la presentación principal de la página Nosotros.',
 };
@@ -176,7 +172,8 @@ const PAGE_TEXT_FIELDS: ConfigField[] = [
     label: 'Texto introductorio',
     description: 'Párrafo breve debajo del título principal de la página Publicaciones.',
     multiline: true,
-    defaultValue: 'Recursos legales y criterios prácticos para apoyar decisiones con certeza jurídica.',
+    defaultValue:
+      'Recursos legales y criterios prácticos para apoyar decisiones con certeza jurídica.',
   },
   {
     section: 'Nosotros - criterios de trabajo',
@@ -221,13 +218,14 @@ const PAGE_TEXT_FIELDS: ConfigField[] = [
     label: 'Tercera tarjeta - texto',
     description: 'Texto breve que explica el tercer criterio de trabajo.',
     multiline: true,
-    defaultValue: 'Soluciones con técnicas transparentes y enfoque práctico para empresas y personas.',
+    defaultValue:
+      'Soluciones con técnicas transparentes y enfoque práctico para empresas y personas.',
   },
 ];
 
 @Component({
   selector: 'admin-configuraciones',
-  imports: [CommonModule, FormsModule, AiAssistantPanelComponent],
+  imports: [FormsModule, AiAssistantPanelComponent],
   templateUrl: './configuraciones.component.html',
   styleUrls: ['./configuraciones.component.scss'],
 })
@@ -332,12 +330,15 @@ export class ConfiguracionesComponent implements OnInit {
   }
 
   private withDefaultTexts(texts: Record<string, string>): Record<string, string> {
-    return this.fields.reduce((result: Record<string, string>, field) => {
-      const value = result[field.key];
-      if (typeof value !== 'string' || value.trim() === '') {
-        result[field.key] = field.defaultValue;
-      }
-      return result;
-    }, { ...texts });
+    return this.fields.reduce(
+      (result: Record<string, string>, field) => {
+        const value = result[field.key];
+        if (typeof value !== 'string' || value.trim() === '') {
+          result[field.key] = field.defaultValue;
+        }
+        return result;
+      },
+      { ...texts }
+    );
   }
 }

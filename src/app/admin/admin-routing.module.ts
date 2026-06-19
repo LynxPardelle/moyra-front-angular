@@ -12,6 +12,9 @@ import { ArchivosComponent } from './archivos.component';
 import { ConfiguracionesComponent } from './configuraciones.component';
 import { UsuariosComponent } from './usuarios.component';
 import { UsoComponent } from './uso.component';
+import { AdminCaseDetailComponent } from './cases/admin-case-detail.component';
+import { AdminCasesConfigComponent } from './cases/admin-cases-config.component';
+import { AdminCasesListComponent } from './cases/admin-cases-list.component';
 
 /* PublicationComponents */
 import { PublicationsComponent } from '../components/publication/publications/publications.component';
@@ -27,6 +30,7 @@ import { ArticleComponent } from '../components/blog/article/article.component';
 
 /* User */
 import { LoginComponent } from '../components/user/login/login.component';
+import { CasesGuard } from '../components/cases/cases.guard';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -44,6 +48,15 @@ const routes: Routes = [
       { path: 'uso', component: UsoComponent },
       { path: 'archivos', component: ArchivosComponent },
       { path: 'usuarios/nuevo', component: UsuariosComponent },
+
+      // Casos
+      { path: 'casos', component: AdminCasesListComponent, canActivate: [CasesGuard] },
+      {
+        path: 'casos/configuracion',
+        component: AdminCasesConfigComponent,
+        canActivate: [CasesGuard],
+      },
+      { path: 'casos/:caseId', component: AdminCaseDetailComponent, canActivate: [CasesGuard] },
 
       // Publication
       { path: 'publications', component: PublicationsComponent },

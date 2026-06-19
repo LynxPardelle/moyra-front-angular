@@ -1,6 +1,14 @@
-import { Component, HostListener, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  Inject,
+  Injector,
+  OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+} from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
+import { isPlatformBrowser, Location } from '@angular/common';
 import { NgxAngoraService } from 'ngx-angora-css';
 import { Subscription, catchError, filter, map, of, switchMap } from 'rxjs';
 
@@ -12,14 +20,16 @@ import { WebService } from './services/web.service';
 import { SharedService } from './services/shared.service';
 import { AuthFacade } from './store/auth/auth.facade';
 import { createAuthSession } from './store/auth/auth.storage';
+import { CasesFeatureService } from './components/cases/cases-feature.service';
+import { NotificationBellComponent } from './components/notifications/notification-bell.component';
 
 // Models
 import { Main } from './models/main';
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink, NotificationBellComponent],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App implements OnDestroy, OnInit {
   public identity: any;
@@ -30,8 +40,7 @@ export class App implements OnDestroy, OnInit {
 
   // Console Settings
   public document: string = 'app.component.ts';
-  public customConsoleCSS =
-    'background-color: green; color: white; padding: 1em;';
+  public customConsoleCSS = 'background-color: green; color: white; padding: 1em;';
 
   // ank
   public colors: any = {
@@ -50,7 +59,7 @@ export class App implements OnDestroy, OnInit {
     tdark: '#000000',
     ulight: '#f5f5f5',
     tlight: '#ffffff',
-    trdark25: 'rgba(0,0,0,0.25)'
+    trdark25: 'rgba(0,0,0,0.25)',
   };
 
   // Utility
@@ -61,6 +70,7 @@ export class App implements OnDestroy, OnInit {
   private stylesheetsReady?: Promise<void>;
   private routeEventsSubscription?: Subscription;
   private refreshSessionSubscription?: Subscription;
+  private notificationClickRoutingStarted = false;
 
   constructor(
     private _mainService: MainService,
@@ -73,6 +83,8 @@ export class App implements OnDestroy, OnInit {
     private _sharedService: SharedService,
     private _userService: UserService,
     private _authFacade: AuthFacade,
+    private _casesFeature: CasesFeatureService,
+    private _injector: Injector,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
     this.windowWidth = isPlatformBrowser(this.platformId) ? window.innerWidth : 0;
@@ -123,16 +135,8 @@ export class App implements OnDestroy, OnInit {
             property: 'main',
             thing: this.main,
           });
-          this._webService.consoleLog(
-            main,
-            this.document + ' 68',
-            this.customConsoleCSS
-          );
-          this._webService.consoleLog(
-            this.main,
-            this.document + ' 74',
-            this.customConsoleCSS
-          );
+          this._webService.consoleLog(main, this.document + ' 68', this.customConsoleCSS);
+          this._webService.consoleLog(this.main, this.document + ' 74', this.customConsoleCSS);
         }
       } catch (e: any) {
         if (e.error.errorMessage === 'No hay main.') {
@@ -159,11 +163,7 @@ export class App implements OnDestroy, OnInit {
               )
               .toPromise();
 
-            this._webService.consoleLog(
-              newMain,
-              this.document + ' 143',
-              this.customConsoleCSS
-            );
+            this._webService.consoleLog(newMain, this.document + ' 143', this.customConsoleCSS);
 
             if (!newMain || !newMain.main) {
               throw new Error('No se pudo crear el main.');
@@ -178,18 +178,10 @@ export class App implements OnDestroy, OnInit {
               thing: this.main,
             });
           } catch (error: any) {
-            this._webService.consoleLog(
-              error,
-              this.document + ' 168',
-              this.customConsoleCSS
-            );
+            this._webService.consoleLog(error, this.document + ' 168', this.customConsoleCSS);
           }
         } else {
-          this._webService.consoleLog(
-            e,
-            this.document + ' 175',
-            this.customConsoleCSS
-          );
+          this._webService.consoleLog(e, this.document + ' 175', this.customConsoleCSS);
         }
       }
     })();
@@ -216,6 +208,9 @@ export class App implements OnDestroy, OnInit {
     });
     this.scheduleCssCreate(true);
     this.refreshSessionFromCookie();
+    if (this.casesFeatureEnabled()) {
+      void this.startCaseNotificationClickRouting();
+    }
   }
 
   @HostListener('window:storage', ['$event'])
@@ -250,6 +245,10 @@ export class App implements OnDestroy, OnInit {
     return this._authFacade.isAuthenticated();
   }
 
+  casesFeatureEnabled(): boolean {
+    return this._casesFeature.isEnabled();
+  }
+
   logout(): void {
     this._authFacade.logout();
   }
@@ -259,7 +258,8 @@ export class App implements OnDestroy, OnInit {
       return;
     }
 
-    this.refreshSessionSubscription = this._authFacade.authStateOnceAfterHydration$()
+    this.refreshSessionSubscription = this._authFacade
+      .authStateOnceAfterHydration$()
       .pipe(
         switchMap((state) => {
           if (state.isAuthenticated) {
@@ -339,10 +339,7 @@ export class App implements OnDestroy, OnInit {
       return this.stylesheetsReady;
     }
 
-    const stylesheets = [
-      'assets/css/angora-styles.css',
-      'assets/css/angora-styles-responsive.css',
-    ];
+    const stylesheets = ['assets/css/angora-styles.css', 'assets/css/angora-styles-responsive.css'];
 
     this.stylesheetsReady = Promise.all(
       stylesheets.map((href) => this.ensureStylesheetLoaded(href))
@@ -412,5 +409,25 @@ export class App implements OnDestroy, OnInit {
       left: 0,
       behavior: 'auto',
     });
+  }
+
+  private async startCaseNotificationClickRouting(): Promise<void> {
+    if (this.notificationClickRoutingStarted) {
+      return;
+    }
+
+    this.notificationClickRoutingStarted = true;
+    try {
+      const { CaseWebPushService } = await import(
+        './components/notifications/case-web-push.service'
+      );
+      this._injector.get(CaseWebPushService).startNotificationClickRouting();
+    } catch (error: any) {
+      this._webService.consoleLog(
+        error,
+        this.document + ' notification-click-routing',
+        this.customConsoleCSS
+      );
+    }
   }
 }
