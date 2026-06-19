@@ -236,4 +236,82 @@ describe('CaseService', () => {
       },
     });
   });
+
+  it('maps notification preferences and push subscription calls to private authenticated APIs', () => {
+    service.getNotificationPreferences().subscribe((response) => {
+      expect(response.item.email.available).toBeTrue();
+    });
+    service
+      .updateNotificationPreferences({
+        email: {
+          enabled: true,
+          entryCreated: true,
+          commentCreated: false,
+          fileVisibilityApproved: true,
+          statusChanged: true,
+        },
+        webPush: { enabled: false },
+      })
+      .subscribe();
+    service
+      .registerPushSubscription({
+        endpoint: 'https://push.example.test/endpoint',
+        keys: { p256dh: 'p256dh-key', auth: 'auth-key' },
+        userAgent: 'Chrome',
+      })
+      .subscribe();
+    service.deletePushSubscription('push-1').subscribe();
+
+    const preferenceRequests = http.match(apiUrl('/case-notification-preferences'));
+    const getPrefsReq = preferenceRequests.find((req) => req.request.method === 'GET')!;
+    expect(getPrefsReq.request.method).toBe('GET');
+    expect(getPrefsReq.request.headers.get('Authorization')).toBe(storeToken);
+    getPrefsReq.flush({
+      status: 'success',
+      item: {
+        id: 'client-1',
+        email: {
+          available: true,
+          enabled: false,
+          entryCreated: true,
+          commentCreated: true,
+          fileVisibilityApproved: true,
+          statusChanged: true,
+        },
+        webPush: { available: false, enabled: false },
+      },
+    });
+
+    const savePrefsReq = preferenceRequests.find((req) => req.request.method === 'PUT')!;
+    expect(savePrefsReq.request.method).toBe('PUT');
+    expect(savePrefsReq.request.body.email.commentCreated).toBeFalse();
+    expect(savePrefsReq.request.body.webPush.enabled).toBeFalse();
+    savePrefsReq.flush({ status: 'success', item: savePrefsReq.request.body });
+
+    const pushCreateReq = http.expectOne(apiUrl('/case-push-subscriptions'));
+    expect(pushCreateReq.request.method).toBe('POST');
+    expect(pushCreateReq.request.body.endpoint).toBe('https://push.example.test/endpoint');
+    expect(pushCreateReq.request.body.keys).toEqual({ p256dh: 'p256dh-key', auth: 'auth-key' });
+    pushCreateReq.flush({
+      status: 'success',
+      item: {
+        id: 'push-1',
+        userId: 'client-1',
+        endpointHash: 'hash',
+        status: 'active',
+      },
+    });
+
+    const pushDeleteReq = http.expectOne(apiUrl('/case-push-subscriptions/push-1'));
+    expect(pushDeleteReq.request.method).toBe('DELETE');
+    pushDeleteReq.flush({
+      status: 'success',
+      item: {
+        id: 'push-1',
+        userId: 'client-1',
+        endpointHash: 'hash',
+        status: 'disabled',
+      },
+    });
+  });
 });

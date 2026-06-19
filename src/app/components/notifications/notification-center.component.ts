@@ -15,9 +15,14 @@ import { CaseService } from '../../services/case.service';
           <p>Centro privado</p>
           <h1>Notificaciones</h1>
         </div>
-        <button type="button" (click)="markAllRead()" [disabled]="notifications.length === 0">
-          Marcar todas como leídas
-        </button>
+        <div class="notification-center__actions">
+          <a routerLink="/notificaciones/preferencias" href="/notificaciones/preferencias">
+            Preferencias
+          </a>
+          <button type="button" (click)="markAllRead()" [disabled]="notifications.length === 0">
+            Marcar todas como leídas
+          </button>
+        </div>
       </header>
 
       @if (loading) {
@@ -100,6 +105,7 @@ import { CaseService } from '../../services/case.service';
         font-size: 1.1rem;
       }
 
+      .notification-center__actions,
       .notification-item__actions {
         display: flex;
         flex-wrap: wrap;

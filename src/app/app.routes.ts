@@ -101,6 +101,14 @@ export const routes: Routes = [
       ),
     canActivate: [CasesGuard],
   },
+  {
+    path: 'notificaciones/preferencias',
+    loadComponent: () =>
+      import('./components/notifications/notification-preferences.component').then(
+        (module) => module.NotificationPreferencesComponent
+      ),
+    canActivate: [CasesGuard],
+  },
 
   // User
   { path: 'login', component: LoginComponent },

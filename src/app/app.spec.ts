@@ -10,18 +10,21 @@ import { AuthFacade } from './store/auth/auth.facade';
 import { NgxAngoraService } from 'ngx-angora-css';
 import { CasesFeatureService } from './components/cases/cases-feature.service';
 import { CaseService } from './services/case.service';
+import { CaseWebPushService } from './components/notifications/case-web-push.service';
 
 describe('App', () => {
   let isAdmin: boolean;
   let isAuthenticated: boolean;
   let casesEnabled: boolean;
   let logoutSpy: jasmine.Spy;
+  let startNotificationClickRoutingSpy: jasmine.Spy;
 
   beforeEach(async () => {
     isAdmin = false;
     isAuthenticated = false;
     casesEnabled = false;
     logoutSpy = jasmine.createSpy('logout');
+    startNotificationClickRoutingSpy = jasmine.createSpy('startNotificationClickRouting');
 
     await TestBed.configureTestingModule({
       imports: [App],
@@ -73,6 +76,12 @@ describe('App', () => {
           provide: CaseService,
           useValue: {
             getUnreadNotificationCount: () => of({ status: 'success', count: 0 }),
+          },
+        },
+        {
+          provide: CaseWebPushService,
+          useValue: {
+            startNotificationClickRouting: startNotificationClickRoutingSpy,
           },
         },
         {
@@ -147,5 +156,16 @@ describe('App', () => {
     );
 
     expect(links).toContain('Casos');
+  });
+
+  it('starts private case notification click routing when the cases feature is enabled', async () => {
+    casesEnabled = true;
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await Promise.resolve();
+
+    expect(startNotificationClickRoutingSpy).toHaveBeenCalledTimes(1);
   });
 });

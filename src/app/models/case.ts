@@ -179,6 +179,26 @@ export type CasePushSubscription = {
   updatedAt?: string;
 };
 
+export type CaseNotificationEmailPreferences = {
+  available: boolean;
+  enabled: boolean;
+  entryCreated: boolean;
+  commentCreated: boolean;
+  fileVisibilityApproved: boolean;
+  statusChanged: boolean;
+};
+
+export type CaseNotificationWebPushPreferences = {
+  available: boolean;
+  enabled: boolean;
+};
+
+export type CaseNotificationPreferences = {
+  id: string;
+  email: CaseNotificationEmailPreferences;
+  webPush: CaseNotificationWebPushPreferences;
+};
+
 export type CaseAuditEvent = {
   id: string;
   caseId: string;
@@ -256,4 +276,18 @@ export type CaseUnreadCountResponse = {
 export type CaseReadAllNotificationsResponse = {
   status: 'success' | string;
   updatedCount: number;
+};
+
+export type UpdateCaseNotificationPreferencesRequest = {
+  email: Omit<CaseNotificationEmailPreferences, 'available'>;
+  webPush: Omit<CaseNotificationWebPushPreferences, 'available'>;
+};
+
+export type RegisterCasePushSubscriptionRequest = {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+  userAgent?: string;
 };

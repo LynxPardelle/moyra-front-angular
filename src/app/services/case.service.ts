@@ -15,6 +15,7 @@ import {
   CaseListResponse,
   CaseMembership,
   CaseNotification,
+  CaseNotificationPreferences,
   CaseReadAllNotificationsResponse,
   CasePushSubscription,
   CaseRecord,
@@ -24,7 +25,9 @@ import {
   CreateCaseEntryRequest,
   InviteCaseMemberRequest,
   PresignCaseFileRequest,
+  RegisterCasePushSubscriptionRequest,
   UpdateCasePermissionsRequest,
+  UpdateCaseNotificationPreferencesRequest,
 } from '../models/case';
 import { AuthFacade } from '../store/auth/auth.facade';
 import { normalizeCaseVisibilityForApi } from '../utils/case-visibility';
@@ -267,6 +270,40 @@ export class CaseService {
   listPushSubscriptions(): Observable<CaseListResponse<CasePushSubscription>> {
     return this._http.get<CaseListResponse<CasePushSubscription>>(
       apiUrl('/case-push-subscriptions'),
+      { headers: this.authHeaders() }
+    );
+  }
+
+  getNotificationPreferences(): Observable<CaseItemResponse<CaseNotificationPreferences>> {
+    return this._http.get<CaseItemResponse<CaseNotificationPreferences>>(
+      apiUrl('/case-notification-preferences'),
+      { headers: this.authHeaders() }
+    );
+  }
+
+  updateNotificationPreferences(
+    body: UpdateCaseNotificationPreferencesRequest
+  ): Observable<CaseItemResponse<CaseNotificationPreferences>> {
+    return this._http.put<CaseItemResponse<CaseNotificationPreferences>>(
+      apiUrl('/case-notification-preferences'),
+      body,
+      { headers: this.authHeaders() }
+    );
+  }
+
+  registerPushSubscription(
+    body: RegisterCasePushSubscriptionRequest
+  ): Observable<CaseItemResponse<CasePushSubscription>> {
+    return this._http.post<CaseItemResponse<CasePushSubscription>>(
+      apiUrl('/case-push-subscriptions'),
+      body,
+      { headers: this.authHeaders() }
+    );
+  }
+
+  deletePushSubscription(subscriptionId: string): Observable<CaseItemResponse<CasePushSubscription>> {
+    return this._http.delete<CaseItemResponse<CasePushSubscription>>(
+      apiUrl(`/case-push-subscriptions/${encodeURIComponent(subscriptionId)}`),
       { headers: this.authHeaders() }
     );
   }

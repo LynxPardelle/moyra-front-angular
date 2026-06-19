@@ -1,4 +1,12 @@
-import { Component, HostListener, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  Inject,
+  Injector,
+  OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+} from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { isPlatformBrowser, Location } from '@angular/common';
 import { NgxAngoraService } from 'ngx-angora-css';
@@ -62,6 +70,7 @@ export class App implements OnDestroy, OnInit {
   private stylesheetsReady?: Promise<void>;
   private routeEventsSubscription?: Subscription;
   private refreshSessionSubscription?: Subscription;
+  private notificationClickRoutingStarted = false;
 
   constructor(
     private _mainService: MainService,
@@ -75,6 +84,7 @@ export class App implements OnDestroy, OnInit {
     private _userService: UserService,
     private _authFacade: AuthFacade,
     private _casesFeature: CasesFeatureService,
+    private _injector: Injector,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
     this.windowWidth = isPlatformBrowser(this.platformId) ? window.innerWidth : 0;
@@ -198,6 +208,9 @@ export class App implements OnDestroy, OnInit {
     });
     this.scheduleCssCreate(true);
     this.refreshSessionFromCookie();
+    if (this.casesFeatureEnabled()) {
+      void this.startCaseNotificationClickRouting();
+    }
   }
 
   @HostListener('window:storage', ['$event'])
@@ -396,5 +409,25 @@ export class App implements OnDestroy, OnInit {
       left: 0,
       behavior: 'auto',
     });
+  }
+
+  private async startCaseNotificationClickRouting(): Promise<void> {
+    if (this.notificationClickRoutingStarted) {
+      return;
+    }
+
+    this.notificationClickRoutingStarted = true;
+    try {
+      const { CaseWebPushService } = await import(
+        './components/notifications/case-web-push.service'
+      );
+      this._injector.get(CaseWebPushService).startNotificationClickRouting();
+    } catch (error: any) {
+      this._webService.consoleLog(
+        error,
+        this.document + ' notification-click-routing',
+        this.customConsoleCSS
+      );
+    }
   }
 }

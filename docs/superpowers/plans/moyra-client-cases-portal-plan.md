@@ -16,6 +16,7 @@ Planning vocabulary:
 - **Implementation sprints** are smaller executable slices used to build those phases safely.
 - Sprints do not replace the five phases; they decompose them into testable increments.
 - Current mapping: Phase 1 = Sprints 0-3, Phase 2 = Sprints 5-6, Phase 3 = Sprint 7, Phase 4 = Sprints 4 and 8, Phase 5 = Sprint 9.
+- Sprint 8 was completed on 2026-06-19 00:41 CT: notification preferences UI, Angular service worker/Web Push opt-in flow, safe email template rendering, and backend Web Push sender via `web-push@3.6.7` are implemented behind disabled-by-default flags.
 
 Approved direction:
 
@@ -853,7 +854,7 @@ sequenceDiagram
 These do not block Sprint 0-2, but they should be resolved before enabling the related production behavior:
 
 1. SES sender identity: exact subdomain/sender address, DNS owner, reply-to address, and whether test starts in SES sandbox.
-2. Web Push sender: exact VAPID key storage location and chosen Node sender library after checking current docs.
+2. Web Push activation: `web-push@3.6.7` is the selected Node sender library. Exact VAPID private-key storage location must be resolved before enabling `CASE_WEB_PUSH_ENABLED` in production/test.
 3. File malware scanning: whether MVP can launch with private access plus size/type restrictions only, or whether scanning is required before any production client upload.
 
 ## Rollback Plan

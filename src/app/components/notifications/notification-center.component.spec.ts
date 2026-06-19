@@ -58,6 +58,7 @@ describe('NotificationCenterComponent', () => {
     expect(text).toContain('Sin leer');
     expect(text).toContain('Leída');
     expect(compiled.querySelector('a[href="/casos/case-1"]')).not.toBeNull();
+    expect(compiled.querySelector('a[href="/notificaciones/preferencias"]')).not.toBeNull();
     expect(compiled.querySelector('a[href*="publication"]')).toBeNull();
   });
 
