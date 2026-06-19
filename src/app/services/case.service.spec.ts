@@ -76,7 +76,7 @@ describe('CaseService', () => {
       .createEntry('case-1', {
         title: 'Actualización privada',
         text: '<p>Contenido para el cliente</p>',
-        visibility: 'external_visible',
+        visibility: 'case_members',
         seoTitle: 'No debe salir',
         slug: 'publico',
         published: true,
@@ -90,11 +90,28 @@ describe('CaseService', () => {
     expect(req.request.body).toEqual({
       title: 'Actualización privada',
       text: '<p>Contenido para el cliente</p>',
-      visibility: 'external_visible',
+      visibility: { mode: 'case_members' },
     });
     req.flush({
       status: 'success',
       item: { id: 'entry-1', caseId: 'case-1', title: 'Actualización privada' },
+    });
+  });
+
+  it('normalizes internal visibility strings before sending private content to the API', () => {
+    service
+      .createEntry('case-1', {
+        title: 'Nota interna',
+        text: '<p>No visible para cliente</p>',
+        visibility: 'internal_only',
+      })
+      .subscribe();
+
+    const req = http.expectOne(apiUrl('/cases/case-1/entries'));
+    expect(req.request.body.visibility).toEqual({ mode: 'internal_only' });
+    req.flush({
+      status: 'success',
+      item: { id: 'entry-1', caseId: 'case-1', title: 'Nota interna' },
     });
   });
 
@@ -116,9 +133,11 @@ describe('CaseService', () => {
     }).subscribe();
     service.updateFileVisibility('case-1', 'file-1', {
       externalVisibilityStatus: 'approved',
-      visibility: 'external_visible',
+      visibility: 'case_members',
     }).subscribe();
     service.markNotificationRead('notification-1').subscribe();
+    service.getUnreadNotificationCount().subscribe();
+    service.markAllNotificationsRead().subscribe();
 
     const statusReq = http.expectOne(apiUrl('/cases/case-1/status'));
     expect(statusReq.request.method).toBe('PUT');
@@ -145,10 +164,76 @@ describe('CaseService', () => {
     const visibilityReq = http.expectOne(apiUrl('/cases/case-1/files/file-1/visibility'));
     expect(visibilityReq.request.method).toBe('PUT');
     expect(visibilityReq.request.body.externalVisibilityStatus).toBe('approved');
+    expect(visibilityReq.request.body.visibility).toEqual({ mode: 'case_members' });
     visibilityReq.flush({ status: 'success', item: {} });
 
     const notificationReq = http.expectOne(apiUrl('/case-notifications/notification-1/read'));
     expect(notificationReq.request.method).toBe('POST');
     notificationReq.flush({ status: 'success', item: {} });
+
+    const unreadReq = http.expectOne(apiUrl('/case-notifications/unread-count'));
+    expect(unreadReq.request.method).toBe('GET');
+    unreadReq.flush({ status: 'success', count: 2 });
+
+    const readAllReq = http.expectOne(apiUrl('/case-notifications/read-all'));
+    expect(readAllReq.request.method).toBe('POST');
+    readAllReq.flush({ status: 'success', updatedCount: 2 });
+  });
+
+  it('uploads a case file through presigned PUT and completes metadata without exposing raw S3 links', () => {
+    const file = new File(['contenido'], 'evidencia.pdf', { type: 'application/pdf' });
+
+    service.uploadCaseFile('case-1', file).subscribe((response) => {
+      expect(response.item.id).toBe('file-1');
+      expect(response.item.uploadStatus).toBe('uploaded');
+    });
+
+    const presignReq = http.expectOne(apiUrl('/cases/case-1/files/presign'));
+    expect(presignReq.request.method).toBe('POST');
+    expect(presignReq.request.body).toEqual({
+      fileName: 'evidencia.pdf',
+      contentType: 'application/pdf',
+      size: file.size,
+    });
+    expect(presignReq.request.headers.get('Authorization')).toBe(storeToken);
+    presignReq.flush({
+      status: 'success',
+      file: {
+        id: 'file-1',
+        caseId: 'case-1',
+        fileName: 'evidencia.pdf',
+        contentType: 'application/pdf',
+        externalVisibilityStatus: 'pending',
+        uploadStatus: 'pending_upload',
+      },
+      upload: {
+        method: 'PUT',
+        url: 'https://signed.example.test/case-upload',
+        headers: {
+          'content-type': 'application/pdf',
+        },
+      },
+    });
+
+    const uploadReq = http.expectOne('https://signed.example.test/case-upload');
+    expect(uploadReq.request.method).toBe('PUT');
+    expect(uploadReq.request.headers.get('Authorization')).toBeNull();
+    expect(uploadReq.request.headers.get('content-type')).toBe('application/pdf');
+    uploadReq.flush('', { status: 200, statusText: 'OK' });
+
+    const completeReq = http.expectOne(apiUrl('/cases/case-1/files/complete'));
+    expect(completeReq.request.method).toBe('POST');
+    expect(completeReq.request.body).toEqual({ fileId: 'file-1' });
+    completeReq.flush({
+      status: 'success',
+      item: {
+        id: 'file-1',
+        caseId: 'case-1',
+        fileName: 'evidencia.pdf',
+        contentType: 'application/pdf',
+        externalVisibilityStatus: 'pending',
+        uploadStatus: 'uploaded',
+      },
+    });
   });
 });

@@ -23,9 +23,6 @@ import { ArticleComponent } from './components/blog/article/article.component';
 
 /* Casos */
 import { CasesGuard } from './components/cases/cases.guard';
-import { CasesListComponent } from './components/cases/cases-list.component';
-import { CaseDetailComponent } from './components/cases/case-detail.component';
-import { CaseEntryDetailComponent } from './components/cases/case-entry-detail.component';
 
 /* User */
 import { ChangePasswordComponent } from './components/user/change-password/change-password.component';
@@ -72,11 +69,36 @@ export const routes: Routes = [
   { path: 'articulo/:id', component: ArticleComponent },
 
   // Casos
-  { path: 'casos', component: CasesListComponent, canActivate: [CasesGuard] },
-  { path: 'casos/:caseId', component: CaseDetailComponent, canActivate: [CasesGuard] },
+  {
+    path: 'casos',
+    loadComponent: () =>
+      import('./components/cases/cases-list.component').then(
+        (module) => module.CasesListComponent
+      ),
+    canActivate: [CasesGuard],
+  },
+  {
+    path: 'casos/:caseId',
+    loadComponent: () =>
+      import('./components/cases/case-detail.component').then(
+        (module) => module.CaseDetailComponent
+      ),
+    canActivate: [CasesGuard],
+  },
   {
     path: 'casos/:caseId/entrada/:entryId',
-    component: CaseEntryDetailComponent,
+    loadComponent: () =>
+      import('./components/cases/case-entry-detail.component').then(
+        (module) => module.CaseEntryDetailComponent
+      ),
+    canActivate: [CasesGuard],
+  },
+  {
+    path: 'notificaciones',
+    loadComponent: () =>
+      import('./components/notifications/notification-center.component').then(
+        (module) => module.NotificationCenterComponent
+      ),
     canActivate: [CasesGuard],
   },
 

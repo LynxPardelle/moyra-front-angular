@@ -13,7 +13,20 @@ export type CasePermission =
   | 'case.manage_notifications'
   | string;
 
-export type CaseVisibility = 'internal_only' | 'external_visible';
+export type CaseVisibilityMode =
+  | 'case_members'
+  | 'internal_only'
+  | 'selected_members'
+  | 'selected_parties'
+  | string;
+
+export type CaseVisibilityObject = {
+  mode: CaseVisibilityMode;
+  memberIds?: string[];
+  partyIds?: string[];
+};
+
+export type CaseVisibility = CaseVisibilityObject | CaseVisibilityMode;
 
 export type CaseRolePreset = 'attorney' | 'pasante' | 'client' | 'observer' | string;
 
@@ -57,6 +70,7 @@ export type CaseRecord = {
   statusId: string;
   leadUserId?: string;
   active?: boolean;
+  unreadCount?: number;
   createdAt?: string;
   updatedAt?: string;
   lastActivityAt?: string;
@@ -112,7 +126,9 @@ export type CaseFile = {
   contentType: string;
   size?: number;
   uploadedByUserId?: string;
-  uploadStatus?: 'pending' | 'uploaded' | string;
+  uploaderUserId?: string;
+  uploadedAt?: string;
+  uploadStatus?: 'pending' | 'pending_upload' | 'uploaded' | string;
   externalVisibilityStatus: CaseExternalVisibilityStatus;
   visibility: CaseVisibility;
   createdAt?: string;
@@ -211,7 +227,33 @@ export type PresignCaseFileRequest = {
   size?: number;
 };
 
+export type CaseFilePresignResponse = {
+  status: 'success' | string;
+  file: CaseFile;
+  upload: {
+    method: 'PUT';
+    url: string;
+    headers?: Record<string, string>;
+    expiresIn?: number;
+  };
+};
+
+export type CompleteCaseFileRequest = {
+  fileId: string;
+  etag?: string;
+};
+
 export type CaseFileVisibilityRequest = {
   externalVisibilityStatus: CaseExternalVisibilityStatus;
   visibility?: CaseVisibility;
+};
+
+export type CaseUnreadCountResponse = {
+  status: 'success' | string;
+  count: number;
+};
+
+export type CaseReadAllNotificationsResponse = {
+  status: 'success' | string;
+  updatedCount: number;
 };

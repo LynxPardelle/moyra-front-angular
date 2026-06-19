@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 import { apiUrl, jsonAuthHeaders, storedToken } from './global';
 import {
@@ -8,20 +9,25 @@ import {
   CaseComment,
   CaseEntry,
   CaseFile,
+  CaseFilePresignResponse,
   CaseFileVisibilityRequest,
   CaseItemResponse,
   CaseListResponse,
   CaseMembership,
   CaseNotification,
+  CaseReadAllNotificationsResponse,
   CasePushSubscription,
   CaseRecord,
   CaseType,
+  CaseUnreadCountResponse,
+  CompleteCaseFileRequest,
   CreateCaseEntryRequest,
   InviteCaseMemberRequest,
   PresignCaseFileRequest,
   UpdateCasePermissionsRequest,
 } from '../models/case';
 import { AuthFacade } from '../store/auth/auth.facade';
+import { normalizeCaseVisibilityForApi } from '../utils/case-visibility';
 
 const FORBIDDEN_CASE_ENTRY_FIELDS = new Set([
   'seoTitle',
@@ -146,13 +152,13 @@ export class CaseService {
   createComment(
     caseId: string,
     entryId: string,
-    body: { text: string; visibility?: string; parentCommentId?: string }
+    body: { text: string; visibility?: any; parentCommentId?: string }
   ): Observable<CaseItemResponse<CaseComment>> {
     return this._http.post<CaseItemResponse<CaseComment>>(
       apiUrl(
         `/cases/${encodeURIComponent(caseId)}/entries/${encodeURIComponent(entryId)}/comments`
       ),
-      body,
+      normalizeVisibilityPayload(body),
       { headers: this.authHeaders() }
     );
   }
@@ -167,11 +173,45 @@ export class CaseService {
   presignCaseFile(
     caseId: string,
     body: PresignCaseFileRequest
-  ): Observable<{ status: string; file: CaseFile; upload: { method: 'PUT'; url: string } }> {
-    return this._http.post<{ status: string; file: CaseFile; upload: { method: 'PUT'; url: string } }>(
+  ): Observable<CaseFilePresignResponse> {
+    return this._http.post<CaseFilePresignResponse>(
       apiUrl(`/cases/${encodeURIComponent(caseId)}/files/presign`),
       body,
       { headers: this.authHeaders() }
+    );
+  }
+
+  completeCaseFile(
+    caseId: string,
+    body: CompleteCaseFileRequest
+  ): Observable<CaseItemResponse<CaseFile>> {
+    return this._http.post<CaseItemResponse<CaseFile>>(
+      apiUrl(`/cases/${encodeURIComponent(caseId)}/files/complete`),
+      body,
+      { headers: this.authHeaders() }
+    );
+  }
+
+  uploadCaseFile(caseId: string, file: File): Observable<CaseItemResponse<CaseFile>> {
+    return this.presignCaseFile(caseId, {
+      fileName: file.name,
+      contentType: file.type || 'application/octet-stream',
+      size: file.size,
+    }).pipe(
+      switchMap((presign) =>
+        this._http
+          .put(presign.upload.url, file, {
+            headers: new HttpHeaders(presign.upload.headers || {}),
+            responseType: 'text',
+          })
+          .pipe(
+            switchMap(() =>
+              this.completeCaseFile(caseId, {
+                fileId: presign.file.id,
+              })
+            )
+          )
+      )
     );
   }
 
@@ -184,7 +224,7 @@ export class CaseService {
       apiUrl(
         `/cases/${encodeURIComponent(caseId)}/files/${encodeURIComponent(fileId)}/visibility`
       ),
-      body,
+      normalizeVisibilityPayload(body),
       { headers: this.authHeaders() }
     );
   }
@@ -210,6 +250,20 @@ export class CaseService {
     );
   }
 
+  getUnreadNotificationCount(): Observable<CaseUnreadCountResponse> {
+    return this._http.get<CaseUnreadCountResponse>(apiUrl('/case-notifications/unread-count'), {
+      headers: this.authHeaders(),
+    });
+  }
+
+  markAllNotificationsRead(): Observable<CaseReadAllNotificationsResponse> {
+    return this._http.post<CaseReadAllNotificationsResponse>(
+      apiUrl('/case-notifications/read-all'),
+      {},
+      { headers: this.authHeaders() }
+    );
+  }
+
   listPushSubscriptions(): Observable<CaseListResponse<CasePushSubscription>> {
     return this._http.get<CaseListResponse<CasePushSubscription>>(
       apiUrl('/case-push-subscriptions'),
@@ -224,10 +278,22 @@ export class CaseService {
 }
 
 function cleanCaseEntryPayload(body: CreateCaseEntryRequest): CreateCaseEntryRequest {
-  return Object.entries(body as Record<string, unknown>).reduce((payload, [key, value]) => {
+  const payload = Object.entries(body as Record<string, unknown>).reduce((payload, [key, value]) => {
     if (!FORBIDDEN_CASE_ENTRY_FIELDS.has(key)) {
       (payload as Record<string, unknown>)[key] = value;
     }
     return payload;
   }, {} as CreateCaseEntryRequest);
+  return normalizeVisibilityPayload(payload);
+}
+
+function normalizeVisibilityPayload<T extends { visibility?: any }>(body: T): T {
+  if (!body.visibility) {
+    return body;
+  }
+
+  return {
+    ...body,
+    visibility: normalizeCaseVisibilityForApi(body.visibility),
+  };
 }

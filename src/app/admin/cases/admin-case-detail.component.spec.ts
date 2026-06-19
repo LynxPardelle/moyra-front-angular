@@ -119,7 +119,7 @@ describe('AdminCaseDetailComponent', () => {
     fixture.componentInstance.newEntry = {
       title: 'Actualización interna',
       text: '<p>Texto privado</p>',
-      visibility: 'internal_only',
+      visibility: { mode: 'internal_only' },
     };
     fixture.componentInstance.createEntry();
 
@@ -127,7 +127,7 @@ describe('AdminCaseDetailComponent', () => {
     expect(createEntrySpy).toHaveBeenCalledWith('case-1', {
       title: 'Actualización interna',
       text: '<p>Texto privado</p>',
-      visibility: 'internal_only',
+      visibility: { mode: 'internal_only' },
     });
   });
 
@@ -149,7 +149,7 @@ describe('AdminCaseDetailComponent', () => {
     });
     expect(updateFileVisibilitySpy).toHaveBeenCalledWith('case-1', 'file-1', {
       externalVisibilityStatus: 'approved',
-      visibility: 'external_visible',
+      visibility: { mode: 'case_members' },
     });
   });
 });

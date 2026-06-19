@@ -9,6 +9,7 @@ import { SharedService } from './services/shared.service';
 import { AuthFacade } from './store/auth/auth.facade';
 import { NgxAngoraService } from 'ngx-angora-css';
 import { CasesFeatureService } from './components/cases/cases-feature.service';
+import { CaseService } from './services/case.service';
 
 describe('App', () => {
   let isAdmin: boolean;
@@ -66,6 +67,12 @@ describe('App', () => {
           provide: CasesFeatureService,
           useValue: {
             isEnabled: () => casesEnabled,
+          },
+        },
+        {
+          provide: CaseService,
+          useValue: {
+            getUnreadNotificationCount: () => of({ status: 'success', count: 0 }),
           },
         },
         {

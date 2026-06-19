@@ -47,8 +47,8 @@ import { CaseService } from '../../services/case.service';
             <input name="entryTitle" [(ngModel)]="newEntry.title" placeholder="Título" />
             <textarea name="entryText" [(ngModel)]="newEntry.text" placeholder="Contenido"></textarea>
             <select name="entryVisibility" [(ngModel)]="newEntry.visibility">
-              <option value="internal_only">Sólo interno</option>
-              <option value="external_visible">Visible para cliente</option>
+              <option [ngValue]="{ mode: 'internal_only' }">Sólo interno</option>
+              <option [ngValue]="{ mode: 'case_members' }">Visible para cliente</option>
             </select>
             <button type="submit">Publicar entrada</button>
           </form>
@@ -195,7 +195,7 @@ export class AdminCaseDetailComponent implements OnInit {
   newEntry: CreateCaseEntryRequest = {
     title: '',
     text: '',
-    visibility: 'internal_only',
+    visibility: { mode: 'internal_only' },
   };
   invite: InviteCaseMemberRequest = {
     email: '',
@@ -263,7 +263,7 @@ export class AdminCaseDetailComponent implements OnInit {
     this._caseService
       .updateFileVisibility(this.caseId, fileId, {
         externalVisibilityStatus: 'approved',
-        visibility: 'external_visible',
+        visibility: { mode: 'case_members' },
       })
       .subscribe();
   }

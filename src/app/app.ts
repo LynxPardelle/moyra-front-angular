@@ -13,12 +13,13 @@ import { SharedService } from './services/shared.service';
 import { AuthFacade } from './store/auth/auth.facade';
 import { createAuthSession } from './store/auth/auth.storage';
 import { CasesFeatureService } from './components/cases/cases-feature.service';
+import { NotificationBellComponent } from './components/notifications/notification-bell.component';
 
 // Models
 import { Main } from './models/main';
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink, NotificationBellComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
