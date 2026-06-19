@@ -29,6 +29,9 @@
     <a href="/we" [routerLink]="['/we']">Nosotros</a>
     <a href="/publications" [routerLink]="['/publications']">Publicaciones</a>
     <a href="/blog" [routerLink]="['/blog']">Blog</a>
+    @if (casesFeatureEnabled() && isAuthenticatedUser()) {
+    <a href="/casos" [routerLink]="['/casos']">Casos</a>
+    }
     @if (!isAuthenticatedUser()) {
     <a href="/login" [routerLink]="['/login']">Acceso</a>
     } @if (isAuthenticatedUser()) {
@@ -134,6 +137,18 @@
             Blog
           </a>
         </li>
+        @if (casesFeatureEnabled() && isAuthenticatedUser()) {
+        <li class="text-center my-4 h3">
+          <a
+            class="d-block mx-auto ank ank-text-linkM text-decoration-none"
+            href="/casos"
+            [routerLink]="['/casos']"
+            data-bs-dismiss="offcanvas"
+          >
+            Casos
+          </a>
+        </li>
+        }
         @if (!isAuthenticatedUser()) {
         <li class="text-center my-4 h3">
           <a

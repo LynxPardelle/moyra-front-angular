@@ -8,15 +8,18 @@ import { WebService } from './services/web.service';
 import { SharedService } from './services/shared.service';
 import { AuthFacade } from './store/auth/auth.facade';
 import { NgxAngoraService } from 'ngx-angora-css';
+import { CasesFeatureService } from './components/cases/cases-feature.service';
 
 describe('App', () => {
   let isAdmin: boolean;
   let isAuthenticated: boolean;
+  let casesEnabled: boolean;
   let logoutSpy: jasmine.Spy;
 
   beforeEach(async () => {
     isAdmin = false;
     isAuthenticated = false;
+    casesEnabled = false;
     logoutSpy = jasmine.createSpy('logout');
 
     await TestBed.configureTestingModule({
@@ -57,6 +60,12 @@ describe('App', () => {
             isAuthenticated: () => isAuthenticated,
             logout: logoutSpy,
             authStateOnceAfterHydration$: () => of({ isAuthenticated: false }),
+          },
+        },
+        {
+          provide: CasesFeatureService,
+          useValue: {
+            isEnabled: () => casesEnabled,
           },
         },
         {
@@ -117,5 +126,19 @@ describe('App', () => {
     expect(compiled.querySelector('[data-testid="site-logout"]')?.textContent).toContain(
       'Cerrar sesión'
     );
+  });
+
+  it('shows the private cases link only when the feature is enabled for authenticated users', () => {
+    casesEnabled = true;
+    isAuthenticated = true;
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const links = Array.from(compiled.querySelectorAll('a')).map((link) =>
+      link.textContent?.trim()
+    );
+
+    expect(links).toContain('Casos');
   });
 });

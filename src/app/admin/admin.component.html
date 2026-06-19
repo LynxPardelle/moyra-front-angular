@@ -108,6 +108,18 @@
             Crear usuario
           </a>
         </li>
+        @if (casesFeatureEnabled()) {
+        <li>
+          <a
+            href="/admin/casos"
+            [routerLink]="['/admin/casos']"
+            class="text-decoration-none"
+            data-testid="admin-cases-link"
+          >
+            Casos
+          </a>
+        </li>
+        }
         <li>
           <a
             href="/admin/publications"

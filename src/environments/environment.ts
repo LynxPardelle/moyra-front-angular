@@ -7,6 +7,7 @@ export const environment = {
   apiBaseUrl: '/api/v2',
   cognitoRegion: 'us-east-1',
   cognitoUserPoolClientId: '4enfk4kbskekcodme7n80d10ju',
+  casesFeatureEnabled: false,
 };
 
 /*

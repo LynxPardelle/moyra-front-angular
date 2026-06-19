@@ -12,6 +12,7 @@ import { WebService } from './services/web.service';
 import { SharedService } from './services/shared.service';
 import { AuthFacade } from './store/auth/auth.facade';
 import { createAuthSession } from './store/auth/auth.storage';
+import { CasesFeatureService } from './components/cases/cases-feature.service';
 
 // Models
 import { Main } from './models/main';
@@ -72,6 +73,7 @@ export class App implements OnDestroy, OnInit {
     private _sharedService: SharedService,
     private _userService: UserService,
     private _authFacade: AuthFacade,
+    private _casesFeature: CasesFeatureService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
     this.windowWidth = isPlatformBrowser(this.platformId) ? window.innerWidth : 0;
@@ -227,6 +229,10 @@ export class App implements OnDestroy, OnInit {
 
   isAuthenticatedUser(): boolean {
     return this._authFacade.isAuthenticated();
+  }
+
+  casesFeatureEnabled(): boolean {
+    return this._casesFeature.isEnabled();
   }
 
   logout(): void {

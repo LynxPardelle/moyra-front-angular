@@ -21,6 +21,12 @@ import { ServicioComponent } from './components/servicio/servicio/servicio.compo
 import { BlogComponent } from './components/blog/blog/blog.component';
 import { ArticleComponent } from './components/blog/article/article.component';
 
+/* Casos */
+import { CasesGuard } from './components/cases/cases.guard';
+import { CasesListComponent } from './components/cases/cases-list.component';
+import { CaseDetailComponent } from './components/cases/case-detail.component';
+import { CaseEntryDetailComponent } from './components/cases/case-entry-detail.component';
+
 /* User */
 import { ChangePasswordComponent } from './components/user/change-password/change-password.component';
 import { LoginComponent } from './components/user/login/login.component';
@@ -64,6 +70,15 @@ export const routes: Routes = [
   { path: 'blog/:search/:page', component: BlogComponent },
   { path: 'articulo', component: ArticleComponent },
   { path: 'articulo/:id', component: ArticleComponent },
+
+  // Casos
+  { path: 'casos', component: CasesListComponent, canActivate: [CasesGuard] },
+  { path: 'casos/:caseId', component: CaseDetailComponent, canActivate: [CasesGuard] },
+  {
+    path: 'casos/:caseId/entrada/:entryId',
+    component: CaseEntryDetailComponent,
+    canActivate: [CasesGuard],
+  },
 
   // User
   { path: 'login', component: LoginComponent },
