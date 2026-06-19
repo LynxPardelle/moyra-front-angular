@@ -17,6 +17,7 @@ Planning vocabulary:
 - Sprints do not replace the five phases; they decompose them into testable increments.
 - Current mapping: Phase 1 = Sprints 0-3, Phase 2 = Sprints 5-6, Phase 3 = Sprint 7, Phase 4 = Sprints 4 and 8, Phase 5 = Sprint 9.
 - Sprint 8 was completed on 2026-06-19 00:41 CT: notification preferences UI, Angular service worker/Web Push opt-in flow, safe email template rendering, and backend Web Push sender via `web-push@3.6.7` are implemented behind disabled-by-default flags.
+- Sprint 9 was completed on 2026-06-19 01:11 CT as release-readiness hardening: route privacy regression tests, public aggregate leakage tests, release/rollback runbook, full automated validation, and dependency audit cleanup. Controlled test deployment, real-browser visual QA, SES activation, Web Push secret activation, and client-upload malware scanning remain explicit release gates.
 
 Approved direction:
 
