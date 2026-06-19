@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { Router, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 
@@ -35,9 +35,9 @@ type PublicationListItem = {
 
 @Component({
   selector: 'publications',
-  imports: [CommonModule, RouterLink, SafeRichHtmlPipe, SafeEmbedUrlPipe],
+  imports: [RouterLink, SafeRichHtmlPipe, SafeEmbedUrlPipe],
   templateUrl: './publications.component.html',
-  styleUrls: ['./publications.component.scss']
+  styleUrls: ['./publications.component.scss'],
 })
 export class PublicationsComponent implements OnChanges, OnInit {
   @Input() embedded = false;
@@ -69,11 +69,7 @@ export class PublicationsComponent implements OnChanges, OnInit {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (
-      changes['publicationsInput'] ||
-      changes['maxItems'] ||
-      changes['embedded']
-    ) {
+    if (changes['publicationsInput'] || changes['maxItems'] || changes['embedded']) {
       this.syncPublicationInput();
     }
   }
@@ -180,7 +176,9 @@ export class PublicationsComponent implements OnChanges, OnInit {
       return '';
     }
 
-    return file.publicUrl || (file.location ? this.urlPublication + 'get-file/' + file.location : '');
+    return (
+      file.publicUrl || (file.location ? this.urlPublication + 'get-file/' + file.location : '')
+    );
   }
 
   richContent(text: string): string {
@@ -241,7 +239,8 @@ export class PublicationsComponent implements OnChanges, OnInit {
     this._meta.updateTag({ name: 'description', content: description });
     this._meta.updateTag({
       name: 'keywords',
-      content: 'publicaciones legales, derecho corporativo, derecho civil, derecho mercantil, asesoría legal',
+      content:
+        'publicaciones legales, derecho corporativo, derecho civil, derecho mercantil, asesoría legal',
     });
     this._meta.updateTag({ property: 'og:title', content: title });
     this._meta.updateTag({ property: 'og:description', content: description });
@@ -285,5 +284,4 @@ export class PublicationsComponent implements OnChanges, OnInit {
     this.setPublications(this.publicationsInput);
     this.loading = false;
   }
-
 }

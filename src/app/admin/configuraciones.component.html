@@ -5,44 +5,48 @@
     <span>Textos generales de páginas públicas.</span>
   </header>
 
-  <div *ngIf="loading" class="admin-config-card">Cargando configuraciones...</div>
-
-  <form *ngIf="!loading" class="admin-config-form" (ngSubmit)="save()">
+  @if (loading) {
+  <div class="admin-config-card">Cargando configuraciones...</div>
+  } @if (!loading) {
+  <form class="admin-config-form" (ngSubmit)="save()">
     <app-ai-assistant-panel
       surface="configurations"
       [context]="aiContext()"
     ></app-ai-assistant-panel>
-
-    <section *ngFor="let group of groupedFields" class="admin-config-card">
+    @for (group of groupedFields; track group) {
+    <section class="admin-config-card">
       <div class="admin-config-card__heading">
         <h2>{{ group.section }}</h2>
-        <p *ngIf="group.description">{{ group.description }}</p>
+        @if (group.description) {
+        <p>{{ group.description }}</p>
+        }
       </div>
-
-      <label *ngFor="let field of group.fields" class="admin-config-field">
+      @for (field of group.fields; track field) {
+      <label class="admin-config-field">
         <span class="admin-config-field__label">{{ field.label }}</span>
         <small>{{ field.description }}</small>
+        @if (field.multiline) {
         <textarea
-          *ngIf="field.multiline; else inputField"
           [(ngModel)]="pageTexts[field.key]"
           [name]="field.key"
           [placeholder]="field.defaultValue"
           rows="4"
         ></textarea>
-
-        <ng-template #inputField>
-          <input
-            [(ngModel)]="pageTexts[field.key]"
-            [name]="field.key"
-            [placeholder]="field.defaultValue"
-            type="text"
-          />
-        </ng-template>
+        } @else {
+        <input
+          [(ngModel)]="pageTexts[field.key]"
+          [name]="field.key"
+          [placeholder]="field.defaultValue"
+          type="text"
+        />
+        }
       </label>
+      }
     </section>
-
+    }
     <button class="admin-config-save" type="submit" [disabled]="saving">
       {{ saving ? 'Guardando...' : 'Guardar configuraciones' }}
     </button>
   </form>
+  }
 </section>

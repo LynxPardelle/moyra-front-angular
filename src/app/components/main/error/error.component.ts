@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 // Services
 import { GlobalUser, GlobalMain } from '../../../services/global';
@@ -14,7 +13,7 @@ import { renderTemplateExpressions } from '../../../utils/template-value';
 
 @Component({
   selector: 'app-error',
-  imports: [CommonModule, SafeHtmlPipe],
+  imports: [SafeHtmlPipe],
   templateUrl: './error.component.html',
   styleUrls: ['./error.component.scss'],
 })
@@ -23,8 +22,7 @@ export class ErrorComponent implements OnInit {
 
   // Console Settings
   public document: string = 'app.component.ts';
-  public customConsoleCSS =
-    'background-color: green; color: white; padding: 1em;';
+  public customConsoleCSS = 'background-color: green; color: white; padding: 1em;';
   constructor(
     private _webService: WebService,
 
@@ -54,11 +52,7 @@ export class ErrorComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  Linkify(
-    text: string,
-    textcolor: string = '#ffffff',
-    linkcolor: string = '#f9c24f'
-  ) {
+  Linkify(text: string, textcolor: string = '#ffffff', linkcolor: string = '#f9c24f') {
     let value: any;
     value = {
       text: '',

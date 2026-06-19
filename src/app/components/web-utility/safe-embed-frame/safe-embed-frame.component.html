@@ -1,5 +1,5 @@
+@if (embed?.kind === 'youtube') {
 <iframe
-  *ngIf="embed?.kind === 'youtube'"
   class="safe-embed-frame"
   [class.safe-embed-frame--compact]="compact"
   [src]="embed?.embedUrl | safeEmbedUrl"
@@ -9,9 +9,8 @@
   loading="lazy"
   referrerpolicy="strict-origin-when-cross-origin"
 ></iframe>
-
+} @if (embed?.kind === 'iframe') {
 <iframe
-  *ngIf="embed?.kind === 'iframe'"
   class="safe-embed-frame safe-embed-frame--external"
   [class.safe-embed-frame--compact]="compact"
   [src]="embed?.embedUrl | safeEmbedUrl"
@@ -23,9 +22,8 @@
   referrerpolicy="strict-origin-when-cross-origin"
   [style.height.px]="embed?.height"
 ></iframe>
-
+} @if (embed?.kind === 'link') {
 <a
-  *ngIf="embed?.kind === 'link'"
   class="safe-embed-link"
   [class.safe-embed-link--compact]="compact"
   [href]="embed?.url"
@@ -35,3 +33,4 @@
   <span>{{ embed?.title }}</span>
   <small>{{ embed?.url }}</small>
 </a>
+}

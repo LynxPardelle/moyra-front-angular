@@ -1,5 +1,5 @@
 import { Component, OnInit, DoCheck, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 
@@ -24,7 +24,6 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'servicio',
   imports: [
-    CommonModule,
     FormsModule,
     SafeRichHtmlPipe,
     FileUploaderComponent,
@@ -35,18 +34,7 @@ import Swal from 'sweetalert2';
   styleUrls: ['./servicio.component.scss'],
 })
 export class ServicioComponent implements OnInit {
-  public servicio: Servicio = new Servicio(
-    '',
-    '',
-    null,
-    '',
-    '',
-    '',
-    new Date(),
-    '',
-    '',
-    ''
-  );
+  public servicio: Servicio = new Servicio('', '', null, '', '', '', new Date(), '', '', '');
   public servicios: Servicio[] = [];
   public identity: any;
 
@@ -60,8 +48,7 @@ export class ServicioComponent implements OnInit {
 
   // Console Settings
   public document: string = 'servicio.component.ts';
-  public customConsoleCSS =
-    'background-color: #db5600; color: black; padding: 1em;';
+  public customConsoleCSS = 'background-color: #db5600; color: black; padding: 1em;';
 
   constructor(
     private _servicioService: ServicioService,
@@ -118,11 +105,7 @@ export class ServicioComponent implements OnInit {
         await this.checkRoute();
         await this.getServicio();
       } catch (err: any) {
-        this._webService.consoleLog(
-          err,
-          this.document + ' 84',
-          this.customConsoleCSS
-        );
+        this._webService.consoleLog(err, this.document + ' 84', this.customConsoleCSS);
       }
     })();
   }
@@ -141,17 +124,9 @@ export class ServicioComponent implements OnInit {
         this.isAdmin = true;
       }
 
-      this._webService.consoleLog(
-        this.isAdmin,
-        this.document + ' 88',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(this.isAdmin, this.document + ' 88', this.customConsoleCSS);
     } catch (err: any) {
-      this._webService.consoleLog(
-        err,
-        this.document + ' 98',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(err, this.document + ' 98', this.customConsoleCSS);
     }
   }
 
@@ -173,11 +148,7 @@ export class ServicioComponent implements OnInit {
             throw new Error('No hay params.');
           }
 
-          this._webService.consoleLog(
-            params,
-            this.document + ' 148',
-            this.customConsoleCSS
-          );
+          this._webService.consoleLog(params, this.document + ' 148', this.customConsoleCSS);
 
           if (!params.id) {
             if (this.isAdmin === true && this.canChange === true) {
@@ -186,20 +157,14 @@ export class ServicioComponent implements OnInit {
             throw new Error('No hay id.');
           }
 
-          this._webService.consoleLog(
-            params.id,
-            this.document + ' 162',
-            this.customConsoleCSS
-          );
+          this._webService.consoleLog(params.id, this.document + ' 162', this.customConsoleCSS);
 
           servicioId = params.id;
         } else {
           servicioId = this.servicio.urltitle;
         }
 
-        let servicio = await this._servicioService
-          .getServicio(servicioId)
-          .toPromise();
+        let servicio = await this._servicioService.getServicio(servicioId).toPromise();
 
         if (!servicio || !servicio.servicio) {
           throw new Error('No hay solución.');
@@ -207,18 +172,10 @@ export class ServicioComponent implements OnInit {
 
         this.servicio = servicio.servicio;
         this.editSwitch = this.shouldStartInEditMode();
-        this._webService.consoleLog(
-          this.servicio,
-          this.document + ' 125',
-          this.customConsoleCSS
-        );
+        this._webService.consoleLog(this.servicio, this.document + ' 125', this.customConsoleCSS);
       }
     } catch (err) {
-      this._webService.consoleLog(
-        err,
-        this.document + ' 85',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(err, this.document + ' 85', this.customConsoleCSS);
       if (this.isAdmin === true && this.canChange === true) {
         this.editSwitch = true;
       } else {
@@ -338,9 +295,7 @@ export class ServicioComponent implements OnInit {
         }
       } else {
         let falta =
-          this.servicio.title === '' &&
-          this.servicio.desc === '' &&
-          this.servicio.urltitle === ''
+          this.servicio.title === '' && this.servicio.desc === '' && this.servicio.urltitle === ''
             ? 'el título, la descripción y el link-de-la-solucion-sin-acentos-ni-espacios'
             : this.servicio.title === '' && this.servicio.desc === ''
             ? 'el título y la descripción'
@@ -360,11 +315,7 @@ export class ServicioComponent implements OnInit {
         Es necesario poner ${falta}.`);
       }
     } catch (err: any) {
-      this._webService.consoleLog(
-        err,
-        this.document + ' 203',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(err, this.document + ' 203', this.customConsoleCSS);
 
       let errorMessage = '';
       if (err.error) {
@@ -408,9 +359,7 @@ export class ServicioComponent implements OnInit {
       }
 
       if (result.isConfirmed) {
-        const servicioDeleted = await this._servicioService
-          .deleteServicio(servicioId)
-          .toPromise();
+        const servicioDeleted = await this._servicioService.deleteServicio(servicioId).toPromise();
 
         if (!servicioDeleted) {
           throw new Error('No hay solución.');
@@ -418,11 +367,7 @@ export class ServicioComponent implements OnInit {
 
         await this.getServicio();
 
-        this._webService.consoleLog(
-          servicioDeleted,
-          this.document + ' 173',
-          this.customConsoleCSS
-        );
+        this._webService.consoleLog(servicioDeleted, this.document + ' 173', this.customConsoleCSS);
 
         Swal.fire({
           title: 'La solución se ha eliminado con éxito',
@@ -449,11 +394,7 @@ export class ServicioComponent implements OnInit {
         });
       }
     } catch (err: any) {
-      this._webService.consoleLog(
-        err,
-        this.document + ' 108',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(err, this.document + ' 108', this.customConsoleCSS);
 
       let errorMessage = '';
       if (err.error) {
@@ -498,11 +439,7 @@ export class ServicioComponent implements OnInit {
           break;
       }
     } catch (err: any) {
-      this._webService.consoleLog(
-        err,
-        this.document + ' 108',
-        this.customConsoleCSS
-      );
+      this._webService.consoleLog(err, this.document + ' 108', this.customConsoleCSS);
 
       let errorMessage = '';
       if (err.error) {
@@ -535,22 +472,14 @@ export class ServicioComponent implements OnInit {
 
   switchEdit() {
     this.editSwitch =
-      this.canChange === true &&
-      this.isAdmin === true &&
-      this.servicio._id !== ''
+      this.canChange === true && this.isAdmin === true && this.servicio._id !== ''
         ? !this.editSwitch
-        : this.canChange === true &&
-          this.isAdmin === true &&
-          this.servicio._id === ''
+        : this.canChange === true && this.isAdmin === true && this.servicio._id === ''
         ? true
         : false;
   }
 
-  Linkify(
-    text: string,
-    textcolor: string = '#ffffff',
-    linkcolor: string = '#f9c24f'
-  ) {
+  Linkify(text: string, textcolor: string = '#ffffff', linkcolor: string = '#f9c24f') {
     let value: any;
     value = {
       text: '',
@@ -578,9 +507,7 @@ export class ServicioComponent implements OnInit {
 
   richContent(text: string): string {
     const content = this.valuefy(text);
-    return hasHtmlMarkup(content)
-      ? content
-      : this.Linkify(content, '#000', '#4b8ff5');
+    return hasHtmlMarkup(content) ? content : this.Linkify(content, '#000', '#4b8ff5');
   }
 
   serviceUrl(): string {
@@ -625,7 +552,9 @@ export class ServicioComponent implements OnInit {
   }
 
   effectiveSeoKeywords(): string {
-    return String(this.servicio.seoKeywords || '').trim() || String(this.servicio.tags || '').trim();
+    return (
+      String(this.servicio.seoKeywords || '').trim() || String(this.servicio.tags || '').trim()
+    );
   }
 
   private shouldStartInEditMode(): boolean {

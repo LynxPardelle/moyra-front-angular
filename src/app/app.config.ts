@@ -53,7 +53,7 @@ export const appConfig: ApplicationConfig = {
         disableImageSizeWarning: true,
       },
     },
-    importProvidersFrom(ModalModule.forRoot()),
+    importProvidersFrom(ModalModule),
     ArticleService,
     FileService,
     MainService,

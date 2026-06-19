@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
@@ -16,7 +15,7 @@ type NewUserForm = {
 
 @Component({
   selector: 'admin-usuarios',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './usuarios.component.html',
   styleUrls: ['./usuarios.component.scss'],
 })

@@ -1,11 +1,10 @@
-import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { QuillEditorComponent } from 'ngx-quill';
 
 @Component({
   selector: 'app-rich-text-editor',
-  imports: [CommonModule, FormsModule, QuillEditorComponent],
+  imports: [FormsModule, QuillEditorComponent],
   templateUrl: './rich-text-editor.component.html',
   styleUrls: ['./rich-text-editor.component.scss'],
 })

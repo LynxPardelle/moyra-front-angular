@@ -1,16 +1,8 @@
 <!-- Edit/Delete Buttons -->
-<div
-  class="position-fixed ank ank-top-15per top-md-10per end-0"
-  *ngIf="
-    canChange === true &&
-    isAdmin === true
-  "
->
-  <button
-    *ngIf="editSwitch == false"
-    class="btn ank ank-btn-linkM ank-text-bg1M mr-2"
-    (click)="switchEdit()"
-  >
+@if ( canChange === true && isAdmin === true ) {
+<div class="position-fixed ank ank-top-15per top-md-10per end-0">
+  @if (editSwitch == false) {
+  <button class="btn ank ank-btn-linkM ank-text-bg1M mr-2" (click)="switchEdit()">
     <svg
       width="1em"
       height="1em"
@@ -28,15 +20,14 @@
       />
     </svg>
   </button>
-
+  } @if (editSwitch == true) {
   <button
-    *ngIf="editSwitch == true"
     class="btn ank ank-btn-linkM ank-text-bg1M mr-2 font-weight-normal float-right"
     (click)="switchEdit()"
   >
     X
   </button>
-
+  }
   <button class="btn btn-warning mr-2" (click)="deleteServicio(servicio._id)">
     <svg
       width="1em"
@@ -53,36 +44,33 @@
     </svg>
   </button>
 </div>
-
-<h2 *ngIf="servicio && servicio.title" class="my-3 mx-auto text-center">
+} @if (servicio && servicio.title) {
+<h2 class="my-3 mx-auto text-center">
   {{ servicio.title }}
 </h2>
-
+} @if (servicio && servicio.mainImg && servicio.mainImg.location) {
 <img
-  *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
   class="ank ank-wmx-65per ank-hmx-500px mx-auto d-block obj-fit-cover"
-  [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
+  [src]="servicio.mainImg.publicUrl || urlServicio + 'get-file/' + servicio.mainImg.location"
   alt="{{ servicio.mainImg.title }}"
 />
+}
 
 <!-- Description -->
+@if (servicio.desc && servicio.desc !== '') {
 <div
-  *ngIf="servicio.desc && servicio.desc !== ''"
   class="ank ank-w-65per mx-auto my-5 text-center"
   [innerHTML]="richContent(servicio.desc) | safeRichHtml"
 ></div>
+}
 
 <!-- Edit Main Section -->
-<section *ngIf="servicio && editSwitch === true">
+@if (servicio && editSwitch === true) {
+<section>
   <h3 class="ank ank-text-titleM text-center">Datos de la solución</h3>
-
   <div class="w-75 mx-auto">
-    <app-ai-assistant-panel
-      surface="solutions"
-      [context]="aiContext()"
-    ></app-ai-assistant-panel>
+    <app-ai-assistant-panel surface="solutions" [context]="aiContext()"></app-ai-assistant-panel>
   </div>
-
   <!-- Title Edit -->
   <div class="d-block w-75 mx-auto my-3">
     <label class="ank ank-text-textM mb-1 d-block" for="title">Título</label>
@@ -95,49 +83,36 @@
       placeholder="Título"
       required
     />
-    <span
-      class="ank ank-text-titleM font-weight-bold"
-      *ngIf="!title.valid && title.touched"
-    >
-      El título es obligatorio.
-    </span>
+    @if (!title.valid && title.touched) {
+    <span class="ank ank-text-titleM font-weight-bold"> El título es obligatorio. </span>
+    }
   </div>
-
   <!-- Description Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="desc"
-      >Descripción</label
-    >
+    <label class="ank ank-text-textM mb-1 d-block" for="desc">Descripción</label>
     @defer (when editSwitch) {
-      <app-rich-text-editor
-        label="Descripción"
-        help="Editor para textos largos: usa negritas, listas, citas y enlaces sin escribir HTML."
-        placeholder="Descripción"
-        [(value)]="servicio.desc"
-      ></app-rich-text-editor>
+    <app-rich-text-editor
+      label="Descripción"
+      help="Editor para textos largos: usa negritas, listas, citas y enlaces sin escribir HTML."
+      placeholder="Descripción"
+      [(value)]="servicio.desc"
+    ></app-rich-text-editor>
     } @placeholder {
-      <textarea
-        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 servicio-textarea"
-        type="text"
-        name="desc"
-        [(ngModel)]="servicio.desc"
-        placeholder="Descripción"
-        required
-      ></textarea>
+    <textarea
+      class="w-100 ank ank-text-bg1M ank-bg-textM border-0 servicio-textarea"
+      type="text"
+      name="desc"
+      [(ngModel)]="servicio.desc"
+      placeholder="Descripción"
+      required
+    ></textarea>
+    } @if (!servicio.desc) {
+    <span class="ank ank-text-titleM font-weight-bold"> La descripción es obligatoria. </span>
     }
-    <span
-      class="ank ank-text-titleM font-weight-bold"
-      *ngIf="!servicio.desc"
-    >
-      La descripción es obligatoria.
-    </span>
   </div>
-
   <!-- Tags Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="tags"
-      >Palabras clave</label
-    >
+    <label class="ank ank-text-textM mb-1 d-block" for="tags">Palabras clave</label>
     <input
       class="w-100 ank ank-text-bg1M ank-bg-textM border-0 servicio-input"
       type="text"
@@ -147,7 +122,6 @@
       placeholder="Palabras clave"
     />
   </div>
-
   <!-- UrlTitle Edit -->
   <div class="d-block w-75 mx-auto my-3">
     <label class="ank ank-text-textM mb-1 d-block" for="urltitle"
@@ -162,13 +136,14 @@
       placeholder="link-de-la-solucion-sin-acentos-ni-espacios"
     />
   </div>
-
   <section class="seo-editor w-75 mx-auto">
     <div class="seo-editor__heading">
       <h2>Vista previa al compartir</h2>
-      <p>Textos que suelen usar Google, Facebook, WhatsApp, X y LinkedIn cuando se comparte esta solución.</p>
+      <p>
+        Textos que suelen usar Google, Facebook, WhatsApp, X y LinkedIn cuando se comparte esta
+        solución.
+      </p>
     </div>
-
     <label>
       <span>Título SEO</span>
       <input
@@ -179,7 +154,6 @@
         [placeholder]="effectiveSeoTitle()"
       />
     </label>
-
     <label>
       <span>Descripción SEO</span>
       <textarea
@@ -189,7 +163,6 @@
         [placeholder]="effectiveSeoDescription()"
       ></textarea>
     </label>
-
     <label>
       <span>Palabras clave</span>
       <input
@@ -200,39 +173,31 @@
         [placeholder]="effectiveSeoKeywords()"
       />
     </label>
-
     <div class="share-preview">
       <small>{{ serviceUrl() }}</small>
       <strong>{{ effectiveSeoTitle() }}</strong>
       <p>{{ effectiveSeoDescription() }}</p>
     </div>
   </section>
-
   <!-- Submit Button -->
   <button
     (click)="onSubmit()"
     class="btn ank ank-btn-linkM ank-text-bg1M mx-auto d-block my-3 w-75"
   >
-    <ng-container *ngIf="servicio._id === ''; else elseTemplate">
-      Crear
-    </ng-container>
-    <ng-template #elseTemplate> Editar </ng-template>
-    solución
+    @if (servicio._id === '') { Crear } @else { Editar } solución
   </button>
-
-  <div *ngIf="servicio.desc !== '' && servicio.title !== ''">
+  @if (servicio.desc !== '' && servicio.title !== '') {
+  <div>
     <hr class="w-100 d-block mx-auto my-5" />
-
     <!-- Photo Equip Member Upload -->
-    <h3 class="ank ank-text-titleM text-center">
-      Subida de la imagen de la solución
-    </h3>
+    <h3 class="ank ank-text-titleM text-center">Subida de la imagen de la solución</h3>
+    @if (servicio && servicio.mainImg && servicio.mainImg.location) {
     <img
-      *ngIf="servicio && servicio.mainImg && servicio.mainImg.location"
       class="ank ank-wmx-75per d-block mx-auto ank-hmx-25vh my-3"
-      [src]="servicio.mainImg.publicUrl || (urlServicio + 'get-file/' + servicio.mainImg.location)"
+      [src]="servicio.mainImg.publicUrl || urlServicio + 'get-file/' + servicio.mainImg.location"
       alt="{{ servicio.mainImg.title }}"
     />
+    }
     <app-file-uploader
       [type]="'servicio'"
       [typeMeta]="'one'"
@@ -244,4 +209,6 @@
       (recoverThing)="recoverThingFather($event)"
     ></app-file-uploader>
   </div>
+  }
 </section>
+}

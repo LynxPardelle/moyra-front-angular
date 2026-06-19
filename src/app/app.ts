@@ -1,6 +1,6 @@
 import { Component, HostListener, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
+import { isPlatformBrowser, Location } from '@angular/common';
 import { NgxAngoraService } from 'ngx-angora-css';
 import { Subscription, catchError, filter, map, of, switchMap } from 'rxjs';
 
@@ -17,9 +17,9 @@ import { createAuthSession } from './store/auth/auth.storage';
 import { Main } from './models/main';
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App implements OnDestroy, OnInit {
   public identity: any;
@@ -30,8 +30,7 @@ export class App implements OnDestroy, OnInit {
 
   // Console Settings
   public document: string = 'app.component.ts';
-  public customConsoleCSS =
-    'background-color: green; color: white; padding: 1em;';
+  public customConsoleCSS = 'background-color: green; color: white; padding: 1em;';
 
   // ank
   public colors: any = {
@@ -50,7 +49,7 @@ export class App implements OnDestroy, OnInit {
     tdark: '#000000',
     ulight: '#f5f5f5',
     tlight: '#ffffff',
-    trdark25: 'rgba(0,0,0,0.25)'
+    trdark25: 'rgba(0,0,0,0.25)',
   };
 
   // Utility
@@ -123,16 +122,8 @@ export class App implements OnDestroy, OnInit {
             property: 'main',
             thing: this.main,
           });
-          this._webService.consoleLog(
-            main,
-            this.document + ' 68',
-            this.customConsoleCSS
-          );
-          this._webService.consoleLog(
-            this.main,
-            this.document + ' 74',
-            this.customConsoleCSS
-          );
+          this._webService.consoleLog(main, this.document + ' 68', this.customConsoleCSS);
+          this._webService.consoleLog(this.main, this.document + ' 74', this.customConsoleCSS);
         }
       } catch (e: any) {
         if (e.error.errorMessage === 'No hay main.') {
@@ -159,11 +150,7 @@ export class App implements OnDestroy, OnInit {
               )
               .toPromise();
 
-            this._webService.consoleLog(
-              newMain,
-              this.document + ' 143',
-              this.customConsoleCSS
-            );
+            this._webService.consoleLog(newMain, this.document + ' 143', this.customConsoleCSS);
 
             if (!newMain || !newMain.main) {
               throw new Error('No se pudo crear el main.');
@@ -178,18 +165,10 @@ export class App implements OnDestroy, OnInit {
               thing: this.main,
             });
           } catch (error: any) {
-            this._webService.consoleLog(
-              error,
-              this.document + ' 168',
-              this.customConsoleCSS
-            );
+            this._webService.consoleLog(error, this.document + ' 168', this.customConsoleCSS);
           }
         } else {
-          this._webService.consoleLog(
-            e,
-            this.document + ' 175',
-            this.customConsoleCSS
-          );
+          this._webService.consoleLog(e, this.document + ' 175', this.customConsoleCSS);
         }
       }
     })();
@@ -259,7 +238,8 @@ export class App implements OnDestroy, OnInit {
       return;
     }
 
-    this.refreshSessionSubscription = this._authFacade.authStateOnceAfterHydration$()
+    this.refreshSessionSubscription = this._authFacade
+      .authStateOnceAfterHydration$()
       .pipe(
         switchMap((state) => {
           if (state.isAuthenticated) {
@@ -339,10 +319,7 @@ export class App implements OnDestroy, OnInit {
       return this.stylesheetsReady;
     }
 
-    const stylesheets = [
-      'assets/css/angora-styles.css',
-      'assets/css/angora-styles-responsive.css',
-    ];
+    const stylesheets = ['assets/css/angora-styles.css', 'assets/css/angora-styles-responsive.css'];
 
     this.stylesheetsReady = Promise.all(
       stylesheets.map((href) => this.ensureStylesheetLoaded(href))

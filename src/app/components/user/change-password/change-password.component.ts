@@ -1,4 +1,4 @@
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import { Component, Inject, OnDestroy, OnInit, PLATFORM_ID } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -9,7 +9,7 @@ import { AuthFacade } from '../../../store/auth/auth.facade';
 
 @Component({
   selector: 'app-change-password',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './change-password.component.html',
   styleUrl: './change-password.component.scss',
 })
@@ -37,15 +37,13 @@ export class ChangePasswordComponent implements OnDestroy, OnInit {
       return;
     }
 
-    this.authSubscription = this._authFacade
-      .authStateOnceAfterHydration$()
-      .subscribe((state) => {
-        if (!state.isAuthenticated) {
-          void this._router.navigate(['/login'], {
-            queryParams: { returnUrl: '/cambiar-contrasena' },
-          });
-        }
-      });
+    this.authSubscription = this._authFacade.authStateOnceAfterHydration$().subscribe((state) => {
+      if (!state.isAuthenticated) {
+        void this._router.navigate(['/login'], {
+          queryParams: { returnUrl: '/cambiar-contrasena' },
+        });
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -77,10 +75,7 @@ export class ChangePasswordComponent implements OnDestroy, OnInit {
 
     this.pending = true;
     this._userService
-      .changePassword(
-        this.passwordChange.currentPassword,
-        this.passwordChange.newPassword
-      )
+      .changePassword(this.passwordChange.currentPassword, this.passwordChange.newPassword)
       .subscribe({
         next: () => {
           this.pending = false;

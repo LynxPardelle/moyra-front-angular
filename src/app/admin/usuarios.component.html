@@ -3,32 +3,20 @@
     <p>Usuarios</p>
     <h1>Crear usuario</h1>
     <span>
-      Alta administrada para cuentas de Moyra. El usuario recibirá una contraseña temporal
-      y deberá cambiarla en su primer inicio de sesión.
+      Alta administrada para cuentas de Moyra. El usuario recibirá una contraseña temporal y deberá
+      cambiarla en su primer inicio de sesión.
     </span>
   </header>
 
   <form class="admin-users-form" (ngSubmit)="createUser()" #userForm="ngForm">
     <label class="admin-users-field">
       <span>Nombre</span>
-      <input
-        type="text"
-        name="name"
-        [(ngModel)]="user.name"
-        autocomplete="name"
-        required
-      />
+      <input type="text" name="name" [(ngModel)]="user.name" autocomplete="name" required />
     </label>
 
     <label class="admin-users-field">
       <span>Correo electrónico</span>
-      <input
-        type="email"
-        name="email"
-        [(ngModel)]="user.email"
-        autocomplete="email"
-        required
-      />
+      <input type="email" name="email" [(ngModel)]="user.email" autocomplete="email" required />
     </label>
 
     <label class="admin-users-field">
@@ -62,12 +50,9 @@
         autocomplete="new-password"
         required
       />
-      <small
-        class="admin-users-field__error"
-        *ngIf="user.confirmTemporaryPassword && !passwordsMatch()"
-      >
-        Las contraseñas no coinciden.
-      </small>
+      @if (user.confirmTemporaryPassword && !passwordsMatch()) {
+      <small class="admin-users-field__error"> Las contraseñas no coinciden. </small>
+      }
     </label>
 
     <button class="admin-users-save" type="submit" [disabled]="!canSubmit()">

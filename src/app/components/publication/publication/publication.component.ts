@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
@@ -24,7 +24,11 @@ import {
   fileKindSummary,
   isImageFile,
 } from '../../../utils/file-kind';
-import { hasHtmlMarkup, richContentPlainText, richTextWordCount } from '../../../utils/rich-content';
+import {
+  hasHtmlMarkup,
+  richContentPlainText,
+  richTextWordCount,
+} from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
 import { AiAssistantPanelComponent } from '../../web-utility/ai-assistant-panel/ai-assistant-panel.component';
 import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
@@ -36,7 +40,6 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'app-publication',
   imports: [
-    CommonModule,
     FormsModule,
     RouterLink,
     SafeRichHtmlPipe,
@@ -49,16 +52,7 @@ import Swal from 'sweetalert2';
   styleUrls: ['./publication.component.scss'],
 })
 export class PublicationComponent implements OnInit {
-  public publication: Publication = new Publication(
-    '',
-    '',
-    [],
-    '',
-    null,
-    [],
-    '',
-    new Date()
-  );
+  public publication: Publication = new Publication('', '', [], '', null, [], '', new Date());
   public identity: any;
   public isAdmin = false;
   public canChange = false;
@@ -70,8 +64,7 @@ export class PublicationComponent implements OnInit {
 
   private generatedSlug = '';
   private slugTouched = false;
-  private readonly consoleStyle =
-    'background-color: #244f7a; color: white; padding: 1em;';
+  private readonly consoleStyle = 'background-color: #244f7a; color: white; padding: 1em;';
 
   constructor(
     private _publicationService: PublicationService,
@@ -110,9 +103,7 @@ export class PublicationComponent implements OnInit {
         return;
       }
 
-      const response = await this._publicationService
-        .getPublication(publicationId)
-        .toPromise();
+      const response = await this._publicationService.getPublication(publicationId).toPromise();
 
       if (!response || !response.publication) {
         throw new Error('No hay publicación.');
@@ -174,12 +165,8 @@ export class PublicationComponent implements OnInit {
       }
 
       const response = existingId
-        ? await this._publicationService
-            .updatePublication(existingId, this.publication)
-            .toPromise()
-        : await this._publicationService
-            .createPublication(this.publication)
-            .toPromise();
+        ? await this._publicationService.updatePublication(existingId, this.publication).toPromise()
+        : await this._publicationService.createPublication(this.publication).toPromise();
 
       const savedPublication = response?.publication || response?.publicationUpdated;
       if (!savedPublication) {
@@ -211,16 +198,9 @@ export class PublicationComponent implements OnInit {
       }
     } catch (err: any) {
       const errorMessage =
-        err?.error?.message ||
-        err?.error?.errorMessage ||
-        err?.message ||
-        'Error desconocido.';
+        err?.error?.message || err?.error?.errorMessage || err?.message || 'Error desconocido.';
 
-      this._webService.consoleLog(
-        err,
-        'publication.component.ts onSubmit',
-        this.consoleStyle
-      );
+      this._webService.consoleLog(err, 'publication.component.ts onSubmit', this.consoleStyle);
 
       await Swal.fire({
         title: 'Error',
@@ -375,7 +355,9 @@ export class PublicationComponent implements OnInit {
       return '';
     }
 
-    return file.publicUrl || (file.location ? this.urlPublication + 'get-file/' + file.location : '');
+    return (
+      file.publicUrl || (file.location ? this.urlPublication + 'get-file/' + file.location : '')
+    );
   }
 
   isImage(file: any): boolean {
@@ -423,11 +405,7 @@ export class PublicationComponent implements OnInit {
     return badge.kind || badge.icon || String(index);
   }
 
-  Linkify(
-    text: string,
-    textcolor: string = '#29303b',
-    linkcolor: string = '#4b8ff5'
-  ) {
+  Linkify(text: string, textcolor: string = '#29303b', linkcolor: string = '#4b8ff5') {
     const value = this._webService.Linkify(text || '', textcolor, linkcolor);
     return value?.text || text || '';
   }
@@ -441,9 +419,7 @@ export class PublicationComponent implements OnInit {
 
   richContent(text: string): string {
     const content = this.valuefy(text);
-    return hasHtmlMarkup(content)
-      ? content
-      : this.Linkify(content, '#29303b', '#4b8ff5');
+    return hasHtmlMarkup(content) ? content : this.Linkify(content, '#29303b', '#4b8ff5');
   }
 
   trackEmbedItem(index: number, embed: EmbedItem): string {
@@ -451,9 +427,7 @@ export class PublicationComponent implements OnInit {
   }
 
   insertionLines(): string {
-    return Array.isArray(this.publication.insertions)
-      ? this.publication.insertions.join('\n')
-      : '';
+    return Array.isArray(this.publication.insertions) ? this.publication.insertions.join('\n') : '';
   }
 
   updateInsertions(value: string) {
@@ -483,7 +457,9 @@ export class PublicationComponent implements OnInit {
       },
       {
         label: 'Contenido',
-        detail: this.publication.text ? `${this.readingMinutes()} min de lectura` : 'Falta contenido',
+        detail: this.publication.text
+          ? `${this.readingMinutes()} min de lectura`
+          : 'Falta contenido',
         complete: Boolean(this.publication.text),
       },
       {
@@ -591,7 +567,9 @@ export class PublicationComponent implements OnInit {
 
   private setSeo() {
     const isDetail = Boolean(this.publication.title);
-    const title = isDetail ? this.effectiveSeoTitle() : 'Nueva publicación | Montaño & Reyes Arrazola S.C.';
+    const title = isDetail
+      ? this.effectiveSeoTitle()
+      : 'Nueva publicación | Montaño & Reyes Arrazola S.C.';
     const description = isDetail
       ? this.effectiveSeoDescription()
       : 'Publicación legal de Montaño & Reyes Arrazola S.C.';

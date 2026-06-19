@@ -14,12 +14,12 @@
     <input [(ngModel)]="filter" type="search" placeholder="Archivo, sección o uso" />
   </label>
 
-  <div *ngIf="loading" class="admin-files-empty">Cargando archivos...</div>
-  <div *ngIf="!loading && visibleFiles().length === 0" class="admin-files-empty">
-    No hay archivos para mostrar.
-  </div>
-
-  <div *ngIf="!loading && visibleFiles().length > 0" class="admin-files-table-wrap">
+  @if (loading) {
+  <div class="admin-files-empty">Cargando archivos...</div>
+  } @if (!loading && visibleFiles().length === 0) {
+  <div class="admin-files-empty">No hay archivos para mostrar.</div>
+  } @if (!loading && visibleFiles().length > 0) {
+  <div class="admin-files-table-wrap">
     <table class="admin-files-table">
       <thead>
         <tr>
@@ -32,25 +32,28 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let file of visibleFiles()">
+        @for (file of visibleFiles(); track file) {
+        <tr>
           <td>
-            <a *ngIf="file.url" [href]="file.url" target="_blank" rel="noopener noreferrer">
+            @if (file.url) {
+            <a [href]="file.url" target="_blank" rel="noopener noreferrer">
               {{ file.title || file.location || file.id }}
             </a>
-            <span *ngIf="!file.url">{{ file.title || file.location || file.id }}</span>
+            } @if (!file.url) {
+            <span>{{ file.title || file.location || file.id }}</span>
+            }
             <small>{{ file.location || file.objectKeys?.[0] }}</small>
           </td>
           <td>{{ file.category || '-' }}</td>
           <td>{{ fileSize(file) }}</td>
           <td>
-            <ng-container *ngIf="file.usages?.length > 0; else noUsage">
-              <span *ngFor="let usage of file.usages" class="admin-files-usage">
-                {{ usage.resource }} / {{ usage.label }} / {{ usage.field }}
-              </span>
-            </ng-container>
-            <ng-template #noUsage>
-              <span class="admin-files-muted">Sin referencias</span>
-            </ng-template>
+            @if (file.usages?.length > 0) { @for (usage of file.usages; track usage) {
+            <span class="admin-files-usage">
+              {{ usage.resource }} / {{ usage.label }} / {{ usage.field }}
+            </span>
+            } } @else {
+            <span class="admin-files-muted">Sin referencias</span>
+            }
           </td>
           <td>
             <span [class.admin-files-muted]="file.hasMetadata">
@@ -63,7 +66,9 @@
             </button>
           </td>
         </tr>
+        }
       </tbody>
     </table>
   </div>
+  }
 </section>

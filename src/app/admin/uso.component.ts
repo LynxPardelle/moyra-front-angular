@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -17,7 +16,7 @@ export const AI_USAGE_DASHBOARD_FEATURE_ENABLED = false;
 
 @Component({
   selector: 'admin-uso',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './uso.component.html',
   styleUrls: ['./uso.component.scss'],
 })
@@ -65,9 +64,7 @@ export class UsoComponent implements OnInit {
       this.selectedInterval = dashboard?.settings?.awsCostRefreshInterval || '6 hours';
     } catch (error: any) {
       this.errorMessage =
-        error?.error?.message ||
-        error?.message ||
-        'No se pudo cargar el dashboard de uso.';
+        error?.error?.message || error?.message || 'No se pudo cargar el dashboard de uso.';
     } finally {
       this.loading = false;
     }
@@ -84,9 +81,7 @@ export class UsoComponent implements OnInit {
       this.selectedInterval = settings?.awsCostRefreshInterval || this.selectedInterval;
     } catch (error: any) {
       this.errorMessage =
-        error?.error?.message ||
-        error?.message ||
-        'No se pudo actualizar el intervalo de costos.';
+        error?.error?.message || error?.message || 'No se pudo actualizar el intervalo de costos.';
     } finally {
       this.savingInterval = false;
     }
@@ -97,15 +92,11 @@ export class UsoComponent implements OnInit {
     this.errorMessage = '';
 
     try {
-      const awsCost = await this._aiUsageService
-        .refreshAwsCosts(this.from, this.to)
-        .toPromise();
+      const awsCost = await this._aiUsageService.refreshAwsCosts(this.from, this.to).toPromise();
       this.awsCost = awsCost || this.awsCost;
     } catch (error: any) {
       this.errorMessage =
-        error?.error?.message ||
-        error?.message ||
-        'No se pudo refrescar Cost Explorer.';
+        error?.error?.message || error?.message || 'No se pudo refrescar Cost Explorer.';
     } finally {
       this.refreshingCosts = false;
     }

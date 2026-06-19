@@ -1,11 +1,4 @@
-<header
-  class="
-    site-header
-    ank
-    ank-bg-bg1M
-    w-100
-  "
->
+<header class="site-header ank ank-bg-bg1M w-100">
   <!-- Icon -->
   <a
     href="/"
@@ -14,19 +7,11 @@
     aria-label="Ir a inicio"
   >
     <!--   class="w-max-75 d-block mx-auto h-max-25vh my-3" -->
-    <img
-      [src]="headerLogoUrl()"
-      [alt]="headerLogoAlt()"
-      (error)="useFallbackLogo($event)"
-    />
+    <img [src]="headerLogoUrl()" [alt]="headerLogoAlt()" (error)="useFallbackLogo($event)" />
   </a>
 
   <!-- Title -->
-  <a
-    href="/"
-    [routerLink]="['/']"
-    class="site-brand-title titleMontano text-decoration-none"
-  >
+  <a href="/" [routerLink]="['/']" class="site-brand-title titleMontano text-decoration-none">
     <span class="titleMontano__name text-center">
       Montaño &
       <wbr />
@@ -44,23 +29,15 @@
     <a href="/we" [routerLink]="['/we']">Nosotros</a>
     <a href="/publications" [routerLink]="['/publications']">Publicaciones</a>
     <a href="/blog" [routerLink]="['/blog']">Blog</a>
-    <a *ngIf="!isAuthenticatedUser()" href="/login" [routerLink]="['/login']">Acceso</a>
-    <a
-      *ngIf="isAuthenticatedUser()"
-      href="/cambiar-contrasena"
-      [routerLink]="['/cambiar-contrasena']"
-    >
-      Cambiar contraseña
-    </a>
-    <a *ngIf="isAdminUser()" href="/admin" [routerLink]="['/admin']">Panel</a>
-    <button
-      *ngIf="isAuthenticatedUser()"
-      type="button"
-      data-testid="site-logout"
-      (click)="logout()"
-    >
-      Cerrar sesión
-    </button>
+    @if (!isAuthenticatedUser()) {
+    <a href="/login" [routerLink]="['/login']">Acceso</a>
+    } @if (isAuthenticatedUser()) {
+    <a href="/cambiar-contrasena" [routerLink]="['/cambiar-contrasena']"> Cambiar contraseña </a>
+    } @if (isAdminUser()) {
+    <a href="/admin" [routerLink]="['/admin']">Panel</a>
+    } @if (isAuthenticatedUser()) {
+    <button type="button" data-testid="site-logout" (click)="logout()">Cerrar sesión</button>
+    }
   </nav>
 
   <!-- Menu -->
@@ -97,9 +74,7 @@
   >
     <div class="offcanvas-header">
       <div></div>
-      <h5 class="offcanvas-title text-center h2" id="offcanvasMenuLabel">
-        Menú
-      </h5>
+      <h5 class="offcanvas-title text-center h2" id="offcanvasMenuLabel">Menú</h5>
       <button
         type="button"
         class="btn-close text-reset p-0 me-2"
@@ -159,10 +134,8 @@
             Blog
           </a>
         </li>
-        <li
-          *ngIf="!isAuthenticatedUser()"
-          class="text-center my-4 h3"
-        >
+        @if (!isAuthenticatedUser()) {
+        <li class="text-center my-4 h3">
           <a
             class="d-block mx-auto ank ank-text-linkM text-decoration-none"
             href="/login"
@@ -172,10 +145,8 @@
             Acceso
           </a>
         </li>
-        <li
-          *ngIf="isAuthenticatedUser()"
-          class="text-center my-4 h3"
-        >
+        } @if (isAuthenticatedUser()) {
+        <li class="text-center my-4 h3">
           <a
             class="d-block mx-auto ank ank-text-linkM text-decoration-none"
             href="/cambiar-contrasena"
@@ -185,10 +156,8 @@
             Cambiar contraseña
           </a>
         </li>
-        <li
-          *ngIf="isAdminUser()"
-          class="text-center my-4 h3"
-        >
+        } @if (isAdminUser()) {
+        <li class="text-center my-4 h3">
           <a
             class="d-block mx-auto ank ank-text-linkM text-decoration-none"
             href="/admin"
@@ -198,10 +167,8 @@
             Panel de administración
           </a>
         </li>
-        <li
-          *ngIf="isAuthenticatedUser()"
-          class="text-center my-4 h3"
-        >
+        } @if (isAuthenticatedUser()) {
+        <li class="text-center my-4 h3">
           <button
             class="d-block mx-auto ank ank-text-linkM text-decoration-none"
             type="button"
@@ -212,6 +179,7 @@
             Cerrar sesión
           </button>
         </li>
+        }
       </ul>
     </div>
   </div>
@@ -222,24 +190,14 @@
 </main>
 
 <footer
-  class="
-    site-footer
-    d-flex
-    justify-content-evenly
-    px-2
-    py-3
-    align-items-center
-    w-100
-    ank
-    ank-z-10
-  "
+  class="site-footer d-flex justify-content-evenly px-2 py-3 align-items-center w-100 ank ank-z-10"
 >
   <!-- Facebook -->
+  @if (main && main.FB) {
   <a
     id="fbIcon"
     href="{{ main.FB }}"
     title="{{ main.FB }}"
-    *ngIf="main && main.FB"
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Abrir Facebook"
@@ -255,13 +213,14 @@
       />
     </svg>
   </a>
+  }
 
   <!-- Whats -->
+  @if (main && main.whatsApp) {
   <a
     id="whatsappIcon"
     href="https://wa.me/+521{{ main.whatsApp }}"
     title="https://wa.me/+521{{ main.whatsApp }}"
-    *ngIf="main && main.whatsApp"
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Abrir WhatsApp"
@@ -277,34 +236,35 @@
       />
     </svg>
   </a>
+  }
 
   <!-- Twitter -->
   <!-- <a
-    id="twitterIcon"
-    href="{{ main.twitter }}"
-    title="{{ main.twitter }}"
-    *ngIf="main && main.twitter"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="currentColor"
-      class="bi bi-twitter"
-      viewBox="0 0 16 16"
-    >
-      <path
-        d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"
-      />
-    </svg>
-  </a> -->
+          id="twitterIcon"
+          href="{{ main.twitter }}"
+          title="{{ main.twitter }}"
+          *ngIf="main && main.twitter"
+          target="_blank"
+          rel="noopener noreferrer"
+          >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="currentColor"
+            class="bi bi-twitter"
+            viewBox="0 0 16 16"
+            >
+            <path
+              d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"
+              />
+            </svg>
+          </a> -->
 
   <!-- Mail -->
+  @if (main && main.mail) {
   <a
     id="mailIcon"
     href="mailto:{{ main.mail }}"
     title="mailto:{{ main.mail }}"
-    *ngIf="main && main.mail"
     aria-label="Enviar correo"
   >
     <svg
@@ -318,13 +278,14 @@
       />
     </svg>
   </a>
+  }
 
   <!-- LinkedId -->
+  @if (main && main.linkedIn) {
   <a
     id="linkedInIcon"
     href="{{ main.linkedIn }}"
     title="{{ main.linkedIn }}"
-    *ngIf="main && main.linkedIn"
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Abrir LinkedIn"
@@ -340,13 +301,14 @@
       />
     </svg>
   </a>
+  }
 
   <!-- Telephone -->
+  @if (main && main.phoneNumber) {
   <a
     id="telephoneIcon"
     href="tel:{{ main.phoneNumber }}"
     title="tel:{{ main.phoneNumber }}"
-    *ngIf="main && main.phoneNumber"
     aria-label="Llamar por teléfono"
   >
     <svg
@@ -361,4 +323,5 @@
       />
     </svg>
   </a>
+  }
 </footer>

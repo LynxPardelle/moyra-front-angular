@@ -2,94 +2,80 @@
   class="publications-page ank ank-wmx-1100px mx-auto px-3 py-4"
   [class.publications-page--embedded]="embedded"
 >
-  <header class="publications-heading" *ngIf="showHeading">
+  @if (showHeading) {
+  <header class="publications-heading">
     <div>
-      <p class="publications-heading__eyebrow">{{ text('publicationsEyebrow', 'Biblioteca legal') }}</p>
-      <h1 class="publications-heading__title">{{ text('publicationsTitle', 'Publicaciones y recursos') }}</h1>
+      <p class="publications-heading__eyebrow">
+        {{ text('publicationsEyebrow', 'Biblioteca legal') }}
+      </p>
+      <h1 class="publications-heading__title">
+        {{ text('publicationsTitle', 'Publicaciones y recursos') }}
+      </h1>
       <p class="publications-heading__copy">
-        {{ text('publicationsCopy', 'Recursos legales y criterios prácticos para apoyar decisiones con certeza jurídica.') }}
+        {{
+          text(
+            'publicationsCopy',
+            'Recursos legales y criterios prácticos para apoyar decisiones con certeza jurídica.'
+          )
+        }}
       </p>
     </div>
-
+    @if ( canChange === true && isAdmin === true ) {
     <a
-      *ngIf="
-        canChange === true &&
-        isAdmin === true
-      "
       class="publications-heading__action text-decoration-none"
       href="/admin/publication"
       [routerLink]="['/admin/publication']"
     >
       Crear nueva publicación
     </a>
+    }
   </header>
-
-  <div *ngIf="loading" class="loading-state">Cargando publicaciones...</div>
-
-  <div
-    *ngIf="!loading && publicationItems.length === 0 && showEmptyState"
-    class="empty-state text-center mx-auto my-5 p-4"
-  >
+  } @if (loading) {
+  <div class="loading-state">Cargando publicaciones...</div>
+  } @if (!loading && publicationItems.length === 0 && showEmptyState) {
+  <div class="empty-state text-center mx-auto my-5 p-4">
     <h3 class="h5">Aún no hay publicaciones disponibles.</h3>
-    <p class="m-0" *ngIf="isAdmin && canChange">
-      Crea la primera publicación desde el panel de administración.
-    </p>
+    @if (isAdmin && canChange) {
+    <p class="m-0">Crea la primera publicación desde el panel de administración.</p>
+    }
   </div>
-
-  <div
-    *ngIf="!loading && publicationItems.length > 0"
-    class="publication-grid"
-  >
-    <article
-      *ngFor="let item of publicationItems; trackBy: trackPublicationItem"
-      class="publication-card ank ank-boxShadow-0__4px__4px__trdark"
-    >
+  } @if (!loading && publicationItems.length > 0) {
+  <div class="publication-grid">
+    @for (item of publicationItems; track trackPublicationItem($index, item)) {
+    <article class="publication-card ank ank-boxShadow-0__4px__4px__trdark">
+      @if (item.mainFileUrl) {
       <a
-        *ngIf="item.mainFileUrl"
         class="publication-card__media-link text-decoration-none"
         href="/publication/{{ item.id }}"
-        [routerLink]="[
-          isAdmin ? '/admin/publication' : '/publication',
-          item.id
-        ]"
+        [routerLink]="[isAdmin ? '/admin/publication' : '/publication', item.id]"
         [queryParams]="isAdmin ? { edit: 'true' } : null"
       >
         <div class="publication-card__media">
-          <img
-            class="publication-card__image"
-            [src]="item.mainFileUrl"
-            [alt]="item.mainFileAlt"
-          />
+          <img class="publication-card__image" [src]="item.mainFileUrl" [alt]="item.mainFileAlt" />
         </div>
       </a>
-
+      }
       <div class="publication-card__body">
         <a
           class="publication-card__title-link text-decoration-none"
           href="/publication/{{ item.id }}"
-          [routerLink]="[
-            isAdmin ? '/admin/publication' : '/publication',
-            item.id
-          ]"
+          [routerLink]="[isAdmin ? '/admin/publication' : '/publication', item.id]"
           [queryParams]="isAdmin ? { edit: 'true' } : null"
         >
           <h3 class="publication-card__title">{{ item.publication.title }}</h3>
         </a>
-
+        @if (item.richContent) {
         <div
           class="publication-card__content publication-rich-content"
-          *ngIf="item.richContent"
           [innerHTML]="item.richContent | safeRichHtml"
         ></div>
-
-        <section *ngIf="item.embeds.length > 0" class="publication-card__embeds">
+        } @if (item.embeds.length > 0) {
+        <section class="publication-card__embeds">
           <h4>Video y enlaces</h4>
-          <article
-            *ngFor="let embed of item.embeds; trackBy: trackEmbedItem"
-            class="publication-card__embed"
-          >
+          @for (embed of item.embeds; track trackEmbedItem($index, embed)) {
+          <article class="publication-card__embed">
+            @if (embed.kind === 'youtube') {
             <iframe
-              *ngIf="embed.kind === 'youtube'; else publicationNonYoutubeEmbed"
               [src]="embed.embedUrl | safeEmbedUrl"
               [title]="embed.title"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
@@ -97,70 +83,69 @@
               loading="eager"
               referrerpolicy="strict-origin-when-cross-origin"
             ></iframe>
-            <ng-template #publicationNonYoutubeEmbed>
-              <iframe
-                *ngIf="embed.kind === 'iframe'; else publicationRelatedLink"
-                class="publication-card__embed-frame--external"
-                [src]="embed.embedUrl | safeEmbedUrl"
-                [title]="embed.title"
-                allow="clipboard-write; encrypted-media; fullscreen; picture-in-picture; web-share"
-                allowfullscreen
-                sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
-                loading="eager"
-                referrerpolicy="strict-origin-when-cross-origin"
-                [style.height.px]="embed.height"
-              ></iframe>
-            </ng-template>
-            <ng-template #publicationRelatedLink>
-              <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
-                <span>{{ embed.title }}</span>
-                <small>{{ embed.url }}</small>
-              </a>
-            </ng-template>
+            } @else { @if (embed.kind === 'iframe') {
+            <iframe
+              class="publication-card__embed-frame--external"
+              [src]="embed.embedUrl | safeEmbedUrl"
+              [title]="embed.title"
+              allow="clipboard-write; encrypted-media; fullscreen; picture-in-picture; web-share"
+              allowfullscreen
+              sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+              loading="eager"
+              referrerpolicy="strict-origin-when-cross-origin"
+              [style.height.px]="embed.height"
+            ></iframe>
+            } @else {
+            <a [href]="embed.url" target="_blank" rel="noopener noreferrer">
+              <span>{{ embed.title }}</span>
+              <small>{{ embed.url }}</small>
+            </a>
+            } }
           </article>
+          }
         </section>
-
-        <section *ngIf="item.fileBadges.length > 0" class="publication-card__files">
+        } @if (item.fileBadges.length > 0) {
+        <section class="publication-card__files">
           <div>
             <h4>Archivos</h4>
             <p>{{ item.fileSummary }}</p>
           </div>
           <div class="publication-card__file-types">
-            <article
-              *ngFor="let badge of item.fileBadges; trackBy: trackFileBadge"
-              class="publication-card__file-type"
-            >
+            @for (badge of item.fileBadges; track trackFileBadge($index, badge)) {
+            <article class="publication-card__file-type">
               <span [class]="badge.className" aria-hidden="true">
                 <span>{{ badge.icon }}</span>
               </span>
-              <span>{{ badge.count }} {{ badge.count === 1 ? badge.label : badge.pluralLabel }}</span>
+              <span
+                >{{ badge.count }} {{ badge.count === 1 ? badge.label : badge.pluralLabel }}</span
+              >
             </article>
+            }
           </div>
         </section>
+        }
       </div>
-
       <div class="publication-card__actions">
         <a
           class="publication-card__read text-decoration-none"
           href="/publication/{{ item.id }}"
-          [routerLink]="[
-            isAdmin ? '/admin/publication' : '/publication',
-            item.id
-          ]"
+          [routerLink]="[isAdmin ? '/admin/publication' : '/publication', item.id]"
           [queryParams]="isAdmin ? { edit: 'true' } : null"
         >
           {{ isAdmin ? 'Editar publicación' : 'Ver publicación' }}
         </a>
-
+        @if (isAdmin && canChange) {
         <button
-          *ngIf="isAdmin && canChange"
           class="btn btn-warning py-1 px-3"
           type="button"
           (click)="deletePublication(item.recordId)"
         >
           Borrar
         </button>
+        }
       </div>
     </article>
+    }
   </div>
+  }
 </section>

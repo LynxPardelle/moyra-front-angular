@@ -1,98 +1,73 @@
 <div class="d-flex flex-column flex-md-row">
   <aside
-    class="position-relative ank ank-z-2  ank-bg-transparent"
+    class="position-relative ank ank-z-2 ank-bg-transparent"
     [ngClass]="{
-      'ank-w-100vw ank-w-lg-25vw ank-w-md-33vw ank-h-md-90vh':
-        showAside === true,
+      'ank-w-100vw ank-w-lg-25vw ank-w-md-33vw ank-h-md-90vh': showAside === true,
       'ank-w-45px ank-h-45px': showAside === false
     }"
   >
     <button
-      class="
-        btn
-        ank
-        ank-btn-linkM
-        ank-text-bg1M
-        position-fixed
-        start-0
-        top-md-10per
-        ank-z-5
-        ank-w-40px
-        ank-h-40px
-      "
+      class="btn ank ank-btn-linkM ank-text-bg1M position-fixed start-0 top-md-10per ank-z-5 ank-w-40px ank-h-40px"
       (click)="showAsideChanger()"
       [ngClass]="{
         'ank-top-45per': showAside === true,
         'ank-top-15per': showAside === false
       }"
     >
-      <ng-container *ngIf="showAside === false; else elseTemplate">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          fill="currentColor"
-          class="bi bi-caret-right-fill d-none d-md-block"
-          viewBox="0 0 16 16"
-        >
-          <path
-            d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"
-          />
-        </svg>
-
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          fill="currentColor"
-          class="bi bi-caret-down-fill d-block d-md-none"
-          viewBox="0 0 16 16"
-        >
-          <path
-            d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"
-          />
-        </svg>
-      </ng-container>
-      <ng-template #elseTemplate>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          fill="currentColor"
-          class="bi bi-caret-left-fill d-none d-md-block"
-          viewBox="0 0 16 16"
-        >
-          <path
-            d="m3.86 8.753 5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"
-          />
-        </svg>
-
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          fill="currentColor"
-          class="bi bi-caret-up-fill d-block d-md-none"
-          viewBox="0 0 16 16"
-        >
-          <path
-            d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"
-          />
-        </svg>
-      </ng-template>
+      @if (showAside === false) {
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        fill="currentColor"
+        class="bi bi-caret-right-fill d-none d-md-block"
+        viewBox="0 0 16 16"
+      >
+        <path
+          d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"
+        />
+      </svg>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        fill="currentColor"
+        class="bi bi-caret-down-fill d-block d-md-none"
+        viewBox="0 0 16 16"
+      >
+        <path
+          d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"
+        />
+      </svg>
+      } @else {
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        fill="currentColor"
+        class="bi bi-caret-left-fill d-none d-md-block"
+        viewBox="0 0 16 16"
+      >
+        <path
+          d="m3.86 8.753 5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"
+        />
+      </svg>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        fill="currentColor"
+        class="bi bi-caret-up-fill d-block d-md-none"
+        viewBox="0 0 16 16"
+      >
+        <path
+          d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"
+        />
+      </svg>
+      }
     </button>
     <div
-      class="
-        position-fixed
-        start-0
-        ank
-        ank-w-100vw ank-w-lg-24vw ank-w-md-32vw
-        ank-h-md-100vh
-        ank-bg-gray__OPA__0_25
-        h-md-100
-        py-3
-        box-shadow-2-0-5-textM
-      "
+      class="position-fixed start-0 ank ank-w-100vw ank-w-lg-24vw ank-w-md-32vw ank-h-md-100vh ank-bg-gray__OPA__0_25 h-md-100 py-3 box-shadow-2-0-5-textM"
       [ngClass]="{
         'd-block': showAside === true,
         'd-none': showAside === false
@@ -100,22 +75,10 @@
     >
       <h2 class="text-center my-3">Panel de administración</h2>
       <ul
-        class="
-          d-flex
-          flex-wrap flex-row flex-md-column
-          justify-content-evenly
-          align-items-end align-items-md-start
-          ank
-          ank-w-90per ank-w-md-70per
-          mx-auto
-          my-3
-          p-0
-        "
+        class="d-flex flex-wrap flex-row flex-md-column justify-content-evenly align-items-end align-items-md-start ank ank-w-90per ank-w-md-70per mx-auto my-3 p-0"
       >
         <li>
-          <a href="" [routerLink]="['/admin/we']" class="text-decoration-none">
-            Nosotros
-          </a>
+          <a href="" [routerLink]="['/admin/we']" class="text-decoration-none"> Nosotros </a>
         </li>
         <li>
           <a
@@ -127,20 +90,12 @@
           </a>
         </li>
         <li>
-          <a
-            href="/admin/uso"
-            [routerLink]="['/admin/uso']"
-            class="text-decoration-none"
-          >
+          <a href="/admin/uso" [routerLink]="['/admin/uso']" class="text-decoration-none">
             Uso y costos
           </a>
         </li>
         <li>
-          <a
-            href="/admin/archivos"
-            [routerLink]="['/admin/archivos']"
-            class="text-decoration-none"
-          >
+          <a href="/admin/archivos" [routerLink]="['/admin/archivos']" class="text-decoration-none">
             Archivos
           </a>
         </li>
@@ -181,29 +136,17 @@
           </a>
         </li>
         <li>
-          <a
-            href="/admin/solucion"
-            [routerLink]="['/admin/solucion']"
-            class="text-decoration-none"
-          >
+          <a href="/admin/solucion" [routerLink]="['/admin/solucion']" class="text-decoration-none">
             Crear nueva solución
           </a>
         </li>
         <li>
-          <a
-            href="/admin/blog"
-            [routerLink]="['/admin/blog']"
-            class="text-decoration-none"
-          >
+          <a href="/admin/blog" [routerLink]="['/admin/blog']" class="text-decoration-none">
             Blog
           </a>
         </li>
         <li>
-          <a
-            href="/admin/articulo"
-            [routerLink]="['/admin/articulo']"
-            class="text-decoration-none"
-          >
+          <a href="/admin/articulo" [routerLink]="['/admin/articulo']" class="text-decoration-none">
             Crear nuevo artículo
           </a>
         </li>

@@ -2,60 +2,59 @@
   <header class="blog-heading">
     <div>
       <p class="blog-heading__eyebrow">{{ text('blogEyebrow', 'Blog legal') }}</p>
-      <h1 class="blog-heading__title">{{ text('blogTitle', 'Criterios para decidir con ventaja') }}</h1>
+      <h1 class="blog-heading__title">
+        {{ text('blogTitle', 'Criterios para decidir con ventaja') }}
+      </h1>
       <p class="blog-heading__copy">
-        {{ text('blogCopy', 'Análisis legal y criterios prácticos para anticipar riesgos y tomar decisiones informadas.') }}
+        {{
+          text(
+            'blogCopy',
+            'Análisis legal y criterios prácticos para anticipar riesgos y tomar decisiones informadas.'
+          )
+        }}
       </p>
     </div>
 
+    @if ( canChange === true && isAdmin === true ) {
     <a
-      *ngIf="
-        canChange === true &&
-        isAdmin === true
-      "
       class="blog-heading__action text-decoration-none"
       href="/admin/articulo"
       [routerLink]="['/admin/articulo']"
     >
       Crear nuevo artículo
     </a>
+    }
   </header>
 
-  <div *ngIf="loading" class="loading-state">Cargando artículos...</div>
-
-  <div
-    *ngIf="!loading && articles.length === 0"
-    class="empty-state mx-auto my-5 p-4"
-  >
+  @if (loading) {
+  <div class="loading-state">Cargando artículos...</div>
+  } @if (!loading && articles.length === 0) {
+  <div class="empty-state mx-auto my-5 p-4">
     <h3 class="h5">Aún no hay artículos disponibles.</h3>
-    <p class="m-0" *ngIf="isAdmin && canChange">
-      Crea el primer artículo desde el panel de administración.
-    </p>
+    @if (isAdmin && canChange) {
+    <p class="m-0">Crea el primer artículo desde el panel de administración.</p>
+    }
   </div>
-
-  <div *ngIf="!loading && articleItems.length > 0" class="article-grid">
-    <article
-      *ngFor="let item of articleItems; trackBy: trackArticleItem"
-      class="article-card ank ank-boxShadow-0__4px__4px__trdark"
-    >
+  } @if (!loading && articleItems.length > 0) {
+  <div class="article-grid">
+    @for (item of articleItems; track trackArticleItem($index, item)) {
+    <article class="article-card ank ank-boxShadow-0__4px__4px__trdark">
+      @if (item.mainFileUrl) {
       <a
-        *ngIf="item.mainFileUrl"
         class="article-card__media-link text-decoration-none"
         href="/articulo/{{ item.id }}"
         [routerLink]="[isAdmin ? '/admin/articulo' : '/articulo', item.id]"
         [queryParams]="isAdmin ? { edit: 'true' } : null"
       >
         <div class="article-card__media">
-          <img
-            class="article-card__image"
-            [src]="item.mainFileUrl"
-            [alt]="item.mainFileAlt"
-          />
+          <img class="article-card__image" [src]="item.mainFileUrl" [alt]="item.mainFileAlt" />
         </div>
       </a>
-
+      }
       <div class="article-card__body">
-        <p class="article-card__tags" *ngIf="item.article.tags">{{ item.article.tags }}</p>
+        @if (item.article.tags) {
+        <p class="article-card__tags">{{ item.article.tags }}</p>
+        }
         <a
           class="article-card__title-link text-decoration-none"
           href="/articulo/{{ item.id }}"
@@ -64,47 +63,48 @@
         >
           <h3 class="article-card__title">{{ item.article.title }}</h3>
         </a>
-
         <p class="article-card__meta">
-          {{ item.readingMinutes }} min de lectura
-          <span *ngIf="item.embeds.length > 0"> · {{ item.embeds.length }} inserción{{ item.embeds.length === 1 ? '' : 'es' }}</span>
+          {{ item.readingMinutes }} min de lectura @if (item.embeds.length > 0) {
+          <span>
+            · {{ item.embeds.length }} inserción{{ item.embeds.length === 1 ? '' : 'es' }}</span
+          >
+          }
         </p>
-
+        @if (item.richContent) {
         <div
           class="article-card__content article-rich-content"
-          *ngIf="item.richContent"
           [innerHTML]="item.richContent | safeRichHtml"
         ></div>
-
-        <section *ngIf="item.embeds.length > 0" class="article-card__embeds">
+        } @if (item.embeds.length > 0) {
+        <section class="article-card__embeds">
           <h4>Video y enlaces</h4>
-          <article
-            *ngFor="let embed of item.embeds; trackBy: trackEmbedItem"
-            class="article-card__embed"
-          >
+          @for (embed of item.embeds; track trackEmbedItem($index, embed)) {
+          <article class="article-card__embed">
             <safe-embed-frame [embed]="embed" [compact]="true"></safe-embed-frame>
           </article>
+          }
         </section>
-
-        <section *ngIf="item.fileBadges.length > 0" class="article-card__files">
+        } @if (item.fileBadges.length > 0) {
+        <section class="article-card__files">
           <div>
             <h4>Archivos</h4>
             <p>{{ item.fileSummary }}</p>
           </div>
           <div class="article-card__file-types">
-            <article
-              *ngFor="let badge of item.fileBadges; trackBy: trackFileBadge"
-              class="article-card__file-type"
-            >
+            @for (badge of item.fileBadges; track trackFileBadge($index, badge)) {
+            <article class="article-card__file-type">
               <span [class]="badge.className" aria-hidden="true">
                 <span>{{ badge.icon }}</span>
               </span>
-              <span>{{ badge.count }} {{ badge.count === 1 ? badge.label : badge.pluralLabel }}</span>
+              <span
+                >{{ badge.count }} {{ badge.count === 1 ? badge.label : badge.pluralLabel }}</span
+              >
             </article>
+            }
           </div>
         </section>
+        }
       </div>
-
       <div class="article-card__actions">
         <a
           class="article-card__read text-decoration-none"
@@ -114,16 +114,18 @@
         >
           {{ isAdmin ? 'Editar artículo' : 'Ver artículo' }}
         </a>
-
+        @if (isAdmin && canChange) {
         <button
-          *ngIf="isAdmin && canChange"
           class="btn btn-warning py-1 px-3"
           type="button"
           (click)="deleteArticle(item.recordId)"
         >
           Borrar
         </button>
+        }
       </div>
     </article>
+    }
   </div>
+  }
 </section>
