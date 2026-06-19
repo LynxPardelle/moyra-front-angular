@@ -8,6 +8,7 @@ export const environment = {
   cognitoRegion: 'us-east-1',
   cognitoUserPoolClientId: '4enfk4kbskekcodme7n80d10ju',
   casesFeatureEnabled: false,
+  caseFeatureEnabledHosts: [],
   caseServiceWorkerEnabled: false,
   caseWebPushPublicKey: '',
 };

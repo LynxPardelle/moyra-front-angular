@@ -24,13 +24,22 @@ Backend flags:
 - `CASE_CLIENT_UPLOADS_ENABLED`: enables client document upload workflow.
 - `CASE_INVITES_ENABLED`: enables case-scoped email invitations.
 - `CASE_EMAIL_NOTIFICATIONS_ENABLED`: enables SES delivery for safe case summaries.
+- `CASE_EMAIL_FROM`, `CASE_EMAIL_REPLY_TO`, `CASE_EMAIL_IDENTITY_ARN`: SES sender and scoped identity settings; keep unset unless email delivery is enabled.
+- `CASE_APP_BASE_URL`: base URL used in authenticated case links.
 - `CASE_WEB_PUSH_ENABLED`: enables Web Push subscription writes and sender delivery.
 
 Frontend flags:
 
 - `casesFeatureEnabled`: shows private case navigation and allows `CasesGuard`.
+- `caseFeatureEnabledHosts`: host allowlist for controlled environments when `casesFeatureEnabled` stays false globally.
 - `caseServiceWorkerEnabled`: registers Angular service worker support.
 - `caseWebPushPublicKey`: browser VAPID public key; keep empty unless Web Push is enabled.
+
+Controlled test rollout posture:
+
+- Backend `test`: set `CASES_FEATURE_ENABLED=true`, `CASE_CLIENT_UPLOADS_ENABLED=true`, `CASE_INVITES_ENABLED=true`, `CASE_EMAIL_NOTIFICATIONS_ENABLED=false`, `CASE_WEB_PUSH_ENABLED=false`, and `CASE_APP_BASE_URL=https://test.moyra.org`.
+- Frontend `test`: keep `casesFeatureEnabled=false` globally and allow only `test.moyra.org` through `caseFeatureEnabledHosts`.
+- Production: keep `casesFeatureEnabled=false` and do not add production hosts until test smoke is approved.
 
 Rollback flag posture:
 
@@ -80,8 +89,9 @@ Test deploy:
 
 1. Run workflow dispatch with `stageName=test`.
 2. Preserve the existing environment variables for custom domain, certificate, CORS origins, notification emails, and Bedrock settings.
-3. Confirm how Cases flags are passed before deployment. The current workflow file does not expose all Cases/SES/Web Push flags as workflow environment variables.
-4. If a one-off CDK deploy is used instead, pass explicit context values and record the command in `Codex.md`.
+3. The workflow exposes Cases release settings through GitHub Environment variables and passes them into CDK.
+4. Do not pass Web Push VAPID private keys through workflow variables or CDK context; keep `CASE_WEB_PUSH_ENABLED=false` until secure runtime secret handling is designed.
+5. If a one-off CDK deploy is used instead, pass explicit context values and record the command in `Codex.md`.
 
 Production deploy:
 
@@ -123,6 +133,7 @@ Keep these defaults until activation is approved:
 
 ```ts
 casesFeatureEnabled: false
+caseFeatureEnabledHosts: ['test.moyra.org'] // test build only
 caseServiceWorkerEnabled: false
 caseWebPushPublicKey: ''
 ```
