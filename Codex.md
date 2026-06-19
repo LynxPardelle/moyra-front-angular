@@ -8,6 +8,8 @@ This file is for durable agent memory only. Dated implementation history belongs
 - Public/admin screens should feel like a legal operations tool: clear hierarchy, dense but readable information, direct controls, and no marketing-style filler.
 - Use the Moyra/MRA logo for browser and touch icons.
 - Approved 2026-06-18 CT product direction for the client portal is a new private `Casos` module, not a change to public Publications. Public Publications stay unchanged for SEO/public content. Private case entries may reuse editor/file/presentation patterns, but must not share public routes, SEO fields, or unauthenticated publication feeds.
+- Client portal implementation plan is tracked in `docs/superpowers/plans/moyra-client-cases-portal-plan.md`; it sequences backend authorization/data foundations before Angular UI work and keeps SES/Web Push behind feature flags until production configuration is confirmed.
+- Sprint 0 started 2026-06-18 CT on branch `codex/moyra-client-cases-portal`. The baseline API contract is `docs/superpowers/contracts/moyra-client-cases-api.md`; it keeps Cases under private `/api/v2/cases...` route groups, rejects SEO/public fields on case entries, and defines fail-closed feature flags.
 
 ## Frontend Architecture
 
