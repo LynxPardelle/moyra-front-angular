@@ -10,6 +10,13 @@ Build a new private **Casos** module for Moyra where clients can sign in, see on
 
 Implementation should happen backend-first because the feature handles confidential legal communication. The first runnable increments must establish private data storage, server-side authorization, and auditable case actions before the Angular UI exposes workflows.
 
+Planning vocabulary:
+
+- **Spec phases** are the five product/release phases in the design spec.
+- **Implementation sprints** are smaller executable slices used to build those phases safely.
+- Sprints do not replace the five phases; they decompose them into testable increments.
+- Current mapping: Phase 1 = Sprints 0-3, Phase 2 = Sprints 5-6, Phase 3 = Sprint 7, Phase 4 = Sprints 4 and 8, Phase 5 = Sprint 9.
+
 Approved direction:
 
 - Use a new Cases domain model, not visibility flags on public Publications.
@@ -69,7 +76,7 @@ sequenceDiagram
 - Context7 Angular docs confirmed `SwPush.requestSubscription({ serverPublicKey })`, `messages`, `notificationClicks`, `subscription`, and `isEnabled`.
 - Context7 NgRx docs confirmed v21 migration via `ng update @ngrx/store@21` and SignalStore async flows through `rxMethod`.
 - Context7 AWS SDK v3 docs confirmed SES `SendEmailCommand`/`SendEmail` requires sender, destination, message content, and returns `MessageId`.
-- Context7 AWS SDK v3 docs confirmed S3 `createPresignedPost` returns upload `url` and `fields`, with configurable expiration.
+- Sprint 3 implementation kept Moyra's existing S3 signed PUT upload pattern instead of adding `createPresignedPost`; the API returns upload `url`, `method`, headers, and configurable expiration.
 
 ## Prerequisites
 
@@ -343,11 +350,11 @@ sequenceDiagram
 - **Location**:
   - Backend cases module
   - Existing files/S3 helper area if reusable
-- **Description**: Add case-scoped upload initialization using S3 presigned POST.
+- **Description**: Add case-scoped upload initialization using the existing S3 presigned PUT upload pattern.
 - **Dependencies**: Sprint 2.
 - **Acceptance Criteria**:
   - Upload keys are scoped under a case-specific prefix.
-  - Presigned POST has short expiration.
+  - Presigned upload URL has short expiration.
   - File metadata record is created with uploader, case ID, size, MIME type, and visibility state.
   - Client uploads default to `internal_visible` and `external_pending`.
   - Size and MIME restrictions are enforced server-side.
@@ -406,7 +413,7 @@ sequenceDiagram
 
 - Creating a case entry/comment/file approval creates in-app notifications.
 - Email send is available behind a disabled-by-default production flag until SES DNS is confirmed.
-- Web Push subscription storage works in test and sends only safe payloads when enabled.
+- Web Push subscription storage works behind a disabled-by-default flag. Actual Web Push sending waits for Sprint 8 service worker/UI integration.
 
 ### Task 4.1: Implement Notification Events And Fanout
 
@@ -454,16 +461,17 @@ sequenceDiagram
 - **Location**:
   - Backend notification module
   - Frontend notification service in Sprint 5/8
-- **Description**: Add storage and management for browser push subscriptions. Choose and document the VAPID-compatible sender library during implementation.
+- **Description**: Add storage and management for browser push subscriptions. `npm view web-push version` returned `3.6.7` during Sprint 4 and `web-push` remains the selected VAPID-compatible sender candidate for Sprint 8, when Angular service worker integration exists.
 - **Dependencies**: Task 4.1.
 - **Acceptance Criteria**:
   - Authenticated user can register, list current, and delete own push subscription.
-  - Subscription keys are encrypted or stored with least necessary exposure.
-  - Push payload includes safe summary only.
-  - Expired/failed subscriptions are disabled after send failure.
+  - Subscription endpoint/key material is stored only for the authenticated owner and is omitted from API responses.
+  - In-app notification delivery records mark Web Push as `skipped/not_implemented` until Sprint 8 sender work.
+  - Future push payloads must include safe summary only.
+  - Expired/failed subscriptions are disabled after send failure once the sender is implemented.
 - **Validation**:
   - API tests for register/delete/cross-user denial.
-  - Sender tests mock success, gone/expired subscription, and retryable failure.
+  - Sender tests for success, gone/expired subscription, and retryable failure move to Sprint 8 with the sender implementation.
 
 ## Sprint 5: Angular 21 Upgrade And Frontend Foundation
 
@@ -671,7 +679,7 @@ sequenceDiagram
 ### Task 7.4: Add Client Document Upload
 
 - **Location**: `src/app/components/cases/`
-- **Description**: Let clients upload case documents through presigned POST and record confirmation.
+- **Description**: Let clients upload case documents through presigned PUT and record confirmation.
 - **Dependencies**: Sprint 3 API.
 - **Acceptance Criteria**:
   - Client sees upload progress and clear success/error states.

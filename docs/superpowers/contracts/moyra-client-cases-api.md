@@ -48,6 +48,13 @@ Flags must fail closed. Frontend flags hide navigation and controls. Backend fla
 | `CASE_WEB_PUSH_ENABLED` | `false` | `false` until VAPID/test service worker is configured | `false` until release approval | Deny push subscription writes with `403`; keep in-app notifications | Hide browser push opt-in |
 | `CASE_INVITES_ENABLED` | `false` until Cognito invite flow is tested | `false` until invite smoke passes | `false` until release approval | Deny invite creation/resend/cancel with `403` | Hide invite action or disable with unavailable state |
 
+Email notification config:
+
+- `CASE_EMAIL_FROM`: configured SES sender address/display name.
+- `CASE_EMAIL_REPLY_TO`: optional reply-to address.
+- `CASE_APP_BASE_URL`: absolute frontend base URL used to build authenticated case links.
+- CDK `caseEmailIdentityArn`: verified SES identity ARN. SES permissions are not granted when this is omitted.
+
 ## Authentication
 
 All Cases endpoints require a Cognito token in the `Authorization` header.
@@ -342,21 +349,36 @@ type CaseNotification = {
   eventType:
     | "case.entry.created"
     | "case.comment.created"
-    | "case.file.uploaded"
-    | "case.file.visibility_approved"
-    | "case.member.invited"
-    | "case.status.changed";
+    | "case.file.visibility_updated"
+    | "case.status.updated"
+    | "case.archived";
+  targetType: "case" | "case-entry" | "case-comment" | "case-file";
+  targetId: string;
   title: string;
   body: string;
-  link: string;
+  link: {
+    path: string;
+  };
   readAt?: string;
   delivery: {
-    inApp: "created";
-    email?: "skipped" | "queued" | "sent" | "failed";
-    emailMessageId?: string;
-    push?: "skipped" | "queued" | "sent" | "failed";
+    inApp: {
+      status: "created";
+    };
+    email: {
+      status: "skipped" | "pending" | "sent" | "failed";
+      reason?: string;
+      messageId?: string;
+      sentAt?: string;
+      failedAt?: string;
+    };
+    webPush: {
+      status: "skipped" | "queued" | "sent" | "failed";
+      reason?: string;
+    };
   };
+  dedupeKey: string;
   createdAt: string;
+  updatedAt: string;
 };
 ```
 
@@ -534,7 +556,7 @@ Comments are immediately visible inside their allowed scope after a successful r
 | Method | Path | Permission | Description |
 |---|---|---|---|
 | `GET` | `/api/v2/cases/{caseId}/files` | `case.read` | List visible case files |
-| `POST` | `/api/v2/cases/{caseId}/files/presign` | `case.upload_file` + `CASE_CLIENT_UPLOADS_ENABLED` when external | Create S3 presigned POST |
+| `POST` | `/api/v2/cases/{caseId}/files/presign` | `case.upload_file` + `CASE_CLIENT_UPLOADS_ENABLED` when external | Create S3 presigned PUT upload URL |
 | `POST` | `/api/v2/cases/{caseId}/files/complete` | `case.upload_file` | Confirm uploaded file metadata |
 | `GET` | `/api/v2/cases/{caseId}/files/{fileId}/download` | `case.download_file` | Return redirect or signed download after auth check |
 | `PUT` | `/api/v2/cases/{caseId}/files/{fileId}/visibility` | `case.approve_file_visibility` | Approve/restrict/reject external visibility |
@@ -544,9 +566,9 @@ Presign request body:
 
 ```json
 {
-  "originalName": "document.pdf",
+  "fileName": "document.pdf",
   "contentType": "application/pdf",
-  "sizeBytes": 12345
+  "size": 12345
 }
 ```
 
@@ -555,12 +577,19 @@ Presign response:
 ```json
 {
   "status": "success",
-  "item": {
-    "fileId": "opaque-file-id",
-    "upload": {
-      "url": "https://s3-presigned-post-target",
-      "fields": {}
-    }
+  "file": {
+    "id": "opaque-file-id",
+    "caseId": "opaque-case-id",
+    "externalVisibilityStatus": "pending",
+    "uploadStatus": "pending_upload"
+  },
+  "upload": {
+    "method": "PUT",
+    "url": "https://s3-presigned-upload-target",
+    "headers": {
+      "content-type": "application/pdf"
+    },
+    "expiresIn": 300
   }
 }
 ```
@@ -569,7 +598,7 @@ Rules:
 
 - Upload keys must be generated server-side under a case-scoped prefix.
 - Clients cannot send raw S3 keys.
-- Presigned POST expiration should be short.
+- Presigned upload URL expiration should be short.
 - File size/type validation happens before presign.
 - Download checks membership, permission, and visibility every time.
 
@@ -627,6 +656,7 @@ Frontend Web Push requirements:
 - Check `SwPush.isEnabled` before showing controls.
 - Call `SwPush.requestSubscription({ serverPublicKey })` only after explicit user action.
 - Use `notificationClicks` to route to authenticated case links.
+- Sprint 4 only stores authenticated subscriptions and omits endpoint/key material from API responses. Actual push sending is reserved for Sprint 8; current notification records use `delivery.webPush.status = "skipped"` with reason `not_implemented`.
 
 ### Audit
 
@@ -713,4 +743,3 @@ Current package checks on 2026-06-18 CT returned:
 ```
 
 Decision: target Angular 21 for implementation. Angular 22 remains deferred until NgRx publishes compatible peer dependencies.
-
