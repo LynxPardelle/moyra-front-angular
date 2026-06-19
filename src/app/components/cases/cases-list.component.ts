@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 
-import { CaseNotification, CaseRecord } from '../../models/case';
+import { CaseNotification, CaseRecord, CaseType, caseStatusLabel } from '../../models/case';
 import { CaseService } from '../../services/case.service';
 
 @Component({
@@ -41,7 +41,7 @@ import { CaseService } from '../../services/case.service';
             <dl class="case-row__meta">
               <div>
                 <dt>Estado</dt>
-                <dd>{{ caseRecord.statusId }}</dd>
+                <dd>{{ statusName(caseRecord.statusId) }}</dd>
               </div>
               <div>
                 <dt>Última actividad</dt>
@@ -151,6 +151,7 @@ import { CaseService } from '../../services/case.service';
 })
 export class CasesListComponent implements OnInit {
   cases: CaseRecord[] = [];
+  caseTypes: CaseType[] = [];
   notifications: CaseNotification[] = [];
   loading = false;
   errorMessage = '';
@@ -167,17 +168,22 @@ export class CasesListComponent implements OnInit {
 
     forkJoin({
       cases: this._caseService.listCases(),
+      caseTypes: this._caseService
+        .listCaseTypes()
+        .pipe(catchError(() => of({ status: 'success', items: [], nextToken: null }))),
       notifications: this._caseService
         .listNotifications()
         .pipe(catchError(() => of({ status: 'success', items: [], nextToken: null }))),
     }).subscribe({
-      next: ({ cases, notifications }) => {
+      next: ({ cases, caseTypes, notifications }) => {
         this.cases = cases.items || [];
+        this.caseTypes = caseTypes.items || [];
         this.notifications = notifications.items || [];
         this.loading = false;
       },
       error: () => {
         this.cases = [];
+        this.caseTypes = [];
         this.notifications = [];
         this.loading = false;
         this.errorMessage = 'No se pudieron cargar tus casos';
@@ -200,5 +206,12 @@ export class CasesListComponent implements OnInit {
 
   lastActivity(caseRecord: CaseRecord): string {
     return caseRecord.lastActivityAt || caseRecord.updatedAt || caseRecord.createdAt || '';
+  }
+
+  statusName(statusId: string): string {
+    const status = this.caseTypes
+      .flatMap((caseType) => caseType.statuses || [])
+      .find((candidate) => candidate.id === statusId);
+    return status ? caseStatusLabel(status) : statusId;
   }
 }

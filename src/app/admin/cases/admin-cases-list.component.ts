@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
-import { CaseRecord, CaseStatusDefinition, CaseType } from '../../models/case';
+import { CaseRecord, CaseStatusDefinition, CaseType, caseStatusLabel } from '../../models/case';
 import { CaseService } from '../../services/case.service';
 
 type NewCaseForm = {
@@ -52,7 +52,7 @@ type NewCaseForm = {
         <select name="statusId" [(ngModel)]="newCase.statusId" aria-label="Estado inicial">
           <option value="">Estado</option>
           @for (status of statusesForType(newCase.caseTypeId); track status.id) {
-          <option [value]="status.id">{{ status.name }}</option>
+          <option [value]="status.id">{{ statusLabel(status) }}</option>
           }
         </select>
         <button type="submit">Crear caso</button>
@@ -68,7 +68,7 @@ type NewCaseForm = {
         <select [(ngModel)]="statusFilter" aria-label="Filtrar por estado">
           <option value="">Todos los estados</option>
           @for (status of allStatuses(); track $index) {
-          <option [value]="status.id">{{ status.name }}</option>
+          <option [value]="status.id">{{ statusLabel(status) }}</option>
           }
         </select>
       </div>
@@ -260,7 +260,11 @@ export class AdminCasesListComponent implements OnInit {
   }
 
   statusesForType(caseTypeId: string): CaseStatusDefinition[] {
-    return this.caseTypes.find((caseType) => caseType.id === caseTypeId)?.statuses || [];
+    return (
+      this.caseTypes
+        .find((caseType) => caseType.id === caseTypeId)
+        ?.statuses?.filter((status) => status.active !== false) || []
+    );
   }
 
   allStatuses(): CaseStatusDefinition[] {
@@ -272,6 +276,11 @@ export class AdminCasesListComponent implements OnInit {
   }
 
   statusName(statusId: string): string {
-    return this.allStatuses().find((status) => status.id === statusId)?.name || statusId;
+    const status = this.allStatuses().find((status) => status.id === statusId);
+    return status ? this.statusLabel(status) : statusId;
+  }
+
+  statusLabel(status: CaseStatusDefinition): string {
+    return caseStatusLabel(status);
   }
 }

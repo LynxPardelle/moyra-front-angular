@@ -14,6 +14,7 @@ import {
   CaseType,
   CreateCaseEntryRequest,
   InviteCaseMemberRequest,
+  caseStatusLabel,
 } from '../../models/case';
 import { CaseService } from '../../services/case.service';
 
@@ -33,7 +34,7 @@ import { CaseService } from '../../services/case.service';
           <label for="case-status">Estado</label>
           <select id="case-status" name="status" [(ngModel)]="selectedStatusId">
             @for (status of statusesForCurrentType(); track status.id) {
-            <option [value]="status.id">{{ status.name }}</option>
+            <option [value]="status.id">{{ statusLabel(status) }}</option>
             }
           </select>
           <button type="submit">Actualizar</button>
@@ -270,7 +271,17 @@ export class AdminCaseDetailComponent implements OnInit {
 
   statusesForCurrentType(): CaseStatusDefinition[] {
     const caseTypeId = this.caseRecord?.caseTypeId || '';
-    return this.caseTypes.find((caseType) => caseType.id === caseTypeId)?.statuses || [];
+    const currentStatusId = this.caseRecord?.statusId || this.selectedStatusId;
+    return (
+      this.caseTypes
+        .find((caseType) => caseType.id === caseTypeId)
+        ?.statuses?.filter((status) => status.active !== false || status.id === currentStatusId) ||
+      []
+    );
+  }
+
+  statusLabel(status: CaseStatusDefinition): string {
+    return caseStatusLabel(status);
   }
 
   downloadUrl(fileId: string): string {

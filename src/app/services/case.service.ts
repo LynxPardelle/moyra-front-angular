@@ -22,10 +22,12 @@ import {
   CaseType,
   CaseUnreadCountResponse,
   CompleteCaseFileRequest,
+  CreateCaseTypeRequest,
   CreateCaseEntryRequest,
   InviteCaseMemberRequest,
   PresignCaseFileRequest,
   RegisterCasePushSubscriptionRequest,
+  UpdateCaseTypeRequest,
   UpdateCasePermissionsRequest,
   UpdateCaseNotificationPreferencesRequest,
 } from '../models/case';
@@ -53,6 +55,23 @@ export class CaseService {
     return this._http.get<CaseListResponse<CaseType>>(apiUrl('/case-types'), {
       headers: this.authHeaders(),
     });
+  }
+
+  createCaseType(body: CreateCaseTypeRequest): Observable<CaseItemResponse<CaseType>> {
+    return this._http.post<CaseItemResponse<CaseType>>(apiUrl('/case-types'), body, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  updateCaseType(
+    caseTypeId: string,
+    body: UpdateCaseTypeRequest
+  ): Observable<CaseItemResponse<CaseType>> {
+    return this._http.put<CaseItemResponse<CaseType>>(
+      apiUrl(`/case-types/${encodeURIComponent(caseTypeId)}`),
+      body,
+      { headers: this.authHeaders() }
+    );
   }
 
   listCases(): Observable<CaseListResponse<CaseRecord>> {

@@ -43,10 +43,12 @@ export type CaseExternalVisibilityStatus =
 
 export type CaseStatusDefinition = {
   id: string;
-  name: string;
+  label?: string;
+  name?: string;
   color?: string;
   order?: number;
   active?: boolean;
+  isDefault?: boolean;
 };
 
 export type CaseType = {
@@ -222,6 +224,16 @@ export type CaseItemResponse<T> = {
   item: T;
 };
 
+export type CreateCaseTypeRequest = {
+  name: string;
+  description?: string;
+  active?: boolean;
+  statuses: Array<Partial<CaseStatusDefinition>>;
+  defaultStatusId?: string;
+};
+
+export type UpdateCaseTypeRequest = Partial<CreateCaseTypeRequest>;
+
 export type CreateCaseEntryRequest = {
   title: string;
   text: string;
@@ -291,3 +303,7 @@ export type RegisterCasePushSubscriptionRequest = {
   };
   userAgent?: string;
 };
+
+export function caseStatusLabel(status: Pick<CaseStatusDefinition, 'id' | 'label' | 'name'>): string {
+  return status.label || status.name || status.id;
+}

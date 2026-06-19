@@ -116,6 +116,20 @@ describe('CaseService', () => {
   });
 
   it('maps status, member, file, and notification calls to the private API contract', () => {
+    service
+      .createCaseType({
+        name: 'Litigio',
+        description: 'Casos judiciales',
+        active: true,
+        statuses: [{ label: 'En revisión', color: '#334155', active: true, isDefault: true }],
+      })
+      .subscribe();
+    service
+      .updateCaseType('type-1', {
+        name: 'Litigio actualizado',
+        statuses: [{ id: 'status-1', label: 'Activo', active: true }],
+      })
+      .subscribe();
     service.updateCaseStatus('case-1', { statusId: 'status-review' }).subscribe();
     service.inviteMember('case-1', {
       email: 'cliente@moyra.org',
@@ -138,6 +152,16 @@ describe('CaseService', () => {
     service.markNotificationRead('notification-1').subscribe();
     service.getUnreadNotificationCount().subscribe();
     service.markAllNotificationsRead().subscribe();
+
+    const createCaseTypeReq = http.expectOne(apiUrl('/case-types'));
+    expect(createCaseTypeReq.request.method).toBe('POST');
+    expect(createCaseTypeReq.request.body.statuses[0].label).toBe('En revisión');
+    createCaseTypeReq.flush({ status: 'success', item: {} });
+
+    const updateCaseTypeReq = http.expectOne(apiUrl('/case-types/type-1'));
+    expect(updateCaseTypeReq.request.method).toBe('PUT');
+    expect(updateCaseTypeReq.request.body.statuses[0].label).toBe('Activo');
+    updateCaseTypeReq.flush({ status: 'success', item: {} });
 
     const statusReq = http.expectOne(apiUrl('/cases/case-1/status'));
     expect(statusReq.request.method).toBe('PUT');

@@ -3,12 +3,13 @@ import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { CasesListComponent } from './cases-list.component';
-import { CaseRecord, CaseNotification } from '../../models/case';
+import { CaseRecord, CaseNotification, CaseType } from '../../models/case';
 import { CaseService } from '../../services/case.service';
 
 describe('CasesListComponent', () => {
   let fixture: ComponentFixture<CasesListComponent>;
   let cases: CaseRecord[];
+  let caseTypes: CaseType[];
   let notifications: CaseNotification[];
   let listCasesFails: boolean;
 
@@ -36,6 +37,21 @@ describe('CasesListComponent', () => {
       notification('notification-2', 'case-1', null),
       notification('notification-3', 'case-2', '2026-06-18T21:00:00.000Z'),
     ];
+    caseTypes = [
+      {
+        id: 'corporate',
+        name: 'Corporativo',
+        statuses: [
+          { id: 'draft', label: 'Borrador' },
+          { id: 'review', label: 'En revisión' },
+        ],
+      },
+      {
+        id: 'immigration',
+        name: 'Migratorio',
+        statuses: [{ id: 'draft', label: 'Nuevo' }],
+      },
+    ];
     listCasesFails = false;
 
     await TestBed.configureTestingModule({
@@ -49,6 +65,8 @@ describe('CasesListComponent', () => {
               listCasesFails
                 ? throwError(() => new Error('falló'))
                 : of({ status: 'success', items: cases, nextToken: null }),
+            listCaseTypes: () =>
+              of({ status: 'success', items: caseTypes, nextToken: null }),
             listNotifications: () =>
               of({ status: 'success', items: notifications, nextToken: null }),
           },
@@ -69,7 +87,7 @@ describe('CasesListComponent', () => {
     const text = compiled.textContent || '';
 
     expect(text).toContain('Contrato corporativo');
-    expect(text).toContain('review');
+    expect(text).toContain('En revisión');
     expect(text).toContain('2 sin leer');
     expect(text).toContain('Revisar novedades');
     expect(text).toContain('Consulta migratoria');
