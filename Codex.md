@@ -7,11 +7,13 @@ This file is for durable agent memory only. Dated implementation history belongs
 - Moyra UI should stay rectilinear: no rounded borders. Shadows are acceptable when they support restrained glassmorphism or elevation.
 - Public/admin screens should feel like a legal operations tool: clear hierarchy, dense but readable information, direct controls, and no marketing-style filler.
 - Use the Moyra/MRA logo for browser and touch icons.
+- Approved 2026-06-18 CT product direction for the client portal is a new private `Casos` module, not a change to public Publications. Public Publications stay unchanged for SEO/public content. Private case entries may reuse editor/file/presentation patterns, but must not share public routes, SEO fields, or unauthenticated publication feeds.
 
 ## Frontend Architecture
 
 - Angular app with serverless API v2 routing from `src/app/services/global.ts`.
 - Admin authentication is centralized in `src/app/store/auth/` using NgRx store/effects.
+- Case portal frontend work should target Angular 21 until NgRx publishes Angular 22-compatible packages. Verified on 2026-06-18 CT: latest `@ngrx/store`, `@ngrx/effects`, and `@ngrx/signals` were `21.1.1` with peer dependency `@angular/core: ^21.0.0`.
 - Admin guards must not trust raw `localStorage` identity. They derive admin access from validated Cognito claims and should redirect to login with `returnUrl` when auth fails.
 - The global site brand/header is visual identity only and must not use `h1`/`h2`; each routed page owns its own document heading hierarchy.
 - Header and footer remain fixed; `.site-main` is the scroll container between them so visible content does not sit under fixed chrome.
@@ -23,6 +25,8 @@ This file is for durable agent memory only. Dated implementation history belongs
 ## Security Notes
 
 - Never store passwords in the frontend or in repo documentation.
+- Cases are confidential legal communication. Enforce authorization server-side for every case read/write/comment/upload/download/notification action; frontend filters are presentation only. Case email/Web Push notifications must use safe summaries and authenticated links, not full legal content.
+- Client-uploaded case documents should become visible to internal team members immediately but remain hidden from other external case members until an attorney approves or confirms external visibility.
 - Session extension is handled by the serverless API using a host-only `moyraRefreshToken` HttpOnly/Secure/SameSite=None cookie scoped to `/api/v2/auth`.
 - `POST /api/v2/auth/refresh` rotates short-lived Cognito access/id tokens from the cookie.
 - `POST /api/v2/auth/logout` clears the refresh cookie.
