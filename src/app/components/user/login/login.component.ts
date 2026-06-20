@@ -1,5 +1,12 @@
-import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, Input } from '@angular/core';
-
+import {
+  ChangeDetectorRef,
+  Component,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  Input
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
@@ -22,7 +29,7 @@ import Swal from 'sweetalert2';
 
 @Component({
   selector: 'login',
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
 })
