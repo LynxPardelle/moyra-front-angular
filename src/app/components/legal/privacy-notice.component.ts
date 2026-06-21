@@ -1,14 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
 
 import { Main } from '../../models/main';
 import { MainService } from '../../services/main.service';
+import { SafeRichHtmlPipe } from '../../pipes/safe-rich-html';
+import { DEFAULT_PRIVACY_NOTICE_BODY_HTML } from '../../utils/privacy-notice-content';
 
 @Component({
   selector: 'app-privacy-notice',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, SafeRichHtmlPipe],
   template: `
     <main class="privacy-page">
       <header class="privacy-hero">
@@ -20,78 +21,7 @@ import { MainService } from '../../services/main.service';
         </p>
       </header>
 
-      <section class="privacy-section">
-        <h2>Responsable y contacto</h2>
-        <p>
-          Montaño & Reyes Arrazola S.C. es responsable del tratamiento de los datos personales
-          relacionados con sus servicios legales y canales digitales.
-        </p>
-        @if (main?.mail; as mail) {
-        <p>
-          Para ejercer derechos o realizar consultas de privacidad, escribe a
-          <a [href]="'mailto:' + mail">{{ mail }}</a>.
-        </p>
-        }
-      </section>
-
-      <section class="privacy-section">
-        <h2>Datos personales tratados</h2>
-        <ul>
-          <li>Datos de identificación y contacto proporcionados por clientes o interesados.</li>
-          <li>Datos necesarios para prestar, documentar y dar seguimiento a servicios legales.</li>
-          <li>
-            Datos de acceso y actividad del portal Casos, incluyendo permisos, comentarios,
-            archivos aportados por el usuario y acuses de lectura.
-          </li>
-          <li>Datos técnicos mínimos para seguridad, autenticación y operación del sitio.</li>
-        </ul>
-      </section>
-
-      <section class="privacy-section">
-        <h2>Finalidades</h2>
-        <ul>
-          <li>Atender solicitudes de contacto y prestación de servicios legales.</li>
-          <li>Administrar usuarios, permisos y comunicación dentro del portal privado Casos.</li>
-          <li>
-            Enviar comunicaciones transaccionales relacionadas con invitaciones, comentarios,
-            actualizaciones de caso, documentos visibles, estados y seguridad de la cuenta.
-          </li>
-          <li>Cumplir obligaciones legales, contractuales, administrativas y de seguridad.</li>
-        </ul>
-      </section>
-
-      <section class="privacy-section">
-        <h2>Comunicaciones transaccionales</h2>
-        <p>
-          Las notificaciones de Casos se envían únicamente a clientes, abogados, pasantes o
-          personal autorizado dentro de un caso privado. No se usan listas compradas, envíos
-          masivos, boletines ni campañas publicitarias.
-        </p>
-        <p>
-          Los mensajes deben contener resúmenes seguros y enlaces al portal autenticado. Los
-          documentos y detalles confidenciales se consultan dentro del caso con los permisos
-          correspondientes.
-        </p>
-      </section>
-
-      <section class="privacy-section">
-        <h2>Transferencias y encargados</h2>
-        <p>
-          Podemos utilizar proveedores tecnológicos para alojamiento, autenticación, correo
-          transaccional, almacenamiento y seguridad. Estos proveedores deben limitarse a prestar
-          los servicios necesarios para operar el sitio y el portal privado.
-        </p>
-      </section>
-
-      <section class="privacy-section">
-        <h2>Derechos y actualizaciones</h2>
-        <p>
-          Puedes solicitar acceso, rectificación, cancelación u oposición respecto de tus datos
-          personales a través del canal de contacto indicado. Este aviso puede actualizarse cuando
-          cambien los servicios, obligaciones aplicables o controles de seguridad.
-        </p>
-        <a routerLink="/contacto" class="privacy-link">Ver canales de contacto</a>
-      </section>
+      <section class="privacy-content" [innerHTML]="noticeBodyHtml() | safeRichHtml"></section>
     </main>
   `,
   styles: [
@@ -137,40 +67,42 @@ import { MainService } from '../../services/main.service';
         margin: 1rem 0 0;
       }
 
-      .privacy-section {
+      .privacy-content {
         background: rgba(255, 255, 255, 0.76);
         border: 1px solid rgba(41, 48, 59, 0.12);
         margin-top: 1rem;
         padding: clamp(1rem, 3vw, 1.35rem);
       }
 
-      .privacy-section h2 {
+      :host ::ng-deep .privacy-content h2 {
         color: #202631;
         font-size: 1.25rem;
         line-height: 1.2;
-        margin: 0 0 0.9rem;
+        margin: 1.6rem 0 0.9rem;
       }
 
-      .privacy-section p {
+      :host ::ng-deep .privacy-content h2:first-child {
+        margin-top: 0;
+      }
+
+      :host ::ng-deep .privacy-content p {
         margin: 0.75rem 0 0;
       }
 
-      .privacy-section ul {
+      :host ::ng-deep .privacy-content ul {
         display: grid;
         gap: 0.65rem;
-        margin: 0;
+        margin: 0.75rem 0 0;
         padding-left: 1.1rem;
       }
 
-      a,
-      .privacy-link {
+      :host ::ng-deep .privacy-content a {
         color: #1f5eb8;
         font-weight: 700;
         text-decoration: none;
       }
 
-      a:hover,
-      .privacy-link:hover {
+      :host ::ng-deep .privacy-content a:hover {
         color: #4b8ff5;
       }
     `,
@@ -195,6 +127,13 @@ export class PrivacyNoticeComponent implements OnInit {
         this.main = null;
       },
     });
+  }
+
+  noticeBodyHtml(): string {
+    const value = this.main?.pageTexts?.['privacyNoticeBodyHtml'];
+    return typeof value === 'string' && value.trim()
+      ? value
+      : DEFAULT_PRIVACY_NOTICE_BODY_HTML;
   }
 
   private setSeo(): void {

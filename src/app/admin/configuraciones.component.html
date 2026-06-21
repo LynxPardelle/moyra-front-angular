@@ -22,6 +22,17 @@
         }
       </div>
       @for (field of group.fields; track field) {
+      @if (field.richText) {
+      <div class="admin-config-field admin-config-field--rich">
+        <app-rich-text-editor
+          [(value)]="pageTexts[field.key]"
+          [label]="field.label"
+          [help]="field.description"
+          [placeholder]="field.defaultValue"
+          minHeight="360px"
+        ></app-rich-text-editor>
+      </div>
+      } @else {
       <label class="admin-config-field">
         <span class="admin-config-field__label">{{ field.label }}</span>
         <small>{{ field.description }}</small>
@@ -41,6 +52,7 @@
         />
         }
       </label>
+      }
       }
     </section>
     }

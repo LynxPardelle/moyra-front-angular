@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MainService } from '../services/main.service';
 import { AiAssistantPanelComponent } from '../components/web-utility/ai-assistant-panel/ai-assistant-panel.component';
+import { RichTextEditorComponent } from '../components/web-utility/rich-text-editor/rich-text-editor.component';
+import { DEFAULT_PRIVACY_NOTICE_BODY_HTML } from '../utils/privacy-notice-content';
 import Swal from 'sweetalert2';
 
 type ConfigField = {
@@ -10,6 +12,7 @@ type ConfigField = {
   description: string;
   defaultValue: string;
   multiline?: boolean;
+  richText?: boolean;
   section: string;
 };
 
@@ -31,6 +34,8 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   Soluciones: 'Textos del encabezado de la página donde se listan todas las áreas de apoyo legal.',
   Blog: 'Textos del encabezado de la página pública del blog legal.',
   Publicaciones: 'Textos del encabezado de la página pública de publicaciones y recursos.',
+  'Aviso de privacidad':
+    'Contenido legal que aparece en la página pública de aviso de privacidad.',
   'Nosotros - criterios de trabajo':
     'Textos de las tres tarjetas que aparecen debajo de la presentación principal de la página Nosotros.',
 };
@@ -176,6 +181,15 @@ const PAGE_TEXT_FIELDS: ConfigField[] = [
       'Recursos legales y criterios prácticos para apoyar decisiones con certeza jurídica.',
   },
   {
+    section: 'Aviso de privacidad',
+    key: 'privacyNoticeBodyHtml',
+    label: 'Contenido del aviso',
+    description:
+      'Texto enriquecido público de /aviso-de-privacidad. Requiere revisión legal antes de publicar cambios sensibles.',
+    richText: true,
+    defaultValue: DEFAULT_PRIVACY_NOTICE_BODY_HTML,
+  },
+  {
     section: 'Nosotros - criterios de trabajo',
     key: 'wePrinciple1Title',
     label: 'Primera tarjeta - título',
@@ -225,7 +239,7 @@ const PAGE_TEXT_FIELDS: ConfigField[] = [
 
 @Component({
   selector: 'admin-configuraciones',
-  imports: [FormsModule, AiAssistantPanelComponent],
+  imports: [FormsModule, AiAssistantPanelComponent, RichTextEditorComponent],
   templateUrl: './configuraciones.component.html',
   styleUrls: ['./configuraciones.component.scss'],
 })
