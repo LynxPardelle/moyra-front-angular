@@ -43,6 +43,19 @@ export const routes: Routes = [
 
   // Main
   { path: 'we', component: WeComponent },
+  {
+    path: 'contacto',
+    loadComponent: () =>
+      import('./components/legal/contact.component').then((module) => module.ContactComponent),
+  },
+  {
+    path: 'aviso-de-privacidad',
+    loadComponent: () =>
+      import('./components/legal/privacy-notice.component').then(
+        (module) => module.PrivacyNoticeComponent
+      ),
+  },
+  { path: 'privacidad', redirectTo: 'aviso-de-privacidad', pathMatch: 'full' },
 
   // Publication
   { path: 'publications', component: PublicationsComponent },

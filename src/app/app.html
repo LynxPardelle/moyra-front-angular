@@ -29,6 +29,7 @@
     <a href="/we" [routerLink]="['/we']">Nosotros</a>
     <a href="/publications" [routerLink]="['/publications']">Publicaciones</a>
     <a href="/blog" [routerLink]="['/blog']">Blog</a>
+    <a href="/contacto" [routerLink]="['/contacto']">Contacto</a>
     @if (casesFeatureEnabled() && isAuthenticatedUser()) {
     <a href="/casos" [routerLink]="['/casos']">Casos</a>
     <app-notification-bell></app-notification-bell>
@@ -136,6 +137,26 @@
             data-bs-dismiss="offcanvas"
           >
             Blog
+          </a>
+        </li>
+        <li class="text-center my-4 h3">
+          <a
+            class="d-block mx-auto ank ank-text-linkM text-decoration-none"
+            href="/contacto"
+            [routerLink]="['/contacto']"
+            data-bs-dismiss="offcanvas"
+          >
+            Contacto
+          </a>
+        </li>
+        <li class="text-center my-4 h3">
+          <a
+            class="d-block mx-auto ank ank-text-linkM text-decoration-none"
+            href="/aviso-de-privacidad"
+            [routerLink]="['/aviso-de-privacidad']"
+            data-bs-dismiss="offcanvas"
+          >
+            Aviso de privacidad
           </a>
         </li>
         @if (casesFeatureEnabled() && isAuthenticatedUser()) {
@@ -343,4 +364,11 @@
     </svg>
   </a>
   }
+
+  <nav class="site-footer__legal" aria-label="Información legal">
+    <a href="/contacto" [routerLink]="['/contacto']">Contacto</a>
+    <a href="/aviso-de-privacidad" [routerLink]="['/aviso-de-privacidad']">
+      Aviso de privacidad
+    </a>
+  </nav>
 </footer>

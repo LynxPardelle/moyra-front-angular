@@ -1,0 +1,30 @@
+:host .site-footer__legal {
+  align-items: center;
+  display: flex;
+  gap: 0.8rem;
+  margin-left: auto;
+}
+
+:host .site-footer__legal a {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.72rem;
+  font-weight: 750;
+  height: auto;
+  letter-spacing: 0;
+  line-height: 1.2;
+  min-height: 36px;
+  padding: 0.25rem 0.35rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+  width: auto;
+}
+
+:host .site-footer__legal a:hover {
+  color: #ffffff;
+}
+
+@media (max-width: 720px) {
+  :host .site-footer__legal {
+    display: none;
+  }
+}

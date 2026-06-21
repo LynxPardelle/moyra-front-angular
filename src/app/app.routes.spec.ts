@@ -15,6 +15,14 @@ describe('app routes privacy boundaries', () => {
     expect(route('publication/:id')?.canActivate).toBeUndefined();
   });
 
+  it('keeps public legal routes accessible without the private cases guard', () => {
+    expect(route('contacto')?.loadComponent).toEqual(jasmine.any(Function));
+    expect(route('contacto')?.canActivate).toBeUndefined();
+    expect(route('aviso-de-privacidad')?.loadComponent).toEqual(jasmine.any(Function));
+    expect(route('aviso-de-privacidad')?.canActivate).toBeUndefined();
+    expect(route('privacidad')?.redirectTo).toBe('aviso-de-privacidad');
+  });
+
   it('guards every private cases and notifications route with CasesGuard', () => {
     const privatePaths = [
       'casos',
