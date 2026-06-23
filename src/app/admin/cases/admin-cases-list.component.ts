@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import {
+  CaseMalwareProtectionStatus,
   CaseOperationsSummary,
   CaseRecord,
   CaseStatusDefinition,
@@ -59,6 +60,55 @@ type NewCaseForm = {
           <strong>{{ operationsSummary.notifications.webPush['failed'] || 0 }}</strong>
         </div>
       </section>
+
+      @if (malwareProtection) {
+      <section class="admin-cases-protection" aria-label="Protección de archivos de casos">
+        <div class="admin-cases-protection__copy">
+          <p class="admin-cases-protection__eyebrow">GuardDuty para archivos</p>
+          <h2>{{ malwareProtectionTitle() }}</h2>
+          <p>{{ malwareProtection.costNotice }}</p>
+          <p>
+            Estado:
+            <strong>{{ malwareProtectionStatusLabel() }}</strong>
+          </p>
+        </div>
+        <div class="admin-cases-protection__actions">
+          @if (!malwareProtection.infrastructureAvailable) {
+          <p class="admin-cases-protection__note">
+            No disponible en este ambiente.
+          </p>
+          } @else if (malwareProtection.enabled) {
+          <button
+            type="button"
+            class="admin-cases-protection__secondary"
+            [disabled]="malwareProtectionBusy"
+            (click)="disableMalwareProtection()"
+          >
+            Desactivar
+          </button>
+          } @else {
+          <label class="admin-cases-protection__check">
+            <input
+              type="checkbox"
+              [(ngModel)]="malwareProtectionCostAccepted"
+              name="malwareProtectionCostAccepted"
+            />
+            Acepto el costo
+          </label>
+          <button
+            type="button"
+            [disabled]="!malwareProtectionCostAccepted || malwareProtectionBusy"
+            (click)="launchMalwareProtection()"
+          >
+            Lanzar protección
+          </button>
+          }
+          @if (malwareProtectionMessage) {
+          <p class="admin-cases-protection__note">{{ malwareProtectionMessage }}</p>
+          }
+        </div>
+      </section>
+      }
 
       @if (operationsSummary.queues.malwareBlockedFiles.length > 0) {
       <section class="admin-cases-queue">
@@ -168,6 +218,7 @@ type NewCaseForm = {
 
       .admin-cases-page__header,
       .admin-cases-ops,
+      .admin-cases-protection,
       .admin-cases-queue,
       .admin-cases-filters,
       .admin-cases-create {
@@ -194,6 +245,7 @@ type NewCaseForm = {
       .admin-cases-page__empty,
       .admin-cases-page__state,
       .admin-cases-ops,
+      .admin-cases-protection,
       .admin-cases-queue,
       .admin-cases-create,
       .admin-cases-filters {
@@ -229,6 +281,59 @@ type NewCaseForm = {
         border-left-color: #b42318 !important;
       }
 
+      .admin-cases-protection {
+        align-items: flex-start;
+        justify-content: space-between;
+      }
+
+      .admin-cases-protection__copy {
+        min-width: min(100%, 420px);
+        flex: 1 1 420px;
+      }
+
+      .admin-cases-protection__copy h2,
+      .admin-cases-protection__copy p {
+        margin: 0 0 8px;
+      }
+
+      .admin-cases-protection__eyebrow {
+        color: #4b8ff5;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+      }
+
+      .admin-cases-protection__actions {
+        display: flex;
+        flex: 1 1 260px;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: flex-end;
+      }
+
+      .admin-cases-protection__check {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        min-height: 36px;
+      }
+
+      .admin-cases-protection__check input {
+        min-height: auto;
+      }
+
+      .admin-cases-protection__note {
+        flex-basis: 100%;
+        margin: 0;
+        color: rgba(41, 48, 59, 0.72);
+        text-align: right;
+      }
+
+      .admin-cases-protection__secondary {
+        border-color: rgba(41, 48, 59, 0.35);
+        color: #29303b;
+      }
+
       .admin-cases-queue {
         display: block;
       }
@@ -260,6 +365,12 @@ type NewCaseForm = {
         text-decoration: none;
       }
 
+      button:disabled {
+        border-color: rgba(41, 48, 59, 0.22);
+        color: rgba(41, 48, 59, 0.45);
+        cursor: not-allowed;
+      }
+
       .admin-cases-table-wrap {
         overflow-x: auto;
       }
@@ -277,6 +388,16 @@ type NewCaseForm = {
         text-align: left;
         vertical-align: top;
       }
+
+      @media (max-width: 720px) {
+        .admin-cases-protection__actions {
+          justify-content: flex-start;
+        }
+
+        .admin-cases-protection__note {
+          text-align: left;
+        }
+      }
     `,
   ],
 })
@@ -284,6 +405,10 @@ export class AdminCasesListComponent implements OnInit {
   cases: CaseRecord[] = [];
   caseTypes: CaseType[] = [];
   operationsSummary: CaseOperationsSummary | null = null;
+  malwareProtection: CaseMalwareProtectionStatus | null = null;
+  malwareProtectionBusy = false;
+  malwareProtectionCostAccepted = false;
+  malwareProtectionMessage = '';
   loading = true;
   errorMessage = '';
   statusFilter = '';
@@ -309,11 +434,14 @@ export class AdminCasesListComponent implements OnInit {
       cases: this._caseService.listCases(),
       caseTypes: this._caseService.listCaseTypes(),
       operations: this._caseService.getOperationsSummary(),
+      malwareProtection: this._caseService.getMalwareProtectionStatus(),
     }).subscribe({
-      next: ({ cases, caseTypes, operations }) => {
+      next: ({ cases, caseTypes, operations, malwareProtection }) => {
         this.cases = cases.items || [];
         this.caseTypes = caseTypes.items || [];
         this.operationsSummary = operations.item;
+        this.malwareProtection = malwareProtection.item;
+        this.malwareProtectionCostAccepted = false;
         this.loading = false;
       },
       error: () => {
@@ -360,6 +488,47 @@ export class AdminCasesListComponent implements OnInit {
     );
   }
 
+  launchMalwareProtection(): void {
+    if (!this.malwareProtectionCostAccepted || this.malwareProtectionBusy) {
+      return;
+    }
+    this.malwareProtectionBusy = true;
+    this.malwareProtectionMessage = '';
+    this._caseService.launchMalwareProtection().subscribe({
+      next: (response) => {
+        this.malwareProtection = response.item;
+        this.malwareProtectionCostAccepted = false;
+        this.malwareProtectionBusy = false;
+        this.malwareProtectionMessage = 'Protección lanzada para nuevos archivos.';
+        this.load();
+      },
+      error: () => {
+        this.malwareProtectionBusy = false;
+        this.malwareProtectionMessage = 'No se pudo lanzar GuardDuty.';
+      },
+    });
+  }
+
+  disableMalwareProtection(): void {
+    if (this.malwareProtectionBusy) {
+      return;
+    }
+    this.malwareProtectionBusy = true;
+    this.malwareProtectionMessage = '';
+    this._caseService.disableMalwareProtection().subscribe({
+      next: (response) => {
+        this.malwareProtection = response.item;
+        this.malwareProtectionBusy = false;
+        this.malwareProtectionMessage = 'Protección desactivada para nuevos archivos.';
+        this.load();
+      },
+      error: () => {
+        this.malwareProtectionBusy = false;
+        this.malwareProtectionMessage = 'No se pudo desactivar GuardDuty.';
+      },
+    });
+  }
+
   allStatuses(): CaseStatusDefinition[] {
     return this.caseTypes.flatMap((caseType) => caseType.statuses || []);
   }
@@ -387,5 +556,28 @@ export class AdminCasesListComponent implements OnInit {
       clean: 'Limpio',
       not_required: 'Sin escaneo',
     }[status] || status || 'Sin estado';
+  }
+
+  malwareProtectionTitle(): string {
+    if (!this.malwareProtection?.infrastructureAvailable) {
+      return 'Protección no disponible';
+    }
+    return this.malwareProtection.enabled ? 'Protección activa' : 'Protección opcional';
+  }
+
+  malwareProtectionStatusLabel(): string {
+    if (!this.malwareProtection) {
+      return 'Sin estado';
+    }
+    if (!this.malwareProtection.infrastructureAvailable) {
+      return 'No disponible';
+    }
+    if (this.malwareProtection.enabled) {
+      return 'Activo';
+    }
+    if (this.malwareProtection.status === 'pending_infrastructure') {
+      return 'Pendiente de infraestructura';
+    }
+    return 'Apagado';
   }
 }

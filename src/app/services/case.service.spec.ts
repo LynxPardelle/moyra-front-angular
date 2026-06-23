@@ -108,6 +108,63 @@ describe('CaseService', () => {
     });
   });
 
+  it('loads and launches GuardDuty malware protection with explicit cost acknowledgement', () => {
+    service.getMalwareProtectionStatus().subscribe((response) => {
+      expect(response.item.enabled).toBe(false);
+      expect(response.item.costNotice).toContain('USD 0.09');
+    });
+
+    const statusReq = http.expectOne(apiUrl('/case-operations/malware-protection'));
+    expect(statusReq.request.method).toBe('GET');
+    expect(statusReq.request.headers.get('Authorization')).toBe(storeToken);
+    statusReq.flush({
+      status: 'success',
+      item: {
+        id: 'case-settings:malware-protection',
+        provider: 'guardduty_s3',
+        status: 'disabled',
+        enabled: false,
+        infrastructureAvailable: true,
+        costNotice: 'GuardDuty cuesta USD 0.09 por GB escaneado.',
+        pricing: {
+          provider: 'guardduty_s3',
+          region: 'us-east-1',
+          freeTierObjectsPerMonth: 1000,
+          freeTierScannedGbPerMonth: 1,
+          scannedGbUsd: 0.09,
+          objectsEvaluatedUsdPerThousand: 0.215,
+        },
+      },
+    });
+
+    service.launchMalwareProtection().subscribe((response) => {
+      expect(response.item.enabled).toBe(true);
+    });
+
+    const launchReq = http.expectOne(apiUrl('/case-operations/malware-protection/launch'));
+    expect(launchReq.request.method).toBe('POST');
+    expect(launchReq.request.body).toEqual({ costAcknowledged: true });
+    launchReq.flush({
+      status: 'success',
+      item: {
+        id: 'case-settings:malware-protection',
+        provider: 'guardduty_s3',
+        status: 'enabled',
+        enabled: true,
+        infrastructureAvailable: true,
+        costNotice: 'GuardDuty cuesta USD 0.09 por GB escaneado.',
+        pricing: {
+          provider: 'guardduty_s3',
+          region: 'us-east-1',
+          freeTierObjectsPerMonth: 1000,
+          freeTierScannedGbPerMonth: 1,
+          scannedGbUsd: 0.09,
+          objectsEvaluatedUsdPerThousand: 0.215,
+        },
+      },
+    });
+  });
+
   it('creates private case entries without forwarding public SEO fields', () => {
     service
       .createEntry('case-1', {

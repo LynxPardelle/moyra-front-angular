@@ -21,11 +21,12 @@
 ## Activation Order
 
 1. Confirm GuardDuty Malware Protection for S3 is deployed for the uploads bucket prefix `cases/` with tagging enabled.
-2. Upload a test case document in test.
-3. Confirm the object receives `GuardDutyMalwareScanStatus=NO_THREATS_FOUND`.
-4. Set `CASE_UPLOAD_MALWARE_SCANNING_ENABLED=true` in test.
-5. Verify pending/threat statuses block download and clean status allows download.
-6. Repeat only then for production.
+2. Set `CASE_UPLOAD_MALWARE_SCANNING_ENABLED=true` only in the intended environment so the product can detect GuardDuty availability.
+3. Open `/admin/casos` as the Moyra admin/attorney, review the GuardDuty cost notice, check `Acepto el costo`, and click `Lanzar protección`.
+4. Upload a test case document in test.
+5. Confirm the object receives `GuardDutyMalwareScanStatus=NO_THREATS_FOUND`.
+6. Verify pending/threat statuses block download and clean status allows download.
+7. Review Cost Explorer/GuardDuty usage, then repeat only after approval for production.
 
 ## Web Push
 

@@ -192,6 +192,33 @@ export type CaseOperationsSummary = {
   >>;
 };
 
+export type CaseMalwareProtectionPricing = {
+  provider: string;
+  region: string;
+  freeTierObjectsPerMonth: number;
+  freeTierScannedGbPerMonth: number;
+  scannedGbUsd: number;
+  objectsEvaluatedUsdPerThousand: number;
+  additionalCharges?: string[];
+  source?: string;
+};
+
+export type CaseMalwareProtectionStatus = {
+  id: string;
+  provider: 'guardduty_s3' | string;
+  status: 'disabled' | 'enabled' | 'pending_infrastructure' | string;
+  enabled: boolean;
+  infrastructureAvailable: boolean;
+  costNotice: string;
+  pricing: CaseMalwareProtectionPricing;
+  launchedAt?: string;
+  launchedByUserId?: string;
+  launchedByEmail?: string;
+  disabledAt?: string;
+  disabledByUserId?: string;
+  updatedAt?: string;
+};
+
 export type CaseOperationsFileQueueItem = Pick<
   CaseFile,
   | 'id'

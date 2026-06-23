@@ -4,13 +4,16 @@ import { of, throwError } from 'rxjs';
 
 import { AdminCasesListComponent } from './admin-cases-list.component';
 import { CaseService } from '../../services/case.service';
-import { CaseRecord, CaseType } from '../../models/case';
+import { CaseMalwareProtectionStatus, CaseRecord, CaseType } from '../../models/case';
 
 describe('AdminCasesListComponent', () => {
   let fixture: ComponentFixture<AdminCasesListComponent>;
   let cases: CaseRecord[];
   let caseTypes: CaseType[];
+  let malwareProtection: CaseMalwareProtectionStatus;
   let createCaseSpy: jasmine.Spy;
+  let launchMalwareProtectionSpy: jasmine.Spy;
+  let disableMalwareProtectionSpy: jasmine.Spy;
   let listCasesFails: boolean;
 
   beforeEach(async () => {
@@ -50,9 +53,42 @@ describe('AdminCasesListComponent', () => {
         statuses: [{ id: 'draft', name: 'Borrador' }],
       },
     ];
+    malwareProtection = {
+      id: 'case-settings:malware-protection',
+      provider: 'guardduty_s3',
+      status: 'disabled',
+      enabled: false,
+      infrastructureAvailable: true,
+      costNotice:
+        'GuardDuty puede generar costo: 1,000 objetos y 1 GB al mes sin cargo; después USD 0.09 por GB.',
+      pricing: {
+        provider: 'guardduty_s3',
+        region: 'us-east-1',
+        freeTierObjectsPerMonth: 1000,
+        freeTierScannedGbPerMonth: 1,
+        scannedGbUsd: 0.09,
+        objectsEvaluatedUsdPerThousand: 0.215,
+      },
+    };
     createCaseSpy = jasmine
       .createSpy('createCase')
       .and.returnValue(of({ status: 'success', item: cases[0] }));
+    launchMalwareProtectionSpy = jasmine
+      .createSpy('launchMalwareProtection')
+      .and.returnValue(
+        of({
+          status: 'success',
+          item: { ...malwareProtection, enabled: true, status: 'enabled' },
+        })
+      );
+    disableMalwareProtectionSpy = jasmine
+      .createSpy('disableMalwareProtection')
+      .and.returnValue(
+        of({
+          status: 'success',
+          item: { ...malwareProtection, enabled: false, status: 'disabled' },
+        })
+      );
     listCasesFails = false;
 
     await TestBed.configureTestingModule({
@@ -103,7 +139,14 @@ describe('AdminCasesListComponent', () => {
                   recentAuditEvents: [],
                 },
               }),
+            getMalwareProtectionStatus: () =>
+              of({
+                status: 'success',
+                item: malwareProtection,
+              }),
             createCase: createCaseSpy,
+            launchMalwareProtection: launchMalwareProtectionSpy,
+            disableMalwareProtection: disableMalwareProtectionSpy,
           },
         },
       ],
@@ -122,6 +165,8 @@ describe('AdminCasesListComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Litigio civil');
     expect(fixture.nativeElement.textContent).toContain('Escaneo pendiente');
     expect(fixture.nativeElement.textContent).toContain('riesgo.zip');
+    expect(fixture.nativeElement.textContent).toContain('Protección opcional');
+    expect(fixture.nativeElement.textContent).toContain('USD 0.09');
 
     fixture.componentInstance.statusFilter = 'review';
     fixture.componentInstance.caseTypeFilter = 'corporate';
@@ -159,5 +204,17 @@ describe('AdminCasesListComponent', () => {
       statusId: 'draft',
       description: 'Alta inicial',
     });
+  });
+
+  it('launches GuardDuty only after cost acknowledgement', () => {
+    render();
+
+    fixture.componentInstance.launchMalwareProtection();
+    expect(launchMalwareProtectionSpy).not.toHaveBeenCalled();
+
+    fixture.componentInstance.malwareProtectionCostAccepted = true;
+    fixture.componentInstance.launchMalwareProtection();
+
+    expect(launchMalwareProtectionSpy).toHaveBeenCalled();
   });
 });

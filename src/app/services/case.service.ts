@@ -14,6 +14,7 @@ import {
   CaseItemResponse,
   CaseListResponse,
   CaseMembership,
+  CaseMalwareProtectionStatus,
   CaseNotification,
   CaseNotificationPreferences,
   CaseOperationsSummary,
@@ -84,6 +85,29 @@ export class CaseService {
   getOperationsSummary(): Observable<CaseItemResponse<CaseOperationsSummary>> {
     return this._http.get<CaseItemResponse<CaseOperationsSummary>>(
       apiUrl('/case-operations/summary'),
+      { headers: this.authHeaders() }
+    );
+  }
+
+  getMalwareProtectionStatus(): Observable<CaseItemResponse<CaseMalwareProtectionStatus>> {
+    return this._http.get<CaseItemResponse<CaseMalwareProtectionStatus>>(
+      apiUrl('/case-operations/malware-protection'),
+      { headers: this.authHeaders() }
+    );
+  }
+
+  launchMalwareProtection(): Observable<CaseItemResponse<CaseMalwareProtectionStatus>> {
+    return this._http.post<CaseItemResponse<CaseMalwareProtectionStatus>>(
+      apiUrl('/case-operations/malware-protection/launch'),
+      { costAcknowledged: true },
+      { headers: this.authHeaders() }
+    );
+  }
+
+  disableMalwareProtection(): Observable<CaseItemResponse<CaseMalwareProtectionStatus>> {
+    return this._http.post<CaseItemResponse<CaseMalwareProtectionStatus>>(
+      apiUrl('/case-operations/malware-protection/disable'),
+      {},
       { headers: this.authHeaders() }
     );
   }

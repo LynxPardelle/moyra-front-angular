@@ -13,7 +13,7 @@
 - `CASES_FEATURE_ENABLED` is enabled only in the intended environment.
 - `CASE_EMAIL_NOTIFICATIONS_ENABLED` stays disabled until the SES identity, sender, and DNS plan are confirmed.
 - `CASE_WEB_PUSH_ENABLED` stays disabled until VAPID public config, backend subject, and `CASE_WEB_PUSH_PRIVATE_KEY_SECRET_ARN` are configured and tested.
-- `CASE_UPLOAD_MALWARE_SCANNING_ENABLED` stays disabled until the GuardDuty Malware Protection plan for `cases/` exists and S3 tags are verified.
+- `CASE_UPLOAD_MALWARE_SCANNING_ENABLED` stays disabled until the GuardDuty Malware Protection plan for `cases/` exists. After it is enabled, the attorney/admin still must launch it from `/admin/casos` after accepting the cost notice before new case uploads require scan tags.
 - Hugo/Alec approve controlled test release before production promotion.
 
 ## Feature Flags
@@ -22,7 +22,7 @@ Backend flags:
 
 - `CASES_FEATURE_ENABLED`: master server-side gate for private case routes.
 - `CASE_CLIENT_UPLOADS_ENABLED`: enables client document upload workflow.
-- `CASE_UPLOAD_MALWARE_SCANNING_ENABLED`: enforces GuardDuty S3 object-tag checks before case-file download or external visibility approval.
+- `CASE_UPLOAD_MALWARE_SCANNING_ENABLED`: makes GuardDuty S3 object-tag checks available for case files. Enforcement starts only after a Moyra admin/attorney accepts the visible cost notice and launches protection from `/admin/casos`.
 - `CASE_INVITES_ENABLED`: enables case-scoped email invitations.
 - `CASE_EMAIL_NOTIFICATIONS_ENABLED`: enables SES delivery for safe case summaries.
 - `CASE_EMAIL_FROM`, `CASE_EMAIL_REPLY_TO`, `CASE_EMAIL_IDENTITY_ARN`: SES sender and scoped identity settings; keep unset unless email delivery is enabled.
@@ -231,7 +231,8 @@ Malware scanning:
 - The API expects the S3 object tag `GuardDutyMalwareScanStatus`.
 - Only `NO_THREATS_FOUND` maps to a downloadable/approvable file.
 - `THREATS_FOUND`, `UNSUPPORTED`, `ACCESS_DENIED`, `FAILED`, missing tags, or tag-read errors block downloads.
-- Do not enable `CASE_UPLOAD_MALWARE_SCANNING_ENABLED=true` until a test upload receives the expected GuardDuty tag.
+- Do not turn on the app-level launch in `/admin/casos` until `CASE_UPLOAD_MALWARE_SCANNING_ENABLED=true` is deployed in test and the attorney/admin accepts the displayed cost.
+- After launch, verify a test upload receives the expected GuardDuty tag before production.
 
 ## Rollback
 
