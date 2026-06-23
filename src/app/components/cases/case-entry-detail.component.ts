@@ -38,7 +38,7 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
       .case-entry-page {
         width: min(1120px, calc(100vw - 32px));
         margin: 0 auto;
-        padding: 24px 0;
+        padding: 24px 0 calc(var(--site-footer-offset, 76px) + 24px);
         color: #29303b;
       }
 
@@ -58,6 +58,12 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
         margin-top: 12px;
         padding: 16px;
         background: #ffffff;
+      }
+
+      .case-entry-page h1,
+      .case-entry-page__panel,
+      .case-entry-page__reference {
+        overflow-wrap: anywhere;
       }
     `,
   ],

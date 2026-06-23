@@ -63,6 +63,7 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
                   <textarea
                     [id]="commentControlId(entry.id)"
                     [name]="'comment-' + entry.id"
+                    [attr.name]="'comment-' + entry.id"
                     [(ngModel)]="commentDrafts[entry.id]"
                     [disabled]="!canComment() || commentBusyEntryId === entry.id"
                     placeholder="Escribe un comentario"

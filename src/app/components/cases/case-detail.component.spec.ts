@@ -230,6 +230,7 @@ describe('CaseDetailComponent', () => {
     const entryTitle = compiled.querySelector('.case-entry__title') as HTMLAnchorElement | null;
 
     expect(commentTextarea?.id).toBe('case-comment-entry-1');
+    expect(commentTextarea?.getAttribute('name')).toBe('comment-entry-1');
     expect(commentLabel?.textContent).toContain('Escribe un comentario');
     expect(entryTitle?.textContent).toContain('Actualización visible');
   });
