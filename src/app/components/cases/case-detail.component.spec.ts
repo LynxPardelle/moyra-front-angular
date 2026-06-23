@@ -219,6 +219,21 @@ describe('CaseDetailComponent', () => {
     expect(compiled.querySelector('a[href*="/publication"]')).toBeNull();
   });
 
+  it('labels comment inputs and keeps long entry titles as wrapping text links', () => {
+    render();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const commentTextarea = compiled.querySelector('textarea') as HTMLTextAreaElement | null;
+    const commentLabel = compiled.querySelector(
+      `label[for="${commentTextarea?.id}"]`
+    ) as HTMLLabelElement | null;
+    const entryTitle = compiled.querySelector('.case-entry__title') as HTMLAnchorElement | null;
+
+    expect(commentTextarea?.id).toBe('case-comment-entry-1');
+    expect(commentLabel?.textContent).toContain('Escribe un comentario');
+    expect(entryTitle?.textContent).toContain('Actualización visible');
+  });
+
   it('submits a client comment and appends the successful API response', () => {
     render();
 

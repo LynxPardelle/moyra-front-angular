@@ -46,7 +46,9 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
             <p>Aún no hay actualizaciones visibles para este caso.</p>
             } @for (entry of entries; track entry.id) {
             <article class="case-entry">
-              <a [routerLink]="['/casos', caseId, 'entrada', entry.id]">{{ entry.title }}</a>
+              <a class="case-entry__title" [routerLink]="['/casos', caseId, 'entrada', entry.id]">
+                {{ entry.title }}
+              </a>
               <div class="case-entry__body" [innerHTML]="entry.text | safeRichHtml"></div>
 
               <section class="case-comments">
@@ -55,7 +57,11 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
                 <p class="case-comment">{{ comment.text }}</p>
                 }
                 <form (ngSubmit)="submitComment(entry.id)">
+                  <label class="case-comments__label" [for]="commentControlId(entry.id)">
+                    Escribe un comentario
+                  </label>
                   <textarea
+                    [id]="commentControlId(entry.id)"
                     [name]="'comment-' + entry.id"
                     [(ngModel)]="commentDrafts[entry.id]"
                     [disabled]="!canComment() || commentBusyEntryId === entry.id"
@@ -146,6 +152,19 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
         margin: 12px 0 16px;
       }
 
+      .case-detail-page__header > div {
+        min-width: 0;
+      }
+
+      .case-detail-page h1,
+      .case-detail-page__reference,
+      .case-entry__title,
+      .case-entry__body,
+      .case-comment,
+      .case-file strong {
+        overflow-wrap: anywhere;
+      }
+
       .case-detail-page__reference {
         margin: 0;
         color: #4b8ff5;
@@ -164,7 +183,6 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
         margin-top: 12px;
       }
 
-      .case-entry a,
       .case-detail-page__header a,
       .case-file a,
       button {
@@ -173,6 +191,25 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
         background: #ffffff;
         text-decoration: none;
         padding: 8px 12px;
+      }
+
+      .case-entry__title {
+        display: block;
+        color: #4b8ff5;
+        line-height: 1.45;
+        margin-bottom: 10px;
+        text-decoration: none;
+      }
+
+      .case-entry__title:hover,
+      .case-entry__title:focus-visible {
+        text-decoration: underline;
+      }
+
+      .case-comments__label {
+        display: block;
+        font-size: 0.9rem;
+        margin-bottom: 6px;
       }
 
       textarea,
@@ -298,6 +335,10 @@ export class CaseDetailComponent implements OnInit {
 
   canUpload(): boolean {
     return this.hasPermission('case.upload_file');
+  }
+
+  commentControlId(entryId: string): string {
+    return `case-comment-${entryId.replace(/[^A-Za-z0-9_-]/g, '-')}`;
   }
 
   submitComment(entryId: string): void {
