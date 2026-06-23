@@ -71,6 +71,43 @@ describe('CaseService', () => {
     });
   });
 
+  it('loads the admin cases operations summary from the private API', () => {
+    service.getOperationsSummary().subscribe((response) => {
+      expect(response.item.files.malwareScanBlocked).toBe(1);
+      expect(response.item.notifications.webPush['failed']).toBe(2);
+    });
+
+    const req = http.expectOne(apiUrl('/case-operations/summary'));
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.get('Authorization')).toBe(storeToken);
+    req.flush({
+      status: 'success',
+      item: {
+        generatedAt: '2026-06-18T20:00:00.000Z',
+        cases: { total: 2, active: 1, archived: 1 },
+        files: {
+          total: 3,
+          pendingUpload: 0,
+          pendingExternalReview: 1,
+          malwareScanPending: 1,
+          malwareScanBlocked: 1,
+        },
+        notifications: {
+          total: 2,
+          email: { skipped: 2 },
+          webPush: { failed: 2 },
+        },
+        queues: {
+          staleUploads: [],
+          pendingExternalFiles: [],
+          malwareBlockedFiles: [],
+          pendingInvites: [],
+        },
+        recentAuditEvents: [],
+      },
+    });
+  });
+
   it('creates private case entries without forwarding public SEO fields', () => {
     service
       .createEntry('case-1', {

@@ -6,5 +6,6 @@ export const environment = {
   casesFeatureEnabled: false,
   caseFeatureEnabledHosts: ['test.moyra.org', 'moyra.org'],
   caseServiceWorkerEnabled: false,
+  caseServiceWorkerEnabledHosts: ['test.moyra.org'],
   caseWebPushPublicKey: '',
 };

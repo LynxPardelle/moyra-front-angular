@@ -12,10 +12,12 @@ describe('CaseDetailComponent', () => {
   let uploadCaseFileSpy: jasmine.Spy;
   let permissions: string[];
   let uploadFails: boolean;
+  let identity: { id: string; email: string };
 
   beforeEach(async () => {
     permissions = ['case.read', 'case.comment', 'case.upload_file', 'case.download_file'];
     uploadFails = false;
+    identity = { id: 'client-1', email: 'cliente@moyra.org' };
     createCommentSpy = jasmine.createSpy('createComment').and.returnValue(
       of({
         status: 'success',
@@ -62,7 +64,7 @@ describe('CaseDetailComponent', () => {
         {
           provide: AuthFacade,
           useValue: {
-            identity: () => ({ id: 'client-1', email: 'cliente@moyra.org' }),
+            identity: () => identity,
           },
         },
         {
@@ -146,6 +148,17 @@ describe('CaseDetailComponent', () => {
                     visibility: { mode: 'case_members' },
                   },
                   {
+                    id: 'file-scan-pending',
+                    caseId: 'case-1',
+                    fileName: 'escaneo-pendiente.zip',
+                    contentType: 'application/zip',
+                    externalVisibilityStatus: 'pending',
+                    uploadStatus: 'uploaded',
+                    uploadedByUserId: 'client-1',
+                    malwareScan: { required: true, status: 'pending' },
+                    visibility: { mode: 'case_members' },
+                  },
+                  {
                     id: 'file-other-pending',
                     caseId: 'case-1',
                     fileName: 'pendiente-otro.pdf',
@@ -200,8 +213,11 @@ describe('CaseDetailComponent', () => {
     expect(text).not.toContain('Comentario interno');
     expect(text).toContain('aprobado.pdf');
     expect(text).toContain('mi-envio.pdf');
+    expect(text).toContain('escaneo-pendiente.zip');
+    expect(text).toContain('Revisión de seguridad pendiente');
     expect(text).toContain('En revisión interna');
     expect(text).not.toContain('pendiente-otro.pdf');
+    expect(compiled.querySelector('a[href*="file-scan-pending"]')).toBeNull();
     expect(compiled.querySelector('a[href*="/publication"]')).toBeNull();
   });
 
@@ -227,6 +243,17 @@ describe('CaseDetailComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Los comentarios no están habilitados');
     expect(fixture.nativeElement.textContent).toContain('La carga de documentos no está habilitada');
     expect(fixture.nativeElement.querySelector('[data-testid="case-comment-submit"]')?.disabled).toBeTrue();
+  });
+
+  it('fails closed when the authenticated user has no loaded case membership', () => {
+    identity = { id: 'client-missing', email: 'missing@moyra.org' };
+
+    render();
+
+    expect(fixture.componentInstance.canComment()).toBeFalse();
+    expect(fixture.componentInstance.canUpload()).toBeFalse();
+    expect(fixture.nativeElement.textContent).toContain('Los comentarios no están habilitados');
+    expect(fixture.nativeElement.textContent).toContain('La carga de documentos no está habilitada');
   });
 
   it('uploads a selected document and keeps it in internal review state', () => {

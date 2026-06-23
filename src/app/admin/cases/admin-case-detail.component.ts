@@ -69,7 +69,7 @@ import { CaseService } from '../../services/case.service';
               <option value="client">Cliente</option>
               <option value="attorney">Abogado</option>
               <option value="pasante">Pasante</option>
-              <option value="observer">Observador</option>
+              <option value="external_observer">Observador</option>
             </select>
             <button type="submit">Invitar</button>
           </form>
@@ -87,8 +87,13 @@ import { CaseService } from '../../services/case.service';
             <article class="admin-case-file">
               <strong>{{ file.fileName }}</strong>
               <span>{{ file.externalVisibilityStatus }}</span>
+              <span>{{ malwareScanLabel(file) }}</span>
+              @if (canDownloadFile(file)) {
               <a [href]="downloadUrl(file.id)">Descargar</a>
-              <button type="button" (click)="approveFile(file.id)">Aprobar visibilidad</button>
+              }
+              <button type="button" (click)="approveFile(file.id)" [disabled]="!canApproveFile(file)">
+                Aprobar visibilidad
+              </button>
             </article>
             }
           </div>
@@ -282,6 +287,28 @@ export class AdminCaseDetailComponent implements OnInit {
 
   statusLabel(status: CaseStatusDefinition): string {
     return caseStatusLabel(status);
+  }
+
+  canApproveFile(file: CaseFile): boolean {
+    return !file.malwareScan?.required || file.malwareScan.status === 'clean';
+  }
+
+  canDownloadFile(file: CaseFile): boolean {
+    return !file.malwareScan?.required || file.malwareScan.status === 'clean';
+  }
+
+  malwareScanLabel(file: CaseFile): string {
+    if (!file.malwareScan?.required) {
+      return 'Seguridad: sin escaneo';
+    }
+    return {
+      pending: 'Seguridad: pendiente',
+      clean: 'Seguridad: limpio',
+      blocked: 'Seguridad: bloqueado',
+      failed: 'Seguridad: fallido',
+      unsupported: 'Seguridad: no soportado',
+      access_denied: 'Seguridad: sin acceso',
+    }[file.malwareScan.status || 'pending'] || `Seguridad: ${file.malwareScan.status}`;
   }
 
   downloadUrl(fileId: string): string {

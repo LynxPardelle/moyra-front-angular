@@ -103,7 +103,7 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
               <article class="case-file">
                 <strong>{{ file.fileName }}</strong>
                 <span>{{ fileReviewLabel(file) }}</span>
-                @if (file.externalVisibilityStatus === 'approved') {
+                @if (canDownloadFile(file)) {
                 <a [href]="downloadUrl(file.id)">Descargar</a>
                 }
               </article>
@@ -364,9 +364,25 @@ export class CaseDetailComponent implements OnInit {
   }
 
   fileReviewLabel(file: CaseFile): string {
+    if (file.malwareScan?.required && file.malwareScan.status !== 'clean') {
+      return {
+        pending: 'Revisión de seguridad pendiente',
+        blocked: 'Bloqueado por seguridad',
+        failed: 'Revisión de seguridad fallida',
+        unsupported: 'Tipo no soportado para escaneo',
+        access_denied: 'Escaneo sin acceso al archivo',
+      }[file.malwareScan.status || 'pending'] || 'Revisión de seguridad pendiente';
+    }
     return file.externalVisibilityStatus === 'approved'
       ? 'Visible para el cliente'
       : 'En revisión interna';
+  }
+
+  canDownloadFile(file: CaseFile): boolean {
+    if (file.malwareScan?.required && file.malwareScan.status !== 'clean') {
+      return false;
+    }
+    return file.externalVisibilityStatus === 'approved' || this.isOwnFile(file);
   }
 
   downloadUrl(fileId: string): string {
@@ -379,6 +395,9 @@ export class CaseDetailComponent implements OnInit {
     if (this.isOwnFile(file)) {
       return true;
     }
+    if (file.malwareScan?.required && file.malwareScan.status !== 'clean') {
+      return false;
+    }
     return (
       file.externalVisibilityStatus === 'approved' && isVisibleToCaseClient(file.visibility)
     );
@@ -387,7 +406,7 @@ export class CaseDetailComponent implements OnInit {
   private hasPermission(permission: string): boolean {
     const membership = this.currentMembership();
     if (!membership) {
-      return true;
+      return false;
     }
     return membership.permissions?.includes(permission) === true;
   }

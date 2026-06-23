@@ -28,7 +28,13 @@ export type CaseVisibilityObject = {
 
 export type CaseVisibility = CaseVisibilityObject | CaseVisibilityMode;
 
-export type CaseRolePreset = 'attorney' | 'pasante' | 'client' | 'observer' | string;
+export type CaseRolePreset =
+  | 'attorney'
+  | 'pasante'
+  | 'client'
+  | 'external_observer'
+  | 'observer'
+  | string;
 
 export type CaseMemberType = 'internal' | 'external' | string;
 
@@ -131,10 +137,81 @@ export type CaseFile = {
   uploaderUserId?: string;
   uploadedAt?: string;
   uploadStatus?: 'pending' | 'pending_upload' | 'uploaded' | string;
+  malwareScan?: CaseFileMalwareScan;
   externalVisibilityStatus: CaseExternalVisibilityStatus;
   visibility: CaseVisibility;
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type CaseFileMalwareScan = {
+  required?: boolean;
+  provider?: 'guardduty_s3' | 'none' | string;
+  status?:
+    | 'not_required'
+    | 'pending'
+    | 'clean'
+    | 'blocked'
+    | 'unsupported'
+    | 'access_denied'
+    | 'failed'
+    | string;
+  result?: string;
+  reason?: string;
+  checkedAt?: string;
+};
+
+export type CaseOperationsSummary = {
+  generatedAt: string;
+  cases: {
+    total: number;
+    active: number;
+    archived: number;
+  };
+  files: {
+    total: number;
+    pendingUpload: number;
+    pendingExternalReview: number;
+    malwareScanPending: number;
+    malwareScanBlocked: number;
+  };
+  notifications: {
+    total: number;
+    email: Record<string, number>;
+    webPush: Record<string, number>;
+  };
+  queues: {
+    staleUploads: CaseOperationsFileQueueItem[];
+    pendingExternalFiles: CaseOperationsFileQueueItem[];
+    malwareBlockedFiles: CaseOperationsFileQueueItem[];
+    pendingInvites: CaseOperationsInviteQueueItem[];
+  };
+  recentAuditEvents: Array<Pick<
+    CaseAuditEvent,
+    'id' | 'caseId' | 'actorUserId' | 'action' | 'targetType' | 'targetId' | 'createdAt'
+  >>;
+};
+
+export type CaseOperationsFileQueueItem = Pick<
+  CaseFile,
+  | 'id'
+  | 'caseId'
+  | 'fileName'
+  | 'uploadStatus'
+  | 'externalVisibilityStatus'
+  | 'malwareScan'
+  | 'createdAt'
+  | 'updatedAt'
+>;
+
+export type CaseOperationsInviteQueueItem = {
+  id: string;
+  caseId: string;
+  email?: string;
+  displayName?: string;
+  rolePreset?: string;
+  status?: string;
+  createdAt?: string;
 };
 
 export type CaseNotification = {
@@ -162,8 +239,11 @@ export type CaseNotification = {
       failedAt?: string;
     };
     webPush: {
-      status: 'skipped' | 'queued' | 'sent' | 'failed';
+      status: 'skipped' | 'pending' | 'queued' | 'sent' | 'partial' | 'failed';
       reason?: string;
+      sentCount?: number;
+      failedCount?: number;
+      expiredCount?: number;
     };
   };
   dedupeKey?: string;

@@ -34,7 +34,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
-    ...(environment.caseServiceWorkerEnabled
+    ...(caseServiceWorkerRuntimeEnabled()
       ? [
           provideServiceWorker('ngsw-worker.js', {
             enabled: environment.production,
@@ -72,3 +72,14 @@ export const appConfig: ApplicationConfig = {
     WebService,
   ],
 };
+
+function caseServiceWorkerRuntimeEnabled(): boolean {
+  if (!environment.caseServiceWorkerEnabled) {
+    return false;
+  }
+  const allowedHosts = (environment.caseServiceWorkerEnabledHosts || []) as readonly string[];
+  if (allowedHosts.length === 0 || typeof window === 'undefined') {
+    return true;
+  }
+  return allowedHosts.includes(window.location.hostname);
+}

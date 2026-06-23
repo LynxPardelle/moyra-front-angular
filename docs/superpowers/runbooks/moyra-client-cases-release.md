@@ -12,8 +12,8 @@
 - Public Publications routes and public aggregate APIs have been smoke-tested.
 - `CASES_FEATURE_ENABLED` is enabled only in the intended environment.
 - `CASE_EMAIL_NOTIFICATIONS_ENABLED` stays disabled until the SES identity, sender, and DNS plan are confirmed.
-- `CASE_WEB_PUSH_ENABLED` stays disabled until VAPID private-key storage and runtime configuration are finished.
-- Client file-upload rollout acknowledges that malware scanning is not implemented in this MVP.
+- `CASE_WEB_PUSH_ENABLED` stays disabled until VAPID public config, backend subject, and `CASE_WEB_PUSH_PRIVATE_KEY_SECRET_ARN` are configured and tested.
+- `CASE_UPLOAD_MALWARE_SCANNING_ENABLED` stays disabled until the GuardDuty Malware Protection plan for `cases/` exists and S3 tags are verified.
 - Hugo/Alec approve controlled test release before production promotion.
 
 ## Feature Flags
@@ -22,22 +22,25 @@ Backend flags:
 
 - `CASES_FEATURE_ENABLED`: master server-side gate for private case routes.
 - `CASE_CLIENT_UPLOADS_ENABLED`: enables client document upload workflow.
+- `CASE_UPLOAD_MALWARE_SCANNING_ENABLED`: enforces GuardDuty S3 object-tag checks before case-file download or external visibility approval.
 - `CASE_INVITES_ENABLED`: enables case-scoped email invitations.
 - `CASE_EMAIL_NOTIFICATIONS_ENABLED`: enables SES delivery for safe case summaries.
 - `CASE_EMAIL_FROM`, `CASE_EMAIL_REPLY_TO`, `CASE_EMAIL_IDENTITY_ARN`: SES sender and scoped identity settings; keep unset unless email delivery is enabled.
 - `CASE_APP_BASE_URL`: base URL used in authenticated case links.
-- `CASE_WEB_PUSH_ENABLED`: enables Web Push subscription writes and sender delivery.
+- `CASE_WEB_PUSH_ENABLED`: enables Web Push subscription writes and sender delivery only when subject, public key, and private-key secret ARN are present.
+- `CASE_WEB_PUSH_SUBJECT`, `CASE_WEB_PUSH_PUBLIC_KEY`, `CASE_WEB_PUSH_PRIVATE_KEY_SECRET_ARN`: VAPID runtime config; never use a raw private-key workflow variable.
 
 Frontend flags:
 
 - `casesFeatureEnabled`: shows private case navigation and allows `CasesGuard`.
 - `caseFeatureEnabledHosts`: host allowlist for controlled environments when `casesFeatureEnabled` stays false globally.
 - `caseServiceWorkerEnabled`: registers Angular service worker support.
+- `caseServiceWorkerEnabledHosts`: host allowlist for service-worker rollout when one production build serves test and production hosts.
 - `caseWebPushPublicKey`: browser VAPID public key; keep empty unless Web Push is enabled.
 
 Controlled test rollout posture:
 
-- Backend `test`: set `CASES_FEATURE_ENABLED=true`, `CASE_CLIENT_UPLOADS_ENABLED=true`, `CASE_INVITES_ENABLED=true`, `CASE_EMAIL_NOTIFICATIONS_ENABLED=false`, `CASE_WEB_PUSH_ENABLED=false`, and `CASE_APP_BASE_URL=https://test.moyra.org`.
+- Backend `test`: set `CASES_FEATURE_ENABLED=true`, `CASE_CLIENT_UPLOADS_ENABLED=true`, `CASE_INVITES_ENABLED=true`, `CASE_EMAIL_NOTIFICATIONS_ENABLED=false`, `CASE_WEB_PUSH_ENABLED=false`, `CASE_UPLOAD_MALWARE_SCANNING_ENABLED=false`, and `CASE_APP_BASE_URL=https://test.moyra.org`.
 - Frontend `test`: keep `casesFeatureEnabled=false` globally and allow only `test.moyra.org` through `caseFeatureEnabledHosts`.
 - Production: keep `casesFeatureEnabled=false` and do not add production hosts until test smoke is approved.
 
@@ -90,14 +93,14 @@ Test deploy:
 1. Run workflow dispatch with `stageName=test`.
 2. Preserve the existing environment variables for custom domain, certificate, CORS origins, notification emails, and Bedrock settings.
 3. The workflow exposes Cases release settings through GitHub Environment variables and passes them into CDK.
-4. Do not pass Web Push VAPID private keys through workflow variables or CDK context; keep `CASE_WEB_PUSH_ENABLED=false` until secure runtime secret handling is designed.
+4. Do not pass Web Push VAPID private keys through workflow variables or CDK context; use `CASE_WEB_PUSH_PRIVATE_KEY_SECRET_ARN` after the secret exists.
 5. If a one-off CDK deploy is used instead, pass explicit context values and record the command in `Codex.md`.
 
 Production deploy:
 
 1. Promote only after test smoke passes.
 2. Preserve production custom-domain context for `api.moyra.org`.
-3. Keep SES and Web Push disabled unless their activation gates have been closed.
+3. Keep SES, Web Push, and malware enforcement disabled unless their activation gates have been closed.
 4. Do not add AWS WAF as part of this release without explicit approval.
 
 Route verification examples:
@@ -183,6 +186,7 @@ Positive checks:
 - Client with multiple cases sees those cases separately.
 - Notification center read/read-all updates unread counts.
 - Email and Web Push are tested only if their flags and configuration are enabled.
+- If malware enforcement is enabled, pending or blocked scan status must prevent download and external visibility approval.
 
 ## Browser Visual QA
 
@@ -217,8 +221,17 @@ SES:
 Web Push:
 
 - Do not store VAPID private keys in frontend environment files.
-- Enable only after backend runtime secret handling is configured.
+- Store the VAPID private key in AWS Secrets Manager and pass only `CASE_WEB_PUSH_PRIVATE_KEY_SECRET_ARN` to CDK/GitHub Actions.
+- Enable only after backend runtime secret handling is configured and `caseServiceWorkerEnabledHosts` limits first rollout to `test.moyra.org`.
 - Test expired subscriptions and service worker update behavior before production.
+
+Malware scanning:
+
+- Use AWS GuardDuty Malware Protection for S3 on the uploads bucket with object prefix `cases/` and tagging enabled.
+- The API expects the S3 object tag `GuardDutyMalwareScanStatus`.
+- Only `NO_THREATS_FOUND` maps to a downloadable/approvable file.
+- `THREATS_FOUND`, `UNSUPPORTED`, `ACCESS_DENIED`, `FAILED`, missing tags, or tag-read errors block downloads.
+- Do not enable `CASE_UPLOAD_MALWARE_SCANNING_ENABLED=true` until a test upload receives the expected GuardDuty tag.
 
 ## Rollback
 
@@ -227,10 +240,11 @@ Fast rollback:
 1. Set `CASES_FEATURE_ENABLED=false`.
 2. Set `CASE_EMAIL_NOTIFICATIONS_ENABLED=false`.
 3. Set `CASE_WEB_PUSH_ENABLED=false`.
-4. Set frontend `casesFeatureEnabled=false`, `caseServiceWorkerEnabled=false`, and `caseWebPushPublicKey=''`.
-5. Redeploy backend and frontend through the same release path.
-6. Verify logged-out and member users cannot reach cases routes.
-7. Verify public routes still return expected content.
+4. Set `CASE_UPLOAD_MALWARE_SCANNING_ENABLED=false` only if GuardDuty/tag enforcement itself is blocking healthy files; inspect blocked records first.
+5. Set frontend `casesFeatureEnabled=false`, `caseServiceWorkerEnabled=false`, and `caseWebPushPublicKey=''`.
+6. Redeploy backend and frontend through the same release path.
+7. Verify logged-out and member users cannot reach cases routes.
+8. Verify public routes still return expected content.
 
 Route-family rollback:
 

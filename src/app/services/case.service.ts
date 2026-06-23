@@ -16,8 +16,9 @@ import {
   CaseMembership,
   CaseNotification,
   CaseNotificationPreferences,
-  CaseReadAllNotificationsResponse,
+  CaseOperationsSummary,
   CasePushSubscription,
+  CaseReadAllNotificationsResponse,
   CaseRecord,
   CaseType,
   CaseUnreadCountResponse,
@@ -78,6 +79,13 @@ export class CaseService {
     return this._http.get<CaseListResponse<CaseRecord>>(apiUrl('/cases'), {
       headers: this.authHeaders(),
     });
+  }
+
+  getOperationsSummary(): Observable<CaseItemResponse<CaseOperationsSummary>> {
+    return this._http.get<CaseItemResponse<CaseOperationsSummary>>(
+      apiUrl('/case-operations/summary'),
+      { headers: this.authHeaders() }
+    );
   }
 
   createCase(body: {

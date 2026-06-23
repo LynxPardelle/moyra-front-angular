@@ -67,6 +67,42 @@ describe('AdminCasesListComponent', () => {
                 ? throwError(() => new Error('falló'))
                 : of({ status: 'success', items: cases, nextToken: null }),
             listCaseTypes: () => of({ status: 'success', items: caseTypes, nextToken: null }),
+            getOperationsSummary: () =>
+              of({
+                status: 'success',
+                item: {
+                  generatedAt: '2026-06-18T20:00:00.000Z',
+                  cases: { total: 2, active: 2, archived: 0 },
+                  files: {
+                    total: 3,
+                    pendingUpload: 0,
+                    pendingExternalReview: 1,
+                    malwareScanPending: 1,
+                    malwareScanBlocked: 1,
+                  },
+                  notifications: {
+                    total: 1,
+                    email: { skipped: 1 },
+                    webPush: { failed: 1 },
+                  },
+                  queues: {
+                    staleUploads: [],
+                    pendingExternalFiles: [],
+                    malwareBlockedFiles: [
+                      {
+                        id: 'file-blocked',
+                        caseId: 'case-1',
+                        fileName: 'riesgo.zip',
+                        externalVisibilityStatus: 'pending',
+                        uploadStatus: 'uploaded',
+                        malwareScan: { required: true, status: 'blocked' },
+                      },
+                    ],
+                    pendingInvites: [],
+                  },
+                  recentAuditEvents: [],
+                },
+              }),
             createCase: createCaseSpy,
           },
         },
@@ -84,6 +120,8 @@ describe('AdminCasesListComponent', () => {
 
     expect(fixture.nativeElement.textContent).toContain('Contrato corporativo');
     expect(fixture.nativeElement.textContent).toContain('Litigio civil');
+    expect(fixture.nativeElement.textContent).toContain('Escaneo pendiente');
+    expect(fixture.nativeElement.textContent).toContain('riesgo.zip');
 
     fixture.componentInstance.statusFilter = 'review';
     fixture.componentInstance.caseTypeFilter = 'corporate';

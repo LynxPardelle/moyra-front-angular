@@ -4,7 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
-import { CaseRecord, CaseStatusDefinition, CaseType, caseStatusLabel } from '../../models/case';
+import {
+  CaseOperationsSummary,
+  CaseRecord,
+  CaseStatusDefinition,
+  CaseType,
+  caseStatusLabel,
+} from '../../models/case';
 import { CaseService } from '../../services/case.service';
 
 type NewCaseForm = {
@@ -29,6 +35,45 @@ type NewCaseForm = {
           Configuración
         </a>
       </header>
+
+      @if (operationsSummary) {
+      <section class="admin-cases-ops" aria-label="Resumen operativo de casos">
+        <div>
+          <span>Activos</span>
+          <strong>{{ operationsSummary.cases.active }}</strong>
+        </div>
+        <div>
+          <span>Archivo pendiente</span>
+          <strong>{{ operationsSummary.files.pendingExternalReview }}</strong>
+        </div>
+        <div>
+          <span>Escaneo pendiente</span>
+          <strong>{{ operationsSummary.files.malwareScanPending }}</strong>
+        </div>
+        <div [class.admin-cases-ops__risk]="operationsSummary.files.malwareScanBlocked > 0">
+          <span>Bloqueados</span>
+          <strong>{{ operationsSummary.files.malwareScanBlocked }}</strong>
+        </div>
+        <div>
+          <span>Push fallidos</span>
+          <strong>{{ operationsSummary.notifications.webPush['failed'] || 0 }}</strong>
+        </div>
+      </section>
+
+      @if (operationsSummary.queues.malwareBlockedFiles.length > 0) {
+      <section class="admin-cases-queue">
+        <h2>Archivos bloqueados por seguridad</h2>
+        <ul>
+          @for (file of operationsSummary.queues.malwareBlockedFiles; track file.id) {
+          <li>
+            <a [routerLink]="['/admin/casos', file.caseId]">{{ file.fileName }}</a>
+            <span>{{ malwareScanLabel(file.malwareScan?.status || '') }}</span>
+          </li>
+          }
+        </ul>
+      </section>
+      }
+      }
 
       <form class="admin-cases-create" (ngSubmit)="createCase()">
         <input
@@ -122,6 +167,8 @@ type NewCaseForm = {
       }
 
       .admin-cases-page__header,
+      .admin-cases-ops,
+      .admin-cases-queue,
       .admin-cases-filters,
       .admin-cases-create {
         display: flex;
@@ -146,11 +193,54 @@ type NewCaseForm = {
       .admin-cases-page__action,
       .admin-cases-page__empty,
       .admin-cases-page__state,
+      .admin-cases-ops,
+      .admin-cases-queue,
       .admin-cases-create,
       .admin-cases-filters {
         border: 1px solid rgba(41, 48, 59, 0.18);
         padding: 12px 16px;
         background: #ffffff;
+      }
+
+      .admin-cases-ops {
+        align-items: stretch;
+      }
+
+      .admin-cases-ops div {
+        min-width: 132px;
+        border-left: 3px solid rgba(75, 143, 245, 0.45);
+        padding-left: 10px;
+      }
+
+      .admin-cases-ops span,
+      .admin-cases-queue span {
+        display: block;
+        color: rgba(41, 48, 59, 0.68);
+        font-size: 0.82rem;
+      }
+
+      .admin-cases-ops strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 1.4rem;
+      }
+
+      .admin-cases-ops__risk {
+        border-left-color: #b42318 !important;
+      }
+
+      .admin-cases-queue {
+        display: block;
+      }
+
+      .admin-cases-queue h2 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+      }
+
+      .admin-cases-queue ul {
+        margin: 0;
+        padding-left: 18px;
       }
 
       input,
@@ -193,6 +283,7 @@ type NewCaseForm = {
 export class AdminCasesListComponent implements OnInit {
   cases: CaseRecord[] = [];
   caseTypes: CaseType[] = [];
+  operationsSummary: CaseOperationsSummary | null = null;
   loading = true;
   errorMessage = '';
   statusFilter = '';
@@ -217,10 +308,12 @@ export class AdminCasesListComponent implements OnInit {
     forkJoin({
       cases: this._caseService.listCases(),
       caseTypes: this._caseService.listCaseTypes(),
+      operations: this._caseService.getOperationsSummary(),
     }).subscribe({
-      next: ({ cases, caseTypes }) => {
+      next: ({ cases, caseTypes, operations }) => {
         this.cases = cases.items || [];
         this.caseTypes = caseTypes.items || [];
+        this.operationsSummary = operations.item;
         this.loading = false;
       },
       error: () => {
@@ -282,5 +375,17 @@ export class AdminCasesListComponent implements OnInit {
 
   statusLabel(status: CaseStatusDefinition): string {
     return caseStatusLabel(status);
+  }
+
+  malwareScanLabel(status: string): string {
+    return {
+      blocked: 'Amenaza detectada',
+      failed: 'Escaneo fallido',
+      unsupported: 'No soportado',
+      access_denied: 'Sin acceso de escaneo',
+      pending: 'Pendiente',
+      clean: 'Limpio',
+      not_required: 'Sin escaneo',
+    }[status] || status || 'Sin estado';
   }
 }
