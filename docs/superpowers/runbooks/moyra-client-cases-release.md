@@ -13,7 +13,7 @@
 - `CASES_FEATURE_ENABLED` is enabled only in the intended environment.
 - `CASE_EMAIL_NOTIFICATIONS_ENABLED` stays disabled until the SES identity, sender, and DNS plan are confirmed.
 - `CASE_WEB_PUSH_ENABLED` stays disabled until VAPID public config, backend subject, and `CASE_WEB_PUSH_PRIVATE_KEY_SECRET_ARN` are configured and tested.
-- `CASE_UPLOAD_MALWARE_SCANNING_ENABLED` stays disabled until the GuardDuty Malware Protection plan for `cases/` exists. After it is enabled, the attorney/admin still must launch it from `/admin/casos` after accepting the cost notice before new case uploads require scan tags.
+- External malware scanning is outside this release; do not add provider-specific upload scanning flags, routes, or UI controls without a separate cost-gated plan.
 - Hugo/Alec approve controlled test release before production promotion.
 
 ## Feature Flags
@@ -22,7 +22,6 @@ Backend flags:
 
 - `CASES_FEATURE_ENABLED`: master server-side gate for private case routes.
 - `CASE_CLIENT_UPLOADS_ENABLED`: enables client document upload workflow.
-- `CASE_UPLOAD_MALWARE_SCANNING_ENABLED`: makes GuardDuty S3 object-tag checks available for case files. Enforcement starts only after a Moyra admin/attorney accepts the visible cost notice and launches protection from `/admin/casos`.
 - `CASE_INVITES_ENABLED`: enables case-scoped email invitations.
 - `CASE_EMAIL_NOTIFICATIONS_ENABLED`: enables SES delivery for safe case summaries.
 - `CASE_EMAIL_FROM`, `CASE_EMAIL_REPLY_TO`, `CASE_EMAIL_IDENTITY_ARN`: SES sender and scoped identity settings; keep unset unless email delivery is enabled.
@@ -40,7 +39,7 @@ Frontend flags:
 
 Controlled test rollout posture:
 
-- Backend `test`: set `CASES_FEATURE_ENABLED=true`, `CASE_CLIENT_UPLOADS_ENABLED=true`, `CASE_INVITES_ENABLED=true`, `CASE_EMAIL_NOTIFICATIONS_ENABLED=false`, `CASE_WEB_PUSH_ENABLED=false`, `CASE_UPLOAD_MALWARE_SCANNING_ENABLED=false`, and `CASE_APP_BASE_URL=https://test.moyra.org`.
+- Backend `test`: set `CASES_FEATURE_ENABLED=true`, `CASE_CLIENT_UPLOADS_ENABLED=true`, `CASE_INVITES_ENABLED=true`, `CASE_EMAIL_NOTIFICATIONS_ENABLED=false`, `CASE_WEB_PUSH_ENABLED=false`, and `CASE_APP_BASE_URL=https://test.moyra.org`.
 - Frontend `test`: keep `casesFeatureEnabled=false` globally and allow only `test.moyra.org` through `caseFeatureEnabledHosts`.
 - Production: keep `casesFeatureEnabled=false` and do not add production hosts until test smoke is approved.
 
@@ -100,7 +99,7 @@ Production deploy:
 
 1. Promote only after test smoke passes.
 2. Preserve production custom-domain context for `api.moyra.org`.
-3. Keep SES, Web Push, and malware enforcement disabled unless their activation gates have been closed.
+3. Keep SES and Web Push disabled unless their activation gates have been closed.
 4. Do not add AWS WAF as part of this release without explicit approval.
 
 Route verification examples:
@@ -186,7 +185,6 @@ Positive checks:
 - Client with multiple cases sees those cases separately.
 - Notification center read/read-all updates unread counts.
 - Email and Web Push are tested only if their flags and configuration are enabled.
-- If malware enforcement is enabled, pending or blocked scan status must prevent download and external visibility approval.
 
 ## Browser Visual QA
 
@@ -225,14 +223,10 @@ Web Push:
 - Enable only after backend runtime secret handling is configured and `caseServiceWorkerEnabledHosts` limits first rollout to `test.moyra.org`.
 - Test expired subscriptions and service worker update behavior before production.
 
-Malware scanning:
+External malware scanning:
 
-- Use AWS GuardDuty Malware Protection for S3 on the uploads bucket with object prefix `cases/` and tagging enabled.
-- The API expects the S3 object tag `GuardDutyMalwareScanStatus`.
-- Only `NO_THREATS_FOUND` maps to a downloadable/approvable file.
-- `THREATS_FOUND`, `UNSUPPORTED`, `ACCESS_DENIED`, `FAILED`, missing tags, or tag-read errors block downloads.
-- Do not turn on the app-level launch in `/admin/casos` until `CASE_UPLOAD_MALWARE_SCANNING_ENABLED=true` is deployed in test and the attorney/admin accepts the displayed cost.
-- After launch, verify a test upload receives the expected GuardDuty tag before production.
+- Outside the current release.
+- Do not add a provider, flag, route, UI control, or activation checklist until a separate cost-gated plan is approved.
 
 ## Rollback
 
@@ -241,11 +235,10 @@ Fast rollback:
 1. Set `CASES_FEATURE_ENABLED=false`.
 2. Set `CASE_EMAIL_NOTIFICATIONS_ENABLED=false`.
 3. Set `CASE_WEB_PUSH_ENABLED=false`.
-4. Set `CASE_UPLOAD_MALWARE_SCANNING_ENABLED=false` only if GuardDuty/tag enforcement itself is blocking healthy files; inspect blocked records first.
-5. Set frontend `casesFeatureEnabled=false`, `caseServiceWorkerEnabled=false`, and `caseWebPushPublicKey=''`.
-6. Redeploy backend and frontend through the same release path.
-7. Verify logged-out and member users cannot reach cases routes.
-8. Verify public routes still return expected content.
+4. Set frontend `casesFeatureEnabled=false`, `caseServiceWorkerEnabled=false`, and `caseWebPushPublicKey=''`.
+5. Redeploy backend and frontend through the same release path.
+6. Verify logged-out and member users cannot reach cases routes.
+7. Verify public routes still return expected content.
 
 Route-family rollback:
 
@@ -269,4 +262,4 @@ Record in `Codex.md`:
 - API Gateway route verification output.
 - Public smoke URLs and statuses.
 - Private smoke users and role matrix, without passwords or secrets.
-- Activation decisions for SES, Web Push, and client-upload scanning.
+- Activation decisions for SES and Web Push.

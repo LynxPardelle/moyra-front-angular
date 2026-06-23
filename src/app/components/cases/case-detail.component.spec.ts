@@ -148,14 +148,13 @@ describe('CaseDetailComponent', () => {
                     visibility: { mode: 'case_members' },
                   },
                   {
-                    id: 'file-scan-pending',
+                    id: 'file-own-zip',
                     caseId: 'case-1',
-                    fileName: 'escaneo-pendiente.zip',
+                    fileName: 'mi-envio.zip',
                     contentType: 'application/zip',
                     externalVisibilityStatus: 'pending',
                     uploadStatus: 'uploaded',
                     uploadedByUserId: 'client-1',
-                    malwareScan: { required: true, status: 'pending' },
                     visibility: { mode: 'case_members' },
                   },
                   {
@@ -213,11 +212,10 @@ describe('CaseDetailComponent', () => {
     expect(text).not.toContain('Comentario interno');
     expect(text).toContain('aprobado.pdf');
     expect(text).toContain('mi-envio.pdf');
-    expect(text).toContain('escaneo-pendiente.zip');
-    expect(text).toContain('Revisión de seguridad pendiente');
+    expect(text).toContain('mi-envio.zip');
     expect(text).toContain('En revisión interna');
     expect(text).not.toContain('pendiente-otro.pdf');
-    expect(compiled.querySelector('a[href*="file-scan-pending"]')).toBeNull();
+    expect(compiled.querySelector('a[href*="file-own-zip"]')).not.toBeNull();
     expect(compiled.querySelector('a[href*="/publication"]')).toBeNull();
   });
 

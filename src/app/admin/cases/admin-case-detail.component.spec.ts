@@ -80,7 +80,7 @@ describe('AdminCaseDetailComponent', () => {
                     fileName: 'evidencia.pdf',
                     contentType: 'application/pdf',
                     externalVisibilityStatus: 'pending',
-                    malwareScan: { required: true, status: 'pending' },
+                    uploadStatus: 'uploaded',
                     visibility: 'internal_only',
                   },
                 ],
@@ -110,10 +110,9 @@ describe('AdminCaseDetailComponent', () => {
     expect(text).toContain('Entradas');
     expect(text).toContain('Miembros');
     expect(text).toContain('Archivos');
-    expect(text).toContain('Seguridad: pendiente');
     expect(text).toContain('Auditoría');
     expect(fixture.nativeElement.querySelector('a[href*="amazonaws"]')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.admin-case-file button')?.disabled).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.admin-case-file button')?.disabled).toBeFalse();
   });
 
   it('updates status and creates internal entries', () => {

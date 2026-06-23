@@ -5,28 +5,20 @@
 ## Daily Checks
 
 - Open `/admin/casos` and review the operations summary.
-- Investigate any `Bloqueados` count above 0 before approving document visibility.
-- Review `Escaneo pendiente` for files that stay pending longer than the expected GuardDuty scan window.
+- Review `Archivo pendiente` and `Carga pendiente` before approving document visibility.
 - Review `Push fallidos` only after Web Push is intentionally enabled.
 - Keep public Publications checks separate; private case content must never appear in public aggregate routes.
 
-## File Security States
+## File Review States
 
-- `not_required`: malware enforcement is disabled for this file.
-- `pending`: GuardDuty has not produced a clean result yet; download and external approval stay blocked.
-- `clean`: GuardDuty returned `NO_THREATS_FOUND`; download and external approval are allowed by normal permissions.
-- `blocked`: GuardDuty returned `THREATS_FOUND`; do not approve externally.
-- `unsupported`, `access_denied`, `failed`: treat as blocked until the cause is investigated.
+- `pending_upload`: the file metadata exists but upload completion has not been confirmed.
+- `pending`: the file is uploaded but not yet approved for external/client visibility.
+- `approved`: the file can be shown to authorized external case members when its visibility also allows case members.
+- `restricted` or `rejected`: the file should stay internal unless a later attorney/admin decision changes it.
 
-## Activation Order
+## External Malware Scanning
 
-1. Confirm GuardDuty Malware Protection for S3 is deployed for the uploads bucket prefix `cases/` with tagging enabled.
-2. Set `CASE_UPLOAD_MALWARE_SCANNING_ENABLED=true` only in the intended environment so the product can detect GuardDuty availability.
-3. Open `/admin/casos` as the Moyra admin/attorney, review the GuardDuty cost notice, check `Acepto el costo`, and click `Lanzar protección`.
-4. Upload a test case document in test.
-5. Confirm the object receives `GuardDutyMalwareScanStatus=NO_THREATS_FOUND`.
-6. Verify pending/threat statuses block download and clean status allows download.
-7. Review Cost Explorer/GuardDuty usage, then repeat only after approval for production.
+External malware scanning is outside the current `Casos` release. Do not add provider-specific upload scanning controls, flags, or activation steps to the frontend until that work is planned as a separate cost-gated feature.
 
 ## Web Push
 

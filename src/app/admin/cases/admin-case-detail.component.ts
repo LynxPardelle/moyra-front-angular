@@ -87,7 +87,6 @@ import { CaseService } from '../../services/case.service';
             <article class="admin-case-file">
               <strong>{{ file.fileName }}</strong>
               <span>{{ file.externalVisibilityStatus }}</span>
-              <span>{{ malwareScanLabel(file) }}</span>
               @if (canDownloadFile(file)) {
               <a [href]="downloadUrl(file.id)">Descargar</a>
               }
@@ -290,25 +289,11 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   canApproveFile(file: CaseFile): boolean {
-    return !file.malwareScan?.required || file.malwareScan.status === 'clean';
+    return file.uploadStatus !== 'pending_upload';
   }
 
   canDownloadFile(file: CaseFile): boolean {
-    return !file.malwareScan?.required || file.malwareScan.status === 'clean';
-  }
-
-  malwareScanLabel(file: CaseFile): string {
-    if (!file.malwareScan?.required) {
-      return 'Seguridad: sin escaneo';
-    }
-    return {
-      pending: 'Seguridad: pendiente',
-      clean: 'Seguridad: limpio',
-      blocked: 'Seguridad: bloqueado',
-      failed: 'Seguridad: fallido',
-      unsupported: 'Seguridad: no soportado',
-      access_denied: 'Seguridad: sin acceso',
-    }[file.malwareScan.status || 'pending'] || `Seguridad: ${file.malwareScan.status}`;
+    return file.uploadStatus !== 'pending_upload';
   }
 
   downloadUrl(fileId: string): string {

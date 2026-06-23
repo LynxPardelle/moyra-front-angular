@@ -73,7 +73,7 @@ describe('CaseService', () => {
 
   it('loads the admin cases operations summary from the private API', () => {
     service.getOperationsSummary().subscribe((response) => {
-      expect(response.item.files.malwareScanBlocked).toBe(1);
+      expect(response.item.files.pendingExternalReview).toBe(1);
       expect(response.item.notifications.webPush['failed']).toBe(2);
     });
 
@@ -89,8 +89,6 @@ describe('CaseService', () => {
           total: 3,
           pendingUpload: 0,
           pendingExternalReview: 1,
-          malwareScanPending: 1,
-          malwareScanBlocked: 1,
         },
         notifications: {
           total: 2,
@@ -100,67 +98,9 @@ describe('CaseService', () => {
         queues: {
           staleUploads: [],
           pendingExternalFiles: [],
-          malwareBlockedFiles: [],
           pendingInvites: [],
         },
         recentAuditEvents: [],
-      },
-    });
-  });
-
-  it('loads and launches GuardDuty malware protection with explicit cost acknowledgement', () => {
-    service.getMalwareProtectionStatus().subscribe((response) => {
-      expect(response.item.enabled).toBe(false);
-      expect(response.item.costNotice).toContain('USD 0.09');
-    });
-
-    const statusReq = http.expectOne(apiUrl('/case-operations/malware-protection'));
-    expect(statusReq.request.method).toBe('GET');
-    expect(statusReq.request.headers.get('Authorization')).toBe(storeToken);
-    statusReq.flush({
-      status: 'success',
-      item: {
-        id: 'case-settings:malware-protection',
-        provider: 'guardduty_s3',
-        status: 'disabled',
-        enabled: false,
-        infrastructureAvailable: true,
-        costNotice: 'GuardDuty cuesta USD 0.09 por GB escaneado.',
-        pricing: {
-          provider: 'guardduty_s3',
-          region: 'us-east-1',
-          freeTierObjectsPerMonth: 1000,
-          freeTierScannedGbPerMonth: 1,
-          scannedGbUsd: 0.09,
-          objectsEvaluatedUsdPerThousand: 0.215,
-        },
-      },
-    });
-
-    service.launchMalwareProtection().subscribe((response) => {
-      expect(response.item.enabled).toBe(true);
-    });
-
-    const launchReq = http.expectOne(apiUrl('/case-operations/malware-protection/launch'));
-    expect(launchReq.request.method).toBe('POST');
-    expect(launchReq.request.body).toEqual({ costAcknowledged: true });
-    launchReq.flush({
-      status: 'success',
-      item: {
-        id: 'case-settings:malware-protection',
-        provider: 'guardduty_s3',
-        status: 'enabled',
-        enabled: true,
-        infrastructureAvailable: true,
-        costNotice: 'GuardDuty cuesta USD 0.09 por GB escaneado.',
-        pricing: {
-          provider: 'guardduty_s3',
-          region: 'us-east-1',
-          freeTierObjectsPerMonth: 1000,
-          freeTierScannedGbPerMonth: 1,
-          scannedGbUsd: 0.09,
-          objectsEvaluatedUsdPerThousand: 0.215,
-        },
       },
     });
   });

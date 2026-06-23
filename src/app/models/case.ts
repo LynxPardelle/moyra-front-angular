@@ -137,28 +137,10 @@ export type CaseFile = {
   uploaderUserId?: string;
   uploadedAt?: string;
   uploadStatus?: 'pending' | 'pending_upload' | 'uploaded' | string;
-  malwareScan?: CaseFileMalwareScan;
   externalVisibilityStatus: CaseExternalVisibilityStatus;
   visibility: CaseVisibility;
   createdAt?: string;
   updatedAt?: string;
-};
-
-export type CaseFileMalwareScan = {
-  required?: boolean;
-  provider?: 'guardduty_s3' | 'none' | string;
-  status?:
-    | 'not_required'
-    | 'pending'
-    | 'clean'
-    | 'blocked'
-    | 'unsupported'
-    | 'access_denied'
-    | 'failed'
-    | string;
-  result?: string;
-  reason?: string;
-  checkedAt?: string;
 };
 
 export type CaseOperationsSummary = {
@@ -172,8 +154,6 @@ export type CaseOperationsSummary = {
     total: number;
     pendingUpload: number;
     pendingExternalReview: number;
-    malwareScanPending: number;
-    malwareScanBlocked: number;
   };
   notifications: {
     total: number;
@@ -183,40 +163,12 @@ export type CaseOperationsSummary = {
   queues: {
     staleUploads: CaseOperationsFileQueueItem[];
     pendingExternalFiles: CaseOperationsFileQueueItem[];
-    malwareBlockedFiles: CaseOperationsFileQueueItem[];
     pendingInvites: CaseOperationsInviteQueueItem[];
   };
   recentAuditEvents: Array<Pick<
     CaseAuditEvent,
     'id' | 'caseId' | 'actorUserId' | 'action' | 'targetType' | 'targetId' | 'createdAt'
   >>;
-};
-
-export type CaseMalwareProtectionPricing = {
-  provider: string;
-  region: string;
-  freeTierObjectsPerMonth: number;
-  freeTierScannedGbPerMonth: number;
-  scannedGbUsd: number;
-  objectsEvaluatedUsdPerThousand: number;
-  additionalCharges?: string[];
-  source?: string;
-};
-
-export type CaseMalwareProtectionStatus = {
-  id: string;
-  provider: 'guardduty_s3' | string;
-  status: 'disabled' | 'enabled' | 'pending_infrastructure' | string;
-  enabled: boolean;
-  infrastructureAvailable: boolean;
-  costNotice: string;
-  pricing: CaseMalwareProtectionPricing;
-  launchedAt?: string;
-  launchedByUserId?: string;
-  launchedByEmail?: string;
-  disabledAt?: string;
-  disabledByUserId?: string;
-  updatedAt?: string;
 };
 
 export type CaseOperationsFileQueueItem = Pick<
@@ -226,7 +178,6 @@ export type CaseOperationsFileQueueItem = Pick<
   | 'fileName'
   | 'uploadStatus'
   | 'externalVisibilityStatus'
-  | 'malwareScan'
   | 'createdAt'
   | 'updatedAt'
 >;
