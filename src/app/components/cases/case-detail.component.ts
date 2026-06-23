@@ -126,7 +126,7 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
       .case-detail-page {
         width: min(1120px, calc(100vw - 32px));
         margin: 0 auto;
-        padding: 24px 0;
+        padding: 24px 0 calc(var(--site-footer-offset, 76px) + 24px);
         color: #29303b;
       }
 
