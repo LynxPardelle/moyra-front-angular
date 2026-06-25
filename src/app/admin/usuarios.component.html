@@ -25,7 +25,24 @@
         <option value="ROLE_USER">Usuario</option>
         <option value="ROLE_ADMIN">Administrador</option>
       </select>
+      <small>
+        Este rol controla acceso global al sitio. Los roles de Casos se asignan dentro de cada
+        caso al invitar o administrar miembros.
+      </small>
     </label>
+
+    <section class="admin-users-case-roles" aria-label="Roles disponibles en Casos">
+      <h2>Roles de Casos</h2>
+      <p>Después de crear el usuario, asígnalo desde el caso correspondiente.</p>
+      <div class="admin-users-case-roles__grid">
+        @for (role of caseRoleOptions; track role.name) {
+        <article>
+          <strong>{{ role.name }}</strong>
+          <span>{{ role.description }}</span>
+        </article>
+        }
+      </div>
+    </section>
 
     <label class="admin-users-field">
       <span>Contraseña temporal</span>

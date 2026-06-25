@@ -269,6 +269,11 @@ export class App implements OnDestroy, OnInit {
     return count > 99 ? '99+' : `${count}`;
   }
 
+  pageText(key: string, fallback: string): string {
+    const value = this.main?.pageTexts?.[key];
+    return typeof value === 'string' && value.trim() ? value : fallback;
+  }
+
   menuButtonAriaLabel(): string {
     if (!this.hasUnreadNotifications()) {
       return 'Abrir menú';

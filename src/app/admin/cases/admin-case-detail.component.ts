@@ -71,6 +71,10 @@ import { CaseService } from '../../services/case.service';
               <option value="pasante">Pasante</option>
               <option value="external_observer">Observador</option>
             </select>
+            <small class="admin-case-help">
+              Los permisos se asignan por rol del caso: clientes comentan y abren documentos,
+              pasantes colaboran internamente y observadores sólo consultan.
+            </small>
             <button type="submit">Invitar</button>
           </form>
           <ul>
@@ -82,13 +86,44 @@ import { CaseService } from '../../services/case.service';
 
         <section>
           <h2>Archivos</h2>
+          <form class="admin-case-form admin-case-form--stack" (ngSubmit)="addOneDriveLink()">
+            <label>
+              Nombre del documento
+              <input
+                name="oneDriveFileName"
+                [(ngModel)]="oneDriveLink.fileName"
+                placeholder="Ej. Contrato firmado"
+              />
+            </label>
+            <label>
+              Enlace de OneDrive
+              <input
+                name="oneDriveUrl"
+                [(ngModel)]="oneDriveLink.linkUrl"
+                placeholder="https://...sharepoint.com/..."
+                type="url"
+              />
+            </label>
+            <small class="admin-case-help">
+              Para Casos se guardan enlaces privados de OneDrive o SharePoint; los demás módulos
+              siguen usando S3.
+            </small>
+            @if (oneDriveError) {
+            <p class="admin-case-error">{{ oneDriveError }}</p>
+            }
+            <button type="submit" [disabled]="oneDriveBusy || !canCreateOneDriveLink()">
+              {{ oneDriveBusy ? 'Guardando...' : 'Agregar enlace' }}
+            </button>
+          </form>
           <div class="admin-case-files">
             @for (file of files; track file.id) {
             <article class="admin-case-file">
-              <strong>{{ file.fileName }}</strong>
+              <strong>{{ displayFileName(file) }}</strong>
               <span>{{ file.externalVisibilityStatus }}</span>
               @if (canDownloadFile(file)) {
-              <a [href]="downloadUrl(file.id)">Descargar</a>
+              <a [href]="downloadUrl(file.id)" target="_blank" rel="noopener noreferrer">
+                {{ isOneDriveFile(file) ? 'Abrir documento' : 'Descargar' }}
+              </a>
               }
               <button type="button" (click)="approveFile(file.id)" [disabled]="!canApproveFile(file)">
                 Aprobar visibilidad
@@ -159,6 +194,12 @@ import { CaseService } from '../../services/case.service';
         align-items: center;
       }
 
+      .admin-case-form--stack {
+        align-items: stretch;
+        display: grid;
+        margin-bottom: 16px;
+      }
+
       input,
       textarea,
       select,
@@ -173,6 +214,16 @@ import { CaseService } from '../../services/case.service';
       textarea {
         min-width: min(420px, 100%);
         min-height: 88px;
+      }
+
+      .admin-case-help {
+        color: rgba(41, 48, 59, 0.68);
+        line-height: 1.45;
+      }
+
+      .admin-case-error {
+        color: #b42318;
+        margin: 0;
       }
 
       button {
@@ -206,8 +257,13 @@ export class AdminCaseDetailComponent implements OnInit {
     email: '',
     displayName: '',
     rolePreset: 'client',
-    permissions: ['case.read'],
   };
+  oneDriveLink = {
+    fileName: '',
+    linkUrl: '',
+  };
+  oneDriveBusy = false;
+  oneDriveError = '';
 
   constructor(
     private _route: ActivatedRoute,
@@ -259,8 +315,39 @@ export class AdminCaseDetailComponent implements OnInit {
     if (!this.invite.email) {
       return;
     }
-    this._caseService.inviteMember(this.caseId, { ...this.invite }).subscribe((response) => {
+    const payload = this.cleanInvitePayload();
+    this._caseService.inviteMember(this.caseId, payload).subscribe((response) => {
       this.members = [response.item, ...this.members];
+      this.invite = {
+        email: '',
+        displayName: '',
+        rolePreset: 'client',
+      };
+    });
+  }
+
+  addOneDriveLink(): void {
+    if (!this.canCreateOneDriveLink()) {
+      this.oneDriveError = 'Revisa el nombre y usa un enlace de OneDrive o SharePoint válido.';
+      return;
+    }
+
+    this.oneDriveBusy = true;
+    this.oneDriveError = '';
+    this._caseService.createOneDriveLink(this.caseId, {
+      fileName: this.oneDriveLink.fileName.trim(),
+      linkUrl: this.oneDriveLink.linkUrl.trim(),
+      visibility: { mode: 'case_members' },
+    }).subscribe({
+      next: (response) => {
+        this.files = [response.item, ...this.files];
+        this.oneDriveLink = { fileName: '', linkUrl: '' };
+        this.oneDriveBusy = false;
+      },
+      error: () => {
+        this.oneDriveBusy = false;
+        this.oneDriveError = 'No se pudo agregar el enlace de OneDrive.';
+      },
     });
   }
 
@@ -300,5 +387,47 @@ export class AdminCaseDetailComponent implements OnInit {
     return `/api/v2/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
       fileId
     )}/download`;
+  }
+
+  canCreateOneDriveLink(): boolean {
+    return (
+      this.oneDriveLink.fileName.trim().length > 0 &&
+      this.oneDriveLink.linkUrl.trim().length > 0 &&
+      this.looksLikeMicrosoftLink(this.oneDriveLink.linkUrl)
+    );
+  }
+
+  displayFileName(file: CaseFile): string {
+    return file.title || file.originalName || file.fileName;
+  }
+
+  isOneDriveFile(file: CaseFile): boolean {
+    return file.storageProvider === 'onedrive' || file.type === 'onedrive-link';
+  }
+
+  private cleanInvitePayload(): InviteCaseMemberRequest {
+    return {
+      email: this.invite.email.trim().toLowerCase(),
+      displayName: this.invite.displayName?.trim(),
+      rolePreset: this.invite.rolePreset,
+    };
+  }
+
+  private looksLikeMicrosoftLink(value: string): boolean {
+    try {
+      const url = new URL(value.trim());
+      const hostname = url.hostname.toLowerCase();
+      return (
+        url.protocol === 'https:' &&
+        (hostname === '1drv.ms' ||
+          hostname.endsWith('.1drv.ms') ||
+          hostname === 'onedrive.live.com' ||
+          hostname.endsWith('.onedrive.live.com') ||
+          hostname === 'sharepoint.com' ||
+          hostname.endsWith('.sharepoint.com'))
+      );
+    } catch {
+      return false;
+    }
   }
 }

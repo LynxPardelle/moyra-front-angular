@@ -131,12 +131,18 @@ export type CaseFile = {
   id: string;
   caseId: string;
   fileName: string;
+  originalName?: string;
+  title?: string;
+  type?: string;
   contentType: string;
   size?: number;
+  storageProvider?: 's3' | 'onedrive' | string;
+  linkUrl?: string;
+  webUrl?: string;
   uploadedByUserId?: string;
   uploaderUserId?: string;
   uploadedAt?: string;
-  uploadStatus?: 'pending' | 'pending_upload' | 'uploaded' | string;
+  uploadStatus?: 'pending' | 'pending_upload' | 'uploaded' | 'linked' | string;
   externalVisibilityStatus: CaseExternalVisibilityStatus;
   visibility: CaseVisibility;
   createdAt?: string;
@@ -331,6 +337,12 @@ export type CaseFilePresignResponse = {
 export type CompleteCaseFileRequest = {
   fileId: string;
   etag?: string;
+};
+
+export type CreateCaseOneDriveLinkRequest = {
+  fileName: string;
+  linkUrl: string;
+  visibility?: CaseVisibility;
 };
 
 export type CaseFileVisibilityRequest = {

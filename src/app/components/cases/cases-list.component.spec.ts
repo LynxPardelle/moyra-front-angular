@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { CasesListComponent } from './cases-list.component';
 import { CaseRecord, CaseNotification, CaseType } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { MainService } from '../../services/main.service';
 
 describe('CasesListComponent', () => {
   let fixture: ComponentFixture<CasesListComponent>;
@@ -71,6 +72,20 @@ describe('CasesListComponent', () => {
               of({ status: 'success', items: notifications, nextToken: null }),
           },
         },
+        {
+          provide: MainService,
+          useValue: {
+            getMain: () =>
+              of({
+                main: {
+                  pageTexts: {
+                    casesListTitle: 'Expedientes',
+                    casesOpenCaseButtonLabel: 'Entrar al expediente',
+                  },
+                },
+              }),
+          },
+        },
       ],
     }).compileComponents();
   });
@@ -87,6 +102,7 @@ describe('CasesListComponent', () => {
     const text = compiled.textContent || '';
 
     expect(text).toContain('Contrato corporativo');
+    expect(text).toContain('Expedientes');
     expect(text).toContain('En revisión');
     expect(text).toContain('2 sin leer');
     expect(text).toContain('Revisar novedades');

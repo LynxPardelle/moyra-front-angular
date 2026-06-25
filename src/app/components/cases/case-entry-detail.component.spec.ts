@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 
 import { CaseEntryDetailComponent } from './case-entry-detail.component';
 import { CaseService } from '../../services/case.service';
+import { MainService } from '../../services/main.service';
 
 describe('CaseEntryDetailComponent', () => {
   let fixture: ComponentFixture<CaseEntryDetailComponent>;
@@ -52,6 +53,12 @@ describe('CaseEntryDetailComponent', () => {
                   },
                 ],
               }),
+          },
+        },
+        {
+          provide: MainService,
+          useValue: {
+            getMain: () => of({ main: { pageTexts: {} } }),
           },
         },
       ],

@@ -13,6 +13,7 @@ import {
   CaseRecord,
 } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { MainService } from '../../services/main.service';
 import { AuthFacade } from '../../store/auth/auth.facade';
 import { isVisibleToCaseClient } from '../../utils/case-visibility';
 
@@ -21,13 +22,17 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
   imports: [CommonModule, FormsModule, RouterLink, SafeRichHtmlPipe],
   template: `
     <main class="case-detail-page">
-      <a routerLink="/casos" class="case-detail-page__back">Casos</a>
+      <a routerLink="/casos" class="case-detail-page__back">
+        {{ text('casesBackLabel', 'Casos') }}
+      </a>
       @if (loading) {
-      <p class="case-detail-page__panel">Cargando caso...</p>
+      <p class="case-detail-page__panel">{{ text('casesLoadingLabel', 'Cargando caso...') }}</p>
       } @else if (errorMessage) {
       <section class="case-detail-page__panel">
         <p>{{ errorMessage }}</p>
-        <button type="button" (click)="load()">Reintentar</button>
+        <button type="button" (click)="load()">
+          {{ text('casesRetryButtonLabel', 'Reintentar') }}
+        </button>
       </section>
       } @else {
       <header class="case-detail-page__header">
@@ -35,15 +40,33 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
           <p class="case-detail-page__reference">{{ caseRecord?.reference || caseId }}</p>
           <h1>{{ caseRecord?.title || 'Caso' }}</h1>
         </div>
-        <a routerLink="/notificaciones">Notificaciones</a>
+        <a
+          routerLink="/notificaciones"
+          class="case-detail-page__notifications"
+          [attr.aria-label]="notificationButtonAriaLabel()"
+        >
+          {{ text('casesNotificationsButtonLabel', 'Notificaciones') }}
+          @if (hasUnreadNotifications()) {
+          <span class="case-detail-page__badge" aria-hidden="true">
+            {{ notificationBadgeText() }}
+          </span>
+          }
+        </a>
       </header>
 
       <section class="case-detail-page__grid">
         <div class="case-detail-page__main">
           <section class="case-detail-page__panel">
-            <h2>Actualizaciones</h2>
+            <h2>{{ text('casesUpdatesTitle', 'Actualizaciones') }}</h2>
             @if (entries.length === 0) {
-            <p>Aún no hay actualizaciones visibles para este caso.</p>
+            <p>
+              {{
+                text(
+                  'casesEmptyUpdatesMessage',
+                  'Aún no hay actualizaciones visibles para este caso.'
+                )
+              }}
+            </p>
             } @for (entry of entries; track entry.id) {
             <article class="case-entry">
               <a class="case-entry__title" [routerLink]="['/casos', caseId, 'entrada', entry.id]">
@@ -52,13 +75,13 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
               <div class="case-entry__body" [innerHTML]="entry.text | safeRichHtml"></div>
 
               <section class="case-comments">
-                <h3>Comentarios</h3>
+                <h3>{{ text('casesCommentsTitle', 'Comentarios') }}</h3>
                 @for (comment of commentsByEntry[entry.id] || []; track comment.id) {
                 <p class="case-comment">{{ comment.text }}</p>
                 }
                 <form (ngSubmit)="submitComment(entry.id)">
                   <label class="case-comments__label" [for]="commentControlId(entry.id)">
-                    Escribe un comentario
+                    {{ text('casesCommentLabel', 'Escribe un comentario') }}
                   </label>
                   <textarea
                     [id]="commentControlId(entry.id)"
@@ -66,10 +89,17 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
                     [attr.name]="'comment-' + entry.id"
                     [(ngModel)]="commentDrafts[entry.id]"
                     [disabled]="!canComment() || commentBusyEntryId === entry.id"
-                    placeholder="Escribe un comentario"
+                    [placeholder]="text('casesCommentPlaceholder', 'Escribe un comentario')"
                   ></textarea>
                   @if (!canComment()) {
-                  <p>Los comentarios no están habilitados para tu acceso actual.</p>
+                  <p>
+                    {{
+                      text(
+                        'casesCommentsDisabledMessage',
+                        'Los comentarios no están habilitados para tu acceso actual.'
+                      )
+                    }}
+                  </p>
                   } @if (commentErrors[entry.id]) {
                   <p class="case-detail-page__error">{{ commentErrors[entry.id] }}</p>
                   }
@@ -78,7 +108,7 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
                     data-testid="case-comment-submit"
                     [disabled]="!canComment() || commentBusyEntryId === entry.id"
                   >
-                    Comentar
+                    {{ text('casesCommentSubmitLabel', 'Comentar') }}
                   </button>
                 </form>
               </section>
@@ -89,29 +119,73 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
 
         <aside class="case-detail-page__side">
           <section class="case-detail-page__panel">
-            <h2>Documentos</h2>
+            <h2>{{ text('casesDocumentsTitle', 'Documentos') }}</h2>
             @if (!canUpload()) {
-            <p>La carga de documentos no está habilitada para tu acceso actual.</p>
+            <p>
+              {{
+                text(
+                  'casesDocumentsDisabledMessage',
+                  'La carga de documentos no está habilitada para tu acceso actual.'
+                )
+              }}
+            </p>
             } @else {
-            <label for="case-upload">Agregar documento</label>
-            <input id="case-upload" type="file" (change)="handleFileSelection($event)" />
-            <button type="button" (click)="uploadSelectedFile()" [disabled]="!selectedFile || uploadState === 'uploading'">
-              Subir
-            </button>
-            @if (uploadState !== 'idle') {
-            <p>{{ uploadProgress }}%</p>
-            } @if (uploadError) {
-            <p class="case-detail-page__error">{{ uploadError }}</p>
-            }
+            <form class="case-onedrive-form" (ngSubmit)="addOneDriveLink()">
+              <label for="case-onedrive-name">
+                {{ text('casesOneDriveNameLabel', 'Nombre del documento') }}
+              </label>
+              <input
+                id="case-onedrive-name"
+                name="caseOneDriveName"
+                [(ngModel)]="oneDriveLink.fileName"
+                [placeholder]="text('casesOneDriveNamePlaceholder', 'Ej. Contrato firmado')"
+              />
+              <label for="case-onedrive-url">
+                {{ text('casesOneDriveUrlLabel', 'Enlace de OneDrive') }}
+              </label>
+              <input
+                id="case-onedrive-url"
+                name="caseOneDriveUrl"
+                [(ngModel)]="oneDriveLink.linkUrl"
+                [placeholder]="
+                  text('casesOneDriveUrlPlaceholder', 'https://...sharepoint.com/...')
+                "
+                type="url"
+              />
+              <small>
+                {{
+                  text(
+                    'casesOneDriveHelpText',
+                    'Usa un enlace compartido de OneDrive o SharePoint con permisos revisados.'
+                  )
+                }}
+              </small>
+              @if (oneDriveError) {
+              <p class="case-detail-page__error">{{ oneDriveError }}</p>
+              }
+              <button
+                type="submit"
+                data-testid="case-onedrive-submit"
+                [disabled]="oneDriveBusy || !canCreateOneDriveLink()"
+              >
+                {{
+                  oneDriveBusy
+                    ? text('casesOneDriveSavingLabel', 'Guardando...')
+                    : text('casesOneDriveSubmitLabel', 'Agregar enlace')
+                }}
+              </button>
+            </form>
             }
 
             <div class="case-files">
               @for (file of files; track file.id) {
               <article class="case-file">
-                <strong>{{ file.fileName }}</strong>
+                <strong>{{ displayFileName(file) }}</strong>
                 <span>{{ fileReviewLabel(file) }}</span>
                 @if (canDownloadFile(file)) {
-                <a [href]="downloadUrl(file.id)">Descargar</a>
+                <a [href]="downloadUrl(file.id)" target="_blank" rel="noopener noreferrer">
+                  {{ fileActionLabel(file) }}
+                </a>
                 }
               </article>
               }
@@ -184,7 +258,7 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
         margin-top: 12px;
       }
 
-      .case-detail-page__header a,
+      .case-detail-page__notifications,
       .case-file a,
       button {
         border: 1px solid #4b8ff5;
@@ -192,6 +266,33 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
         background: #ffffff;
         text-decoration: none;
         padding: 8px 12px;
+      }
+
+      .case-detail-page__notifications {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .case-detail-page__badge {
+        align-items: center;
+        background: #4b8ff5;
+        border: 2px solid #ffffff;
+        border-radius: 999px !important;
+        box-shadow: 0 8px 18px rgba(41, 48, 59, 0.18);
+        color: #ffffff;
+        display: inline-flex;
+        font-size: 0.7rem;
+        font-weight: 800;
+        justify-content: center;
+        line-height: 1;
+        min-height: 20px;
+        min-width: 20px;
+        padding: 2px 5px;
+        position: absolute;
+        right: -10px;
+        top: -10px;
       }
 
       .case-entry__title {
@@ -213,6 +314,21 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
         margin-bottom: 6px;
       }
 
+      .case-onedrive-form {
+        display: grid;
+        gap: 8px;
+      }
+
+      .case-onedrive-form label {
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .case-onedrive-form small {
+        color: rgba(41, 48, 59, 0.68);
+        line-height: 1.45;
+      }
+
       textarea,
       input {
         width: 100%;
@@ -230,6 +346,11 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
         border-top: 1px solid rgba(41, 48, 59, 0.12);
       }
 
+      .case-file {
+        display: grid;
+        gap: 6px;
+      }
+
       .case-detail-page__error {
         color: #b42318;
       }
@@ -244,6 +365,7 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
 })
 export class CaseDetailComponent implements OnInit {
   readonly caseId: string;
+  main: any = null;
   caseRecord: CaseRecord | null = null;
   entries: CaseEntry[] = [];
   commentsByEntry: Record<string, CaseComment[]> = {};
@@ -252,16 +374,20 @@ export class CaseDetailComponent implements OnInit {
   commentDrafts: Record<string, string> = {};
   commentErrors: Record<string, string> = {};
   commentBusyEntryId = '';
-  selectedFile: File | null = null;
-  uploadState: 'idle' | 'uploading' | 'done' | 'error' = 'idle';
-  uploadProgress = 0;
-  uploadError = '';
+  oneDriveLink = {
+    fileName: '',
+    linkUrl: '',
+  };
+  oneDriveBusy = false;
+  oneDriveError = '';
+  unreadNotificationsCount: number | null = null;
   loading = false;
   errorMessage = '';
 
   constructor(
     private _route: ActivatedRoute,
     private _caseService: CaseService,
+    private _mainService: MainService,
     private _authFacade: AuthFacade
   ) {
     this.caseId = this._route.snapshot.paramMap.get('caseId') || '';
@@ -276,15 +402,21 @@ export class CaseDetailComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
+      main: this._mainService
+        .getMain()
+        .pipe(catchError(() => of({ main: null }))),
       caseRecord: this._caseService.getCase(this.caseId),
       entries: this._caseService.listEntries(this.caseId),
       files: this._caseService.listFiles(this.caseId),
       members: this._caseService
         .listMembers(this.caseId)
         .pipe(catchError(() => of({ status: 'success', items: [], nextToken: null }))),
+      unread: this._caseService
+        .getUnreadNotificationCount()
+        .pipe(catchError(() => of({ status: 'error', count: 0 }))),
     })
       .pipe(
-        switchMap(({ caseRecord, entries, files, members }) => {
+        switchMap(({ main, caseRecord, entries, files, members, unread }) => {
           const visibleEntries = (entries.items || []).filter((entry) =>
             isVisibleToCaseClient(entry.visibility)
           );
@@ -302,21 +434,26 @@ export class CaseDetailComponent implements OnInit {
 
           return (commentRequests.length > 0 ? forkJoin(commentRequests) : of([])).pipe(
             map((comments) => ({
+              main: main?.main || null,
               caseRecord: caseRecord.item,
               entries: visibleEntries,
               files: (files.items || []).filter((file) => this.canShowFile(file)),
               members: members.items || [],
+              unreadCount: unread.status === 'success' ? unread.count : null,
               comments,
             }))
           );
         })
       )
       .subscribe({
-        next: ({ caseRecord, entries, files, members, comments }) => {
+        next: ({ main, caseRecord, entries, files, members, unreadCount, comments }) => {
+          this.main = main;
           this.caseRecord = caseRecord;
           this.entries = entries;
           this.files = files;
           this.members = members;
+          this.unreadNotificationsCount =
+            unreadCount === null ? null : Math.max(0, Number(unreadCount) || 0);
           this.commentsByEntry = comments.reduce((current, item) => {
             current[item.entryId] = item.comments;
             return current;
@@ -336,6 +473,14 @@ export class CaseDetailComponent implements OnInit {
 
   canUpload(): boolean {
     return this.hasPermission('case.upload_file');
+  }
+
+  canCreateOneDriveLink(): boolean {
+    return (
+      this.oneDriveLink.fileName.trim().length > 0 &&
+      this.oneDriveLink.linkUrl.trim().length > 0 &&
+      this.looksLikeMicrosoftLink(this.oneDriveLink.linkUrl)
+    );
   }
 
   commentControlId(entryId: string): string {
@@ -374,45 +519,59 @@ export class CaseDetailComponent implements OnInit {
       });
   }
 
-  handleFileSelection(event: Event): void {
-    const input = event.target as HTMLInputElement | null;
-    this.selectedFile = input?.files?.[0] || null;
-    this.uploadState = 'idle';
-    this.uploadProgress = 0;
-    this.uploadError = '';
-  }
-
-  uploadSelectedFile(): void {
-    if (!this.selectedFile || !this.canUpload()) {
+  addOneDriveLink(): void {
+    if (!this.canUpload() || !this.canCreateOneDriveLink()) {
+      this.oneDriveError = this.text(
+        'casesOneDriveInvalidMessage',
+        'Revisa el nombre y usa un enlace de OneDrive o SharePoint válido.'
+      );
       return;
     }
 
-    this.uploadState = 'uploading';
-    this.uploadProgress = 15;
-    this.uploadError = '';
-    this._caseService.uploadCaseFile(this.caseId, this.selectedFile).subscribe({
+    this.oneDriveBusy = true;
+    this.oneDriveError = '';
+    this._caseService.createOneDriveLink(this.caseId, {
+      fileName: this.oneDriveLink.fileName.trim(),
+      linkUrl: this.oneDriveLink.linkUrl.trim(),
+      visibility: { mode: 'case_members' },
+    }).subscribe({
       next: (response) => {
         this.files = [response.item, ...this.files];
-        this.selectedFile = null;
-        this.uploadProgress = 100;
-        this.uploadState = 'done';
+        this.oneDriveLink = { fileName: '', linkUrl: '' };
+        this.oneDriveBusy = false;
       },
       error: () => {
-        this.uploadProgress = 0;
-        this.uploadState = 'error';
-        this.uploadError = 'No se pudo subir el documento';
+        this.oneDriveBusy = false;
+        this.oneDriveError = this.text(
+          'casesOneDriveErrorMessage',
+          'No se pudo agregar el enlace de OneDrive'
+        );
       },
     });
   }
 
   fileReviewLabel(file: CaseFile): string {
     return file.externalVisibilityStatus === 'approved'
-      ? 'Visible para el cliente'
-      : 'En revisión interna';
+      ? this.text('casesFileVisibleLabel', 'Visible para el cliente')
+      : this.text('casesFileReviewLabel', 'En revisión interna');
+  }
+
+  fileActionLabel(file: CaseFile): string {
+    return this.isOneDriveFile(file)
+      ? this.text('casesOpenDocumentLabel', 'Abrir documento')
+      : this.text('casesDownloadDocumentLabel', 'Descargar');
+  }
+
+  displayFileName(file: CaseFile): string {
+    return file.title || file.originalName || file.fileName;
   }
 
   canDownloadFile(file: CaseFile): boolean {
-    return file.externalVisibilityStatus === 'approved' || this.isOwnFile(file);
+    return (
+      this._authFacade.isAdmin() ||
+      file.externalVisibilityStatus === 'approved' ||
+      this.isOwnFile(file)
+    );
   }
 
   downloadUrl(fileId: string): string {
@@ -422,6 +581,9 @@ export class CaseDetailComponent implements OnInit {
   }
 
   private canShowFile(file: CaseFile): boolean {
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
     if (this.isOwnFile(file)) {
       return true;
     }
@@ -431,6 +593,9 @@ export class CaseDetailComponent implements OnInit {
   }
 
   private hasPermission(permission: string): boolean {
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
     const membership = this.currentMembership();
     if (!membership) {
       return false;
@@ -452,5 +617,51 @@ export class CaseDetailComponent implements OnInit {
     const identity = this._authFacade.identity?.();
     const userId = identity?.id || identity?.sub || identity?.userId;
     return Boolean(userId && (file.uploadedByUserId === userId || file.uploaderUserId === userId));
+  }
+
+  text(key: string, fallback: string): string {
+    const value = this.main?.pageTexts?.[key];
+    return typeof value === 'string' && value.trim() ? value : fallback;
+  }
+
+  hasUnreadNotifications(): boolean {
+    return (this.unreadNotificationsCount ?? 0) > 0;
+  }
+
+  notificationBadgeText(): string {
+    const count = this.unreadNotificationsCount ?? 0;
+    return count > 99 ? '99+' : `${count}`;
+  }
+
+  notificationButtonAriaLabel(): string {
+    const label = this.text('casesNotificationsButtonLabel', 'Notificaciones');
+    if (!this.hasUnreadNotifications()) {
+      return label;
+    }
+    const count = this.unreadNotificationsCount ?? 0;
+    const unreadLabel = count === 1 ? 'notificación sin leer' : 'notificaciones sin leer';
+    return `${label}. ${count} ${unreadLabel}`;
+  }
+
+  private isOneDriveFile(file: CaseFile): boolean {
+    return file.storageProvider === 'onedrive' || file.type === 'onedrive-link';
+  }
+
+  private looksLikeMicrosoftLink(value: string): boolean {
+    try {
+      const url = new URL(value.trim());
+      const hostname = url.hostname.toLowerCase();
+      return (
+        url.protocol === 'https:' &&
+        (hostname === '1drv.ms' ||
+          hostname.endsWith('.1drv.ms') ||
+          hostname === 'onedrive.live.com' ||
+          hostname.endsWith('.onedrive.live.com') ||
+          hostname === 'sharepoint.com' ||
+          hostname.endsWith('.sharepoint.com'))
+      );
+    } catch {
+      return false;
+    }
   }
 }

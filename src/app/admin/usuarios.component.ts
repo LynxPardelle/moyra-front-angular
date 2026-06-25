@@ -20,6 +20,24 @@ type NewUserForm = {
   styleUrls: ['./usuarios.component.scss'],
 })
 export class UsuariosComponent {
+  public readonly caseRoleOptions = [
+    {
+      name: 'Cliente',
+      description: 'Ve sus casos asignados, comenta y abre documentos aprobados.',
+    },
+    {
+      name: 'Abogado',
+      description: 'Colabora como miembro interno del caso con permisos operativos.',
+    },
+    {
+      name: 'Pasante',
+      description: 'Apoya internamente con lectura, comentarios y documentos del caso.',
+    },
+    {
+      name: 'Observador',
+      description: 'Consulta información y documentos visibles sin intervenir.',
+    },
+  ];
   public saving = false;
   public user: NewUserForm = this.emptyUser();
 

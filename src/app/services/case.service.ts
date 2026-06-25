@@ -23,6 +23,7 @@ import {
   CaseType,
   CaseUnreadCountResponse,
   CompleteCaseFileRequest,
+  CreateCaseOneDriveLinkRequest,
   CreateCaseTypeRequest,
   CreateCaseEntryRequest,
   InviteCaseMemberRequest,
@@ -218,6 +219,17 @@ export class CaseService {
     return this._http.post<CaseItemResponse<CaseFile>>(
       apiUrl(`/cases/${encodeURIComponent(caseId)}/files/complete`),
       body,
+      { headers: this.authHeaders() }
+    );
+  }
+
+  createOneDriveLink(
+    caseId: string,
+    body: CreateCaseOneDriveLinkRequest
+  ): Observable<CaseItemResponse<CaseFile>> {
+    return this._http.post<CaseItemResponse<CaseFile>>(
+      apiUrl(`/cases/${encodeURIComponent(caseId)}/files/onedrive-link`),
+      normalizeVisibilityPayload(body),
       { headers: this.authHeaders() }
     );
   }

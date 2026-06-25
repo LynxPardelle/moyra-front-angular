@@ -5,6 +5,7 @@ import { catchError, forkJoin, of } from 'rxjs';
 
 import { CaseNotification, CaseRecord, CaseType, caseStatusLabel } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { MainService } from '../../services/main.service';
 
 @Component({
   selector: 'app-cases-list',
@@ -14,25 +15,36 @@ import { CaseService } from '../../services/case.service';
       <header class="cases-page__header">
         <div>
           <p class="cases-page__eyebrow">Portal privado</p>
-          <h1>Casos</h1>
+          <h1>{{ text('casesListTitle', 'Casos') }}</h1>
         </div>
-        <a routerLink="/notificaciones" class="cases-page__notifications">Notificaciones</a>
+        <a routerLink="/notificaciones" class="cases-page__notifications">
+          {{ text('casesNotificationsButtonLabel', 'Notificaciones') }}
+        </a>
       </header>
 
       @if (loading) {
-      <p class="cases-page__state">Cargando casos...</p>
+      <p class="cases-page__state">{{ text('casesListLoadingLabel', 'Cargando casos...') }}</p>
       } @else if (errorMessage) {
       <section class="cases-page__state">
         <p>{{ errorMessage }}</p>
-        <button type="button" data-testid="cases-retry" (click)="load()">Reintentar</button>
+        <button type="button" data-testid="cases-retry" (click)="load()">
+          {{ text('casesRetryButtonLabel', 'Reintentar') }}
+        </button>
       </section>
       } @else if (cases.length === 0) {
       <section class="cases-page__state">
-        <h2>No tienes casos asignados</h2>
-        <p>Cuando el despacho te agregue a un caso, aparecerá en esta sección.</p>
+        <h2>{{ text('casesEmptyTitle', 'No tienes casos asignados') }}</h2>
+        <p>
+          {{
+            text(
+              'casesEmptyMessage',
+              'Cuando el despacho te agregue a un caso, aparecerá en esta sección.'
+            )
+          }}
+        </p>
       </section>
       } @else {
-      <section class="cases-list" aria-label="Casos asignados">
+      <section class="cases-list" [attr.aria-label]="text('casesAssignedLabel', 'Casos asignados')">
         @for (caseRecord of sortedCases(); track caseRecord.id) {
         <article class="case-row">
           <div>
@@ -40,21 +52,28 @@ import { CaseService } from '../../services/case.service';
             <h2>{{ caseRecord.title }}</h2>
             <dl class="case-row__meta">
               <div>
-                <dt>Estado</dt>
+                <dt>{{ text('casesStatusLabel', 'Estado') }}</dt>
                 <dd>{{ statusName(caseRecord.statusId) }}</dd>
               </div>
               <div>
-                <dt>Última actividad</dt>
+                <dt>{{ text('casesLastActivityLabel', 'Última actividad') }}</dt>
                 <dd>{{ lastActivity(caseRecord) | date : 'dd/MM/yyyy HH:mm' }}</dd>
               </div>
               <div>
-                <dt>Novedades</dt>
-                <dd>{{ unreadCount(caseRecord.id) }} sin leer</dd>
+                <dt>{{ text('casesUnreadLabel', 'Novedades') }}</dt>
+                <dd>
+                  {{ unreadCount(caseRecord.id) }}
+                  {{ text('casesUnreadSuffix', 'sin leer') }}
+                </dd>
               </div>
             </dl>
           </div>
           <a [routerLink]="['/casos', caseRecord.id]">
-            {{ unreadCount(caseRecord.id) > 0 ? 'Revisar novedades' : 'Abrir caso' }}
+            {{
+              unreadCount(caseRecord.id) > 0
+                ? text('casesReviewUpdatesButtonLabel', 'Revisar novedades')
+                : text('casesOpenCaseButtonLabel', 'Abrir caso')
+            }}
           </a>
         </article>
         }
@@ -153,10 +172,14 @@ export class CasesListComponent implements OnInit {
   cases: CaseRecord[] = [];
   caseTypes: CaseType[] = [];
   notifications: CaseNotification[] = [];
+  main: any = null;
   loading = false;
   errorMessage = '';
 
-  constructor(private _caseService: CaseService) {}
+  constructor(
+    private _caseService: CaseService,
+    private _mainService: MainService
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -167,6 +190,9 @@ export class CasesListComponent implements OnInit {
     this.errorMessage = '';
 
     forkJoin({
+      main: this._mainService
+        .getMain()
+        .pipe(catchError(() => of({ main: null }))),
       cases: this._caseService.listCases(),
       caseTypes: this._caseService
         .listCaseTypes()
@@ -175,7 +201,8 @@ export class CasesListComponent implements OnInit {
         .listNotifications()
         .pipe(catchError(() => of({ status: 'success', items: [], nextToken: null }))),
     }).subscribe({
-      next: ({ cases, caseTypes, notifications }) => {
+      next: ({ main, cases, caseTypes, notifications }) => {
+        this.main = main?.main || null;
         this.cases = cases.items || [];
         this.caseTypes = caseTypes.items || [];
         this.notifications = notifications.items || [];
@@ -186,7 +213,7 @@ export class CasesListComponent implements OnInit {
         this.caseTypes = [];
         this.notifications = [];
         this.loading = false;
-        this.errorMessage = 'No se pudieron cargar tus casos';
+        this.errorMessage = this.text('casesListErrorMessage', 'No se pudieron cargar tus casos');
       },
     });
   }
@@ -213,5 +240,10 @@ export class CasesListComponent implements OnInit {
       .flatMap((caseType) => caseType.statuses || [])
       .find((candidate) => candidate.id === statusId);
     return status ? caseStatusLabel(status) : statusId;
+  }
+
+  text(key: string, fallback: string): string {
+    const value = this.main?.pageTexts?.[key];
+    return typeof value === 'string' && value.trim() ? value : fallback;
   }
 }

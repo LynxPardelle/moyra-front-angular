@@ -179,6 +179,11 @@ describe('CaseService', () => {
       contentType: 'application/pdf',
       size: 2048,
     }).subscribe();
+    service.createOneDriveLink('case-1', {
+      fileName: 'Contrato firmado',
+      linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
+      visibility: 'case_members',
+    }).subscribe();
     service.updateFileVisibility('case-1', 'file-1', {
       externalVisibilityStatus: 'approved',
       visibility: 'case_members',
@@ -218,6 +223,15 @@ describe('CaseService', () => {
     expect(presignReq.request.method).toBe('POST');
     expect(presignReq.request.body.fileName).toBe('evidencia.pdf');
     presignReq.flush({ status: 'success', file: {}, upload: { method: 'PUT', url: 'signed' } });
+
+    const oneDriveReq = http.expectOne(apiUrl('/cases/case-1/files/onedrive-link'));
+    expect(oneDriveReq.request.method).toBe('POST');
+    expect(oneDriveReq.request.body).toEqual({
+      fileName: 'Contrato firmado',
+      linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
+      visibility: { mode: 'case_members' },
+    });
+    oneDriveReq.flush({ status: 'success', item: {} });
 
     const visibilityReq = http.expectOne(apiUrl('/cases/case-1/files/file-1/visibility'));
     expect(visibilityReq.request.method).toBe('PUT');

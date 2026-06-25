@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { switchMap } from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { SafeRichHtmlPipe } from '../../pipes/safe-rich-html';
 import { CaseComment, CaseEntry } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { MainService } from '../../services/main.service';
 import { isVisibleToCaseClient } from '../../utils/case-visibility';
 
 @Component({
@@ -13,7 +14,9 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
   imports: [CommonModule, RouterLink, SafeRichHtmlPipe],
   template: `
     <main class="case-entry-page">
-      <a [routerLink]="['/casos', caseId]" class="case-entry-page__back">Volver al caso</a>
+      <a [routerLink]="['/casos', caseId]" class="case-entry-page__back">
+        {{ text('casesEntryBackLabel', 'Volver al caso') }}
+      </a>
       @if (errorMessage) {
       <p class="case-entry-page__reference">{{ errorMessage }}</p>
       } @else if (entry) {
@@ -23,13 +26,15 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
         <div [innerHTML]="entry.text | safeRichHtml"></div>
       </article>
       <section class="case-entry-page__panel">
-        <h2>Comentarios</h2>
+        <h2>{{ text('casesCommentsTitle', 'Comentarios') }}</h2>
         @for (comment of comments; track comment.id) {
         <p>{{ comment.text }}</p>
         }
       </section>
       } @else {
-      <p class="case-entry-page__reference">Cargando entrada...</p>
+      <p class="case-entry-page__reference">
+        {{ text('casesEntryLoadingLabel', 'Cargando entrada...') }}
+      </p>
       }
     </main>
   `,
@@ -71,30 +76,40 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
 export class CaseEntryDetailComponent implements OnInit {
   readonly caseId: string;
   readonly entryId: string;
+  main: any = null;
   entry: CaseEntry | null = null;
   comments: CaseComment[] = [];
   errorMessage = '';
 
   constructor(
     private _route: ActivatedRoute,
-    private _caseService: CaseService
+    private _caseService: CaseService,
+    private _mainService: MainService
   ) {
     this.caseId = this._route.snapshot.paramMap.get('caseId') || '';
     this.entryId = this._route.snapshot.paramMap.get('entryId') || '';
   }
 
   ngOnInit(): void {
-    this._caseService
-      .listEntries(this.caseId)
+    forkJoin({
+      main: this._mainService
+        .getMain()
+        .pipe(catchError(() => of({ main: null }))),
+      entries: this._caseService.listEntries(this.caseId),
+    })
       .pipe(
-        switchMap((entries) => {
+        switchMap(({ main, entries }) => {
+          this.main = main?.main || null;
           const entry =
             (entries.items || []).find(
               (item) => item.id === this.entryId && isVisibleToCaseClient(item.visibility)
             ) || null;
           this.entry = entry;
           if (!entry) {
-            this.errorMessage = 'No se encontró la entrada solicitada.';
+            this.errorMessage = this.text(
+              'casesEntryNotFoundMessage',
+              'No se encontró la entrada solicitada.'
+            );
           }
           return this._caseService.listComments(this.caseId, this.entryId);
         })
@@ -104,5 +119,10 @@ export class CaseEntryDetailComponent implements OnInit {
           isVisibleToCaseClient(comment.visibility)
         );
       });
+  }
+
+  text(key: string, fallback: string): string {
+    const value = this.main?.pageTexts?.[key];
+    return typeof value === 'string' && value.trim() ? value : fallback;
   }
 }

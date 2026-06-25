@@ -76,6 +76,47 @@
   font-size: 0.8rem;
 }
 
+.admin-users-case-roles {
+  background: #ffffff;
+  border: 1px solid rgba(41, 48, 59, 0.14);
+  padding: 1rem;
+}
+
+.admin-users-case-roles h2 {
+  color: #202631;
+  font-size: 1rem;
+  margin: 0 0 0.35rem;
+}
+
+.admin-users-case-roles p {
+  color: rgba(41, 48, 59, 0.68);
+  line-height: 1.45;
+  margin: 0 0 0.85rem;
+}
+
+.admin-users-case-roles__grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-users-case-roles article {
+  border-left: 3px solid #4b8ff5;
+  display: grid;
+  gap: 0.25rem;
+  padding-left: 0.7rem;
+}
+
+.admin-users-case-roles strong {
+  color: #202631;
+}
+
+.admin-users-case-roles span {
+  color: rgba(41, 48, 59, 0.68);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 .admin-users-field__error {
   color: #cf4b3b !important;
   font-weight: 700;
@@ -107,4 +148,10 @@
   box-shadow: none;
   color: rgba(41, 48, 59, 0.48);
   cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .admin-users-case-roles__grid {
+    grid-template-columns: 1fr;
+  }
 }

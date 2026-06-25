@@ -11,6 +11,7 @@ describe('AdminCaseDetailComponent', () => {
   let createEntrySpy: jasmine.Spy;
   let inviteMemberSpy: jasmine.Spy;
   let updateFileVisibilitySpy: jasmine.Spy;
+  let createOneDriveLinkSpy: jasmine.Spy;
 
   beforeEach(async () => {
     updateStatusSpy = jasmine.createSpy('updateCaseStatus').and.returnValue(of({ status: 'success', item: {} }));
@@ -19,6 +20,21 @@ describe('AdminCaseDetailComponent', () => {
     updateFileVisibilitySpy = jasmine
       .createSpy('updateFileVisibility')
       .and.returnValue(of({ status: 'success', item: {} }));
+    createOneDriveLinkSpy = jasmine
+      .createSpy('createOneDriveLink')
+      .and.returnValue(of({
+        status: 'success',
+        item: {
+          id: 'file-link-1',
+          caseId: 'case-1',
+          fileName: 'Contrato firmado',
+          contentType: 'text/uri-list',
+          storageProvider: 'onedrive',
+          uploadStatus: 'linked',
+          externalVisibilityStatus: 'approved',
+          visibility: { mode: 'case_members' },
+        },
+      }));
 
     await TestBed.configureTestingModule({
       imports: [AdminCaseDetailComponent],
@@ -93,6 +109,7 @@ describe('AdminCaseDetailComponent', () => {
             updateCaseStatus: updateStatusSpy,
             createEntry: createEntrySpy,
             inviteMember: inviteMemberSpy,
+            createOneDriveLink: createOneDriveLinkSpy,
             updateFileVisibility: updateFileVisibilitySpy,
           },
         },
@@ -111,6 +128,7 @@ describe('AdminCaseDetailComponent', () => {
     expect(text).toContain('Miembros');
     expect(text).toContain('Archivos');
     expect(text).toContain('Auditoría');
+    expect(text).toContain('Enlace de OneDrive');
     expect(fixture.nativeElement.querySelector('a[href*="amazonaws"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('.admin-case-file button')?.disabled).toBeFalse();
   });
@@ -138,7 +156,6 @@ describe('AdminCaseDetailComponent', () => {
       email: 'cliente@moyra.org',
       displayName: 'Cliente',
       rolePreset: 'client',
-      permissions: ['case.read'],
     };
     fixture.componentInstance.inviteMember();
     fixture.componentInstance.approveFile('file-1');
@@ -147,11 +164,27 @@ describe('AdminCaseDetailComponent', () => {
       email: 'cliente@moyra.org',
       displayName: 'Cliente',
       rolePreset: 'client',
-      permissions: ['case.read'],
     });
     expect(updateFileVisibilitySpy).toHaveBeenCalledWith('case-1', 'file-1', {
       externalVisibilityStatus: 'approved',
       visibility: { mode: 'case_members' },
     });
+  });
+
+  it('adds OneDrive links as case documents', () => {
+    fixture.componentInstance.oneDriveLink = {
+      fileName: 'Contrato firmado',
+      linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
+    };
+
+    fixture.componentInstance.addOneDriveLink();
+    fixture.detectChanges();
+
+    expect(createOneDriveLinkSpy).toHaveBeenCalledWith('case-1', {
+      fileName: 'Contrato firmado',
+      linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
+      visibility: { mode: 'case_members' },
+    });
+    expect(fixture.nativeElement.textContent).toContain('Contrato firmado');
   });
 });
