@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { EMPTY, of } from 'rxjs';
+import { EMPTY, defer, of } from 'rxjs';
 import { App } from './app';
 import { MainService } from './services/main.service';
 import { UserService } from './services/user.service';
@@ -16,6 +16,7 @@ describe('App', () => {
   let isAdmin: boolean;
   let isAuthenticated: boolean;
   let casesEnabled: boolean;
+  let unreadCount: number;
   let logoutSpy: jasmine.Spy;
   let startNotificationClickRoutingSpy: jasmine.Spy;
 
@@ -23,6 +24,7 @@ describe('App', () => {
     isAdmin = false;
     isAuthenticated = false;
     casesEnabled = false;
+    unreadCount = 0;
     logoutSpy = jasmine.createSpy('logout');
     startNotificationClickRoutingSpy = jasmine.createSpy('startNotificationClickRouting');
 
@@ -60,6 +62,7 @@ describe('App', () => {
           provide: AuthFacade,
           useValue: {
             hydrate: () => undefined,
+            state$: defer(() => of({ hydrated: true, isAuthenticated })),
             isAdmin: () => isAdmin,
             isAuthenticated: () => isAuthenticated,
             logout: logoutSpy,
@@ -75,7 +78,7 @@ describe('App', () => {
         {
           provide: CaseService,
           useValue: {
-            getUnreadNotificationCount: () => of({ status: 'success', count: 0 }),
+            getUnreadNotificationCount: () => of({ status: 'success', count: unreadCount }),
           },
         },
         {
@@ -106,19 +109,17 @@ describe('App', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.site-header h1')).toBeNull();
-    expect(compiled.querySelector('.titleMontano__name')?.textContent).toContain(
-      'Montaño'
-    );
+    expect(compiled.querySelector('.titleMontano__name')?.textContent).toContain('Montaño');
   });
 
-  it('lets an admin close the session from the main navigation', () => {
+  it('lets an admin close the session from the menu navigation', () => {
     isAdmin = true;
     isAuthenticated = true;
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const logoutButton = compiled.querySelector<HTMLButtonElement>(
-      '[data-testid="site-logout"]'
+      '[data-testid="site-logout-offcanvas"]'
     );
 
     expect(logoutButton?.textContent).toContain('Cerrar sesión');
@@ -139,9 +140,27 @@ describe('App', () => {
 
     expect(links).toContain('Cambiar contraseña');
     expect(links).not.toContain('Panel');
-    expect(compiled.querySelector('[data-testid="site-logout"]')?.textContent).toContain(
+    expect(compiled.querySelector('[data-testid="site-logout-offcanvas"]')?.textContent).toContain(
       'Cerrar sesión'
     );
+  });
+
+  it('keeps the header compact behind a modal menu trigger with an unread badge', () => {
+    casesEnabled = true;
+    isAuthenticated = true;
+    unreadCount = 2;
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const menuButton = compiled.querySelector<HTMLButtonElement>(
+      '[data-testid="site-menu-toggle"]'
+    );
+
+    expect(compiled.querySelector('.site-nav')).toBeNull();
+    expect(menuButton?.getAttribute('aria-controls')).toBe('offcanvasMenu');
+    expect(menuButton?.getAttribute('aria-label')).toContain('2 notificaciones sin leer');
+    expect(menuButton?.querySelector('.site-header__menuBadge')?.textContent?.trim()).toBe('2');
   });
 
   it('shows the private cases link only when the feature is enabled for authenticated users', () => {

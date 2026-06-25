@@ -34,8 +34,18 @@ describe('NotificationBellComponent', () => {
     fixture.detectChanges();
 
     const link = fixture.nativeElement.querySelector('a[href="/notificaciones"]');
+    const badge = fixture.nativeElement.querySelector('.notification-bell__badge');
     expect(link?.textContent).toContain('Notificaciones');
-    expect(link?.textContent).toContain('3');
+    expect(badge?.textContent).toContain('3');
+  });
+
+  it('can close the menu offcanvas after navigating from the menu', () => {
+    fixture = TestBed.createComponent(NotificationBellComponent);
+    fixture.componentInstance.dismissOffcanvas = true;
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector('a[href="/notificaciones"]');
+    expect(link?.getAttribute('data-bs-dismiss')).toBe('offcanvas');
   });
 
   it('fails closed without rendering a stale count', () => {

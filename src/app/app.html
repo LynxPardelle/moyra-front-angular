@@ -23,51 +23,38 @@
     <span class="titleMontano__tagline text-center">Estudio Legal</span>
   </a>
 
-  <nav class="site-nav" aria-label="Navegación principal">
-    <a href="/" [routerLink]="['/']">Inicio</a>
-    <a href="/soluciones" [routerLink]="['/soluciones']">Soluciones</a>
-    <a href="/we" [routerLink]="['/we']">Nosotros</a>
-    <a href="/publications" [routerLink]="['/publications']">Publicaciones</a>
-    <a href="/blog" [routerLink]="['/blog']">Blog</a>
-    <a href="/contacto" [routerLink]="['/contacto']">Contacto</a>
-    @if (casesFeatureEnabled() && isAuthenticatedUser()) {
-    <a href="/casos" [routerLink]="['/casos']">Casos</a>
-    <app-notification-bell></app-notification-bell>
-    }
-    @if (!isAuthenticatedUser()) {
-    <a href="/login" [routerLink]="['/login']">Acceso</a>
-    } @if (isAuthenticatedUser()) {
-    <a href="/cambiar-contrasena" [routerLink]="['/cambiar-contrasena']"> Cambiar contraseña </a>
-    } @if (isAdminUser()) {
-    <a href="/admin" [routerLink]="['/admin']">Panel</a>
-    } @if (isAuthenticatedUser()) {
-    <button type="button" data-testid="site-logout" (click)="logout()">Cerrar sesión</button>
-    }
-  </nav>
-
-  <!-- Menu -->
-  <button
-    class="btn menuIconContainer p-0 m-0"
-    type="button"
-    data-bs-toggle="offcanvas"
-    data-bs-target="#offcanvasMenu"
-    aria-controls="offcanvasMenu"
-    aria-label="Abrir menú"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="28"
-      height="28"
-      fill="currentColor"
-      class="bi bi-list d-block mx-auto my-2"
-      viewBox="0 0 16 16"
+  <div class="site-header__actions">
+    <!-- Menu -->
+    <button
+      class="btn menuIconContainer p-0 m-0"
+      type="button"
+      data-testid="site-menu-toggle"
+      data-bs-toggle="offcanvas"
+      data-bs-target="#offcanvasMenu"
+      aria-controls="offcanvasMenu"
+      [attr.aria-label]="menuButtonAriaLabel()"
     >
-      <path
-        fill-rule="evenodd"
-        d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"
-      />
-    </svg>
-  </button>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="28"
+        height="28"
+        fill="currentColor"
+        class="bi bi-list d-block mx-auto my-2"
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"
+        />
+      </svg>
+      @if (hasUnreadNotifications()) {
+      <span class="site-header__menuBadge" aria-hidden="true">
+        {{ notificationBadgeText() }}
+      </span>
+      }
+    </button>
+  </div>
 
   <!-- Off-canvas -->
   <div
@@ -171,10 +158,9 @@
           </a>
         </li>
         <li class="text-center my-4 h3">
-          <app-notification-bell></app-notification-bell>
+          <app-notification-bell [dismissOffcanvas]="true"></app-notification-bell>
         </li>
-        }
-        @if (!isAuthenticatedUser()) {
+        } @if (!isAuthenticatedUser()) {
         <li class="text-center my-4 h3">
           <a
             class="d-block mx-auto ank ank-text-linkM text-decoration-none"

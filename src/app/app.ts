@@ -10,7 +10,7 @@ import {
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { isPlatformBrowser, Location } from '@angular/common';
 import { NgxAngoraService } from 'ngx-angora-css';
-import { Subscription, catchError, filter, map, of, switchMap } from 'rxjs';
+import { Subscription, catchError, distinctUntilChanged, filter, map, of, switchMap } from 'rxjs';
 
 // Services
 import { ApiRuntime, GlobalMain } from './services/global';
@@ -22,6 +22,7 @@ import { AuthFacade } from './store/auth/auth.facade';
 import { createAuthSession } from './store/auth/auth.storage';
 import { CasesFeatureService } from './components/cases/cases-feature.service';
 import { NotificationBellComponent } from './components/notifications/notification-bell.component';
+import { CaseService } from './services/case.service';
 
 // Models
 import { Main } from './models/main';
@@ -65,11 +66,13 @@ export class App implements OnDestroy, OnInit {
   // Utility
   public windowWidth = 0;
   public readonly fallbackLogoUrl = '/assets/images/M&RALowQuality.png';
+  public unreadNotificationsCount: number | null = null;
   private cssCreateTimer?: ReturnType<typeof setTimeout>;
   private lastCssCreateAt = 0;
   private stylesheetsReady?: Promise<void>;
   private routeEventsSubscription?: Subscription;
   private refreshSessionSubscription?: Subscription;
+  private notificationCountSubscription?: Subscription;
   private notificationClickRoutingStarted = false;
 
   constructor(
@@ -84,6 +87,7 @@ export class App implements OnDestroy, OnInit {
     private _userService: UserService,
     private _authFacade: AuthFacade,
     private _casesFeature: CasesFeatureService,
+    private _caseService: CaseService,
     private _injector: Injector,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
@@ -208,6 +212,7 @@ export class App implements OnDestroy, OnInit {
     });
     this.scheduleCssCreate(true);
     this.refreshSessionFromCookie();
+    this.watchCaseNotificationCount();
     if (this.casesFeatureEnabled()) {
       void this.startCaseNotificationClickRouting();
     }
@@ -223,6 +228,7 @@ export class App implements OnDestroy, OnInit {
   ngOnDestroy(): void {
     this.routeEventsSubscription?.unsubscribe();
     this.refreshSessionSubscription?.unsubscribe();
+    this.notificationCountSubscription?.unsubscribe();
     if (this.cssCreateTimer) {
       clearTimeout(this.cssCreateTimer);
     }
@@ -250,7 +256,27 @@ export class App implements OnDestroy, OnInit {
   }
 
   logout(): void {
+    this.unreadNotificationsCount = null;
     this._authFacade.logout();
+  }
+
+  hasUnreadNotifications(): boolean {
+    return (this.unreadNotificationsCount ?? 0) > 0;
+  }
+
+  notificationBadgeText(): string {
+    const count = this.unreadNotificationsCount ?? 0;
+    return count > 99 ? '99+' : `${count}`;
+  }
+
+  menuButtonAriaLabel(): string {
+    if (!this.hasUnreadNotifications()) {
+      return 'Abrir menú';
+    }
+
+    const count = this.unreadNotificationsCount ?? 0;
+    const label = count === 1 ? 'notificación sin leer' : 'notificaciones sin leer';
+    return `Abrir menú. ${count} ${label}`;
   }
 
   private refreshSessionFromCookie(): void {
@@ -276,6 +302,35 @@ export class App implements OnDestroy, OnInit {
         if (session) {
           this._authFacade.setCredentials(session.identity, session.token);
         }
+      });
+  }
+
+  private watchCaseNotificationCount(): void {
+    if (!isPlatformBrowser(this.platformId) || !this.casesFeatureEnabled()) {
+      this.unreadNotificationsCount = null;
+      return;
+    }
+
+    this.notificationCountSubscription = this._authFacade.state$
+      .pipe(
+        filter((state) => state.hydrated),
+        map((state) => state.isAuthenticated),
+        distinctUntilChanged(),
+        switchMap((isAuthenticated) => {
+          if (!isAuthenticated) {
+            return of(null);
+          }
+
+          return this._caseService.getUnreadNotificationCount().pipe(catchError(() => of(null)));
+        })
+      )
+      .subscribe((response) => {
+        if (response?.status === 'success') {
+          this.unreadNotificationsCount = Math.max(0, Number(response.count) || 0);
+          return;
+        }
+
+        this.unreadNotificationsCount = null;
       });
   }
 

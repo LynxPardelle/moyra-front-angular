@@ -286,15 +286,25 @@ body {
       }
     }
 
+    .site-header__actions {
+      align-items: center;
+      display: inline-flex;
+      grid-column: 3;
+      justify-content: flex-end;
+      min-width: 46px;
+    }
+
     .menuIconContainer {
       align-items: center;
       background: rgba(255, 255, 255, 0.58);
       border: 1px solid rgba(41, 48, 59, 0.18);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 10px 24px rgba(41, 48, 59, 0.12);
       color: $titleM;
-      display: none;
+      display: inline-flex;
       height: 46px;
       justify-content: center;
+      overflow: visible;
+      position: relative;
       transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
       width: 46px;
 
@@ -308,6 +318,27 @@ body {
       svg {
         margin: 0 !important;
       }
+    }
+
+    .site-header__menuBadge {
+      align-items: center;
+      background: $linkM;
+      border: 2px solid #ffffff;
+      border-radius: 999px !important;
+      box-shadow: 0 8px 18px rgba(41, 48, 59, 0.24);
+      color: #ffffff;
+      display: inline-flex;
+      font-size: 0.72rem;
+      font-weight: 850;
+      justify-content: center;
+      line-height: 1;
+      min-height: 21px;
+      min-width: 21px;
+      padding: 2px 6px;
+      position: absolute;
+      right: -0.45rem;
+      top: -0.45rem;
+      z-index: 2;
     }
   }
 
@@ -382,6 +413,10 @@ body {
       background: rgba(75, 143, 245, 0.1);
       color: $linkM !important;
     }
+  }
+
+  .offcanvas-body app-notification-bell {
+    display: block;
   }
 
   .titleMontano {
@@ -1151,10 +1186,6 @@ body {
       top: auto;
       transform: none;
       width: auto;
-    }
-
-    .site-nav {
-      display: none;
     }
 
     .site-header .menuIconContainer {
