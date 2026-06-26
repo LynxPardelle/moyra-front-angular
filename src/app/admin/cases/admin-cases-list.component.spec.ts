@@ -136,6 +136,8 @@ describe('AdminCasesListComponent', () => {
       caseTypeId: 'corporate',
       statusId: 'draft',
       description: 'Alta inicial',
+      attorneyEmail: 'abogado@moyra.org',
+      attorneyName: 'Abogado Moyra',
     };
 
     fixture.componentInstance.createCase();
@@ -146,6 +148,10 @@ describe('AdminCasesListComponent', () => {
       caseTypeId: 'corporate',
       statusId: 'draft',
       description: 'Alta inicial',
+      initialAttorney: {
+        email: 'abogado@moyra.org',
+        displayName: 'Abogado Moyra',
+      },
     });
   });
 

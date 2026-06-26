@@ -27,3 +27,8 @@ export const selectIsAdmin = createSelector(
   selectAuthState,
   (state) => state.isAdmin
 );
+
+export const selectIsLegalStaff = createSelector(
+  selectAuthState,
+  (state) => state.isLegalStaff
+);

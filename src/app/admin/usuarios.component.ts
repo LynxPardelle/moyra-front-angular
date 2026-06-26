@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { UserService } from '../services/user.service';
 
-type UserRole = 'ROLE_USER' | 'ROLE_ADMIN';
+type UserRole = 'ROLE_USER' | 'ROLE_LEGAL_STAFF' | 'ROLE_ADMIN';
 
 type NewUserForm = {
   name: string;

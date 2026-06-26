@@ -126,6 +126,10 @@ export function roleFromIdentity(identity: any): string {
     return 'ROLE_ADMIN';
   }
 
+  if (identity.role === 'ROLE_LEGAL_STAFF') {
+    return 'ROLE_LEGAL_STAFF';
+  }
+
   const groups = identity['cognito:groups'] || identity.groups;
   if (
     Array.isArray(groups) &&
@@ -148,6 +152,27 @@ export function roleFromIdentity(identity: any): string {
     return 'ROLE_ADMIN';
   }
 
+  if (
+    Array.isArray(groups) &&
+    groups.some((group) => String(group).trim() === 'ROLE_LEGAL_STAFF')
+  ) {
+    return 'ROLE_LEGAL_STAFF';
+  }
+
+  if (
+    typeof groups === 'string' &&
+    groups
+      .split(',')
+      .map((group) => group.trim())
+      .includes('ROLE_LEGAL_STAFF')
+  ) {
+    return 'ROLE_LEGAL_STAFF';
+  }
+
+  if (identity['custom:legacyRole'] === 'ROLE_LEGAL_STAFF') {
+    return 'ROLE_LEGAL_STAFF';
+  }
+
   if (ApiRuntime.isV2) {
     return 'ROLE_USER';
   }
@@ -157,6 +182,10 @@ export function roleFromIdentity(identity: any): string {
 
 export function isAdminIdentity(identity: any): boolean {
   return roleFromIdentity(identity) === 'ROLE_ADMIN';
+}
+
+export function isLegalStaffIdentity(identity: any): boolean {
+  return roleFromIdentity(identity) === 'ROLE_LEGAL_STAFF';
 }
 
 export function apiUrl(path: string): string {

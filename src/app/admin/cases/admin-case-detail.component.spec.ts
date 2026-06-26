@@ -8,15 +8,47 @@ import { CaseService } from '../../services/case.service';
 describe('AdminCaseDetailComponent', () => {
   let fixture: ComponentFixture<AdminCaseDetailComponent>;
   let updateStatusSpy: jasmine.Spy;
-  let createEntrySpy: jasmine.Spy;
+  let updateCaseSpy: jasmine.Spy;
   let inviteMemberSpy: jasmine.Spy;
+  let updateMemberSpy: jasmine.Spy;
+  let updateMemberPermissionsSpy: jasmine.Spy;
   let updateFileVisibilitySpy: jasmine.Spy;
   let createOneDriveLinkSpy: jasmine.Spy;
 
   beforeEach(async () => {
     updateStatusSpy = jasmine.createSpy('updateCaseStatus').and.returnValue(of({ status: 'success', item: {} }));
-    createEntrySpy = jasmine.createSpy('createEntry').and.returnValue(of({ status: 'success', item: {} }));
+    updateCaseSpy = jasmine.createSpy('updateCase').and.returnValue(of({
+      status: 'success',
+      item: {
+        id: 'case-1',
+        title: 'Contrato corporativo editado',
+        caseTypeId: 'corporate',
+        statusId: 'draft',
+      },
+    }));
     inviteMemberSpy = jasmine.createSpy('inviteMember').and.returnValue(of({ status: 'success', item: {} }));
+    updateMemberSpy = jasmine.createSpy('updateMember').and.returnValue(of({
+      status: 'success',
+      item: {
+        id: 'member-1',
+        caseId: 'case-1',
+        displayName: 'Cliente editado',
+        rolePreset: 'client',
+        memberType: 'external',
+        permissions: ['case.read'],
+      },
+    }));
+    updateMemberPermissionsSpy = jasmine.createSpy('updateMemberPermissions').and.returnValue(of({
+      status: 'success',
+      item: {
+        id: 'member-1',
+        caseId: 'case-1',
+        displayName: 'Cliente editado',
+        rolePreset: 'client',
+        memberType: 'external',
+        permissions: ['case.read', 'case.comment'],
+      },
+    }));
     updateFileVisibilitySpy = jasmine
       .createSpy('updateFileVisibility')
       .and.returnValue(of({ status: 'success', item: {} }));
@@ -79,12 +111,26 @@ describe('AdminCaseDetailComponent', () => {
             listEntries: () =>
               of({
                 status: 'success',
-                items: [{ id: 'entry-1', caseId: 'case-1', title: 'Primera entrada' }],
+                items: [{
+                  id: 'entry-1',
+                  caseId: 'case-1',
+                  title: 'Primera entrada',
+                  text: 'Texto',
+                  visibility: { mode: 'case_members' },
+                }],
               }),
             listMembers: () =>
               of({
                 status: 'success',
-                items: [{ id: 'member-1', caseId: 'case-1', displayName: 'Cliente' }],
+                items: [{
+                  id: 'member-1',
+                  caseId: 'case-1',
+                  displayName: 'Cliente',
+                  email: 'cliente@moyra.org',
+                  rolePreset: 'client',
+                  memberType: 'external',
+                  permissions: ['case.read', 'case.comment'],
+                }],
               }),
             listFiles: () =>
               of({
@@ -104,11 +150,20 @@ describe('AdminCaseDetailComponent', () => {
             listAuditEvents: () =>
               of({
                 status: 'success',
-                items: [{ id: 'audit-1', caseId: 'case-1', action: 'case.created', targetType: 'case' }],
+                items: [{
+                  id: 'audit-1',
+                  caseId: 'case-1',
+                  action: 'case.created',
+                  targetType: 'case',
+                  actorDisplayName: 'Admin',
+                  createdAt: '2026-06-18T20:00:00.000Z',
+                }],
               }),
             updateCaseStatus: updateStatusSpy,
-            createEntry: createEntrySpy,
+            updateCase: updateCaseSpy,
             inviteMember: inviteMemberSpy,
+            updateMember: updateMemberSpy,
+            updateMemberPermissions: updateMemberPermissionsSpy,
             createOneDriveLink: createOneDriveLinkSpy,
             updateFileVisibility: updateFileVisibilitySpy,
           },
@@ -133,22 +188,17 @@ describe('AdminCaseDetailComponent', () => {
     expect(fixture.nativeElement.querySelector('.admin-case-file button')?.disabled).toBeFalse();
   });
 
-  it('updates status and creates internal entries', () => {
+  it('updates case details through the status notification route when needed', () => {
     fixture.componentInstance.selectedStatusId = 'review';
-    fixture.componentInstance.updateStatus();
-    fixture.componentInstance.newEntry = {
-      title: 'Actualización interna',
-      text: '<p>Texto privado</p>',
-      visibility: { mode: 'internal_only' },
-    };
-    fixture.componentInstance.createEntry();
+    fixture.componentInstance.caseDraft.title = 'Contrato corporativo editado';
+    fixture.componentInstance.saveCaseDetails();
 
-    expect(updateStatusSpy).toHaveBeenCalledWith('case-1', { statusId: 'review' });
-    expect(createEntrySpy).toHaveBeenCalledWith('case-1', {
-      title: 'Actualización interna',
-      text: '<p>Texto privado</p>',
-      visibility: { mode: 'internal_only' },
+    expect(updateCaseSpy).toHaveBeenCalledWith('case-1', {
+      title: 'Contrato corporativo editado',
+      reference: '',
+      description: '',
     });
+    expect(updateStatusSpy).toHaveBeenCalledWith('case-1', { statusId: 'review' });
   });
 
   it('invites members and approves file visibility', () => {

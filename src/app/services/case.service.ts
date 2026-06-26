@@ -26,9 +26,13 @@ import {
   CreateCaseOneDriveLinkRequest,
   CreateCaseTypeRequest,
   CreateCaseEntryRequest,
+  InitialAttorneyRequest,
   InviteCaseMemberRequest,
   PresignCaseFileRequest,
   RegisterCasePushSubscriptionRequest,
+  UpdateCaseEntryRequest,
+  UpdateCaseMemberRequest,
+  UpdateCaseRequest,
   UpdateCaseTypeRequest,
   UpdateCasePermissionsRequest,
   UpdateCaseNotificationPreferencesRequest,
@@ -96,6 +100,7 @@ export class CaseService {
     caseTypeId: string;
     statusId: string;
     leadUserId?: string;
+    initialAttorney: InitialAttorneyRequest;
   }): Observable<CaseItemResponse<CaseRecord>> {
     return this._http.post<CaseItemResponse<CaseRecord>>(apiUrl('/cases'), body, {
       headers: this.authHeaders(),
@@ -114,6 +119,17 @@ export class CaseService {
   ): Observable<CaseItemResponse<CaseRecord>> {
     return this._http.put<CaseItemResponse<CaseRecord>>(
       apiUrl(`/cases/${encodeURIComponent(caseId)}/status`),
+      body,
+      { headers: this.authHeaders() }
+    );
+  }
+
+  updateCase(
+    caseId: string,
+    body: UpdateCaseRequest
+  ): Observable<CaseItemResponse<CaseRecord>> {
+    return this._http.put<CaseItemResponse<CaseRecord>>(
+      apiUrl(`/cases/${encodeURIComponent(caseId)}`),
       body,
       { headers: this.authHeaders() }
     );
@@ -153,9 +169,28 @@ export class CaseService {
     );
   }
 
+  updateMember(
+    caseId: string,
+    membershipId: string,
+    body: UpdateCaseMemberRequest
+  ): Observable<CaseItemResponse<CaseMembership>> {
+    return this._http.put<CaseItemResponse<CaseMembership>>(
+      apiUrl(`/cases/${encodeURIComponent(caseId)}/members/${encodeURIComponent(membershipId)}`),
+      body,
+      { headers: this.authHeaders() }
+    );
+  }
+
   listEntries(caseId: string): Observable<CaseListResponse<CaseEntry>> {
     return this._http.get<CaseListResponse<CaseEntry>>(
       apiUrl(`/cases/${encodeURIComponent(caseId)}/entries`),
+      { headers: this.authHeaders() }
+    );
+  }
+
+  getEntry(caseId: string, entryId: string): Observable<CaseItemResponse<CaseEntry>> {
+    return this._http.get<CaseItemResponse<CaseEntry>>(
+      apiUrl(`/cases/${encodeURIComponent(caseId)}/entries/${encodeURIComponent(entryId)}`),
       { headers: this.authHeaders() }
     );
   }
@@ -166,6 +201,18 @@ export class CaseService {
   ): Observable<CaseItemResponse<CaseEntry>> {
     return this._http.post<CaseItemResponse<CaseEntry>>(
       apiUrl(`/cases/${encodeURIComponent(caseId)}/entries`),
+      cleanCaseEntryPayload(body),
+      { headers: this.authHeaders() }
+    );
+  }
+
+  updateEntry(
+    caseId: string,
+    entryId: string,
+    body: UpdateCaseEntryRequest
+  ): Observable<CaseItemResponse<CaseEntry>> {
+    return this._http.put<CaseItemResponse<CaseEntry>>(
+      apiUrl(`/cases/${encodeURIComponent(caseId)}/entries/${encodeURIComponent(entryId)}`),
       cleanCaseEntryPayload(body),
       { headers: this.authHeaders() }
     );
@@ -353,13 +400,13 @@ export class CaseService {
   }
 }
 
-function cleanCaseEntryPayload(body: CreateCaseEntryRequest): CreateCaseEntryRequest {
+function cleanCaseEntryPayload<T extends Partial<CreateCaseEntryRequest>>(body: T): T {
   const payload = Object.entries(body as Record<string, unknown>).reduce((payload, [key, value]) => {
     if (!FORBIDDEN_CASE_ENTRY_FIELDS.has(key)) {
       (payload as Record<string, unknown>)[key] = value;
     }
     return payload;
-  }, {} as CreateCaseEntryRequest);
+  }, {} as T);
   return normalizeVisibilityPayload(payload);
 }
 

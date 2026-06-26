@@ -23,11 +23,12 @@
       <span>Rol</span>
       <select name="role" [(ngModel)]="user.role" required>
         <option value="ROLE_USER">Usuario</option>
+        <option value="ROLE_LEGAL_STAFF">Equipo legal</option>
         <option value="ROLE_ADMIN">Administrador</option>
       </select>
       <small>
-        Este rol controla acceso global al sitio. Los roles de Casos se asignan dentro de cada
-        caso al invitar o administrar miembros.
+        Equipo legal entra al panel de Casos sin administrar el resto del sitio. Los permisos finos
+        se asignan dentro de cada caso.
       </small>
     </label>
 

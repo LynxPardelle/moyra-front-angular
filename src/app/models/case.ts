@@ -269,6 +269,8 @@ export type CaseAuditEvent = {
   id: string;
   caseId: string;
   actorUserId?: string;
+  actorEmail?: string;
+  actorDisplayName?: string;
   action: string;
   targetType: string;
   targetId?: string;
@@ -306,11 +308,35 @@ export type CreateCaseEntryRequest = {
   fileIds?: string[];
 };
 
+export type UpdateCaseEntryRequest = Partial<CreateCaseEntryRequest>;
+
+export type UpdateCaseRequest = {
+  title?: string;
+  reference?: string;
+  description?: string;
+  statusId?: string;
+};
+
+export type InitialAttorneyRequest = {
+  email: string;
+  displayName?: string;
+  userId?: string;
+  permissions?: CasePermission[];
+};
+
 export type InviteCaseMemberRequest = {
   email: string;
   displayName?: string;
   rolePreset: CaseRolePreset;
   permissions?: CasePermission[];
+};
+
+export type UpdateCaseMemberRequest = {
+  displayName?: string;
+  partyId?: string;
+  partyLabel?: string;
+  memberType?: CaseMemberType;
+  rolePreset?: CaseRolePreset;
 };
 
 export type UpdateCasePermissionsRequest = {

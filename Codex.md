@@ -124,3 +124,12 @@ This file is for durable agent memory only. Dated implementation history belongs
 - Infra commit `607d9b8` is deployed to testing and production.
 - Testing refresh smoke passed: `https://api.test.moyra.org/api/v2` health 200, credentialed CORS for `https://test.moyra.org`, login/admin refresh 200, missing cookie 401, untrusted origin 403, and `/admin/publications` stayed authenticated after reload with no console warning/error logs.
 - Production refresh smoke passed: `https://api.moyra.org/api/v2` health 200, credentialed CORS for `https://moyra.org`, login/admin refresh 200, missing cookie 401, untrusted origin 403, and `/admin/publications` stayed authenticated after reload with no console warning/error logs.
+
+## 2026-06-26 CT - Moyra Casos Admin Hardening
+
+- Global role naming decision: use `ROLE_LEGAL_STAFF` with the Spanish UI label `Equipo legal` for abogados/pasantes who can work in the Casos admin area without receiving full site administration access.
+- `Equipo legal` should land in `/admin/casos`; full site sections such as Nosotros, Configuraciones, Usuarios, Publicaciones, Soluciones, Blog, and Uso y costos remain for `ROLE_ADMIN`.
+- Case entries are private case content, not SEO/public publications. Admin case entry create/edit uses rich text content only and intentionally has no slug, canonical, SEO title, SEO description, keywords, public URL, or published flags.
+- Case creation requires an initial responsible attorney (`initialAttorney`) so a case is not born without at least one legal member with publish/manage permissions.
+- Admin case detail now links entries to a dedicated rich-text editor, shows members and audit as tables, lets admins edit case metadata and member role/permissions, and hides the portal-view link for internal-only entries because the client portal intentionally filters those out.
+- Local verification after this cut: `npm run build` succeeded, focused admin cases tests returned `5 SUCCESS`, and full `npx ng test --watch=false --browsers=ChromeHeadless --no-progress` returned `134 SUCCESS`.

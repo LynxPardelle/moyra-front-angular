@@ -13,6 +13,7 @@ import { ConfiguracionesComponent } from './configuraciones.component';
 import { UsuariosComponent } from './usuarios.component';
 import { UsoComponent } from './uso.component';
 import { AdminCaseDetailComponent } from './cases/admin-case-detail.component';
+import { AdminCaseEntryEditorComponent } from './cases/admin-case-entry-editor.component';
 import { AdminCasesConfigComponent } from './cases/admin-cases-config.component';
 import { AdminCasesListComponent } from './cases/admin-cases-list.component';
 
@@ -54,6 +55,16 @@ const routes: Routes = [
       {
         path: 'casos/configuracion',
         component: AdminCasesConfigComponent,
+        canActivate: [CasesGuard],
+      },
+      {
+        path: 'casos/:caseId/entradas/nueva',
+        component: AdminCaseEntryEditorComponent,
+        canActivate: [CasesGuard],
+      },
+      {
+        path: 'casos/:caseId/entradas/:entryId',
+        component: AdminCaseEntryEditorComponent,
         canActivate: [CasesGuard],
       },
       { path: 'casos/:caseId', component: AdminCaseDetailComponent, canActivate: [CasesGuard] },

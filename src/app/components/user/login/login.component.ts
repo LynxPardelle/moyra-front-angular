@@ -102,6 +102,10 @@ export class LoginComponent implements OnInit, OnDestroy {
       this._authFacade.setCredentials(authSession.identity, authSession.token);
       if (authSession.role === 'ROLE_ADMIN') {
         this._router.navigateByUrl(safeReturnUrl || '/admin');
+      } else if (authSession.role === 'ROLE_LEGAL_STAFF') {
+        this._router.navigateByUrl(
+          safeReturnUrl?.startsWith('/admin/casos') ? safeReturnUrl : '/admin/casos'
+        );
       } else if (wantsAdmin) {
         this._router.navigate(['/inicio']);
         Swal.fire({

@@ -19,6 +19,8 @@ type NewCaseForm = {
   description: string;
   caseTypeId: string;
   statusId: string;
+  attorneyEmail: string;
+  attorneyName: string;
 };
 
 @Component({
@@ -82,7 +84,23 @@ type NewCaseForm = {
           <option [value]="status.id">{{ statusLabel(status) }}</option>
           }
         </select>
-        <button type="submit">Crear caso</button>
+        <input
+          name="attorneyName"
+          [(ngModel)]="newCase.attorneyName"
+          placeholder="Abogado responsable"
+          aria-label="Abogado responsable"
+        />
+        <input
+          name="attorneyEmail"
+          [(ngModel)]="newCase.attorneyEmail"
+          placeholder="Correo del abogado"
+          aria-label="Correo del abogado"
+          type="email"
+        />
+        <button type="submit" [disabled]="!canCreateCase()">Crear caso</button>
+        @if (createCaseHint()) {
+        <small>{{ createCaseHint() }}</small>
+        }
       </form>
 
       <div class="admin-cases-filters">
@@ -278,6 +296,8 @@ export class AdminCasesListComponent implements OnInit {
     description: '',
     caseTypeId: '',
     statusId: '',
+    attorneyEmail: '',
+    attorneyName: '',
   };
 
   constructor(private _caseService: CaseService) {}
@@ -320,11 +340,21 @@ export class AdminCasesListComponent implements OnInit {
   }
 
   createCase(): void {
-    if (!this.newCase.title || !this.newCase.caseTypeId || !this.newCase.statusId) {
+    if (!this.canCreateCase()) {
       return;
     }
 
-    this._caseService.createCase({ ...this.newCase }).subscribe((response) => {
+    this._caseService.createCase({
+      title: this.newCase.title,
+      reference: this.newCase.reference,
+      description: this.newCase.description,
+      caseTypeId: this.newCase.caseTypeId,
+      statusId: this.newCase.statusId,
+      initialAttorney: {
+        email: this.newCase.attorneyEmail.trim().toLowerCase(),
+        displayName: this.newCase.attorneyName.trim(),
+      },
+    }).subscribe((response) => {
       this.cases = [response.item, ...this.cases];
       this.newCase = {
         title: '',
@@ -332,6 +362,8 @@ export class AdminCasesListComponent implements OnInit {
         description: '',
         caseTypeId: '',
         statusId: '',
+        attorneyEmail: '',
+        attorneyName: '',
       };
     });
   }
@@ -361,4 +393,32 @@ export class AdminCasesListComponent implements OnInit {
     return caseStatusLabel(status);
   }
 
+  canCreateCase(): boolean {
+    return (
+      this.newCase.title.trim().length > 0 &&
+      Boolean(this.newCase.caseTypeId) &&
+      Boolean(this.newCase.statusId) &&
+      this.isValidEmail(this.newCase.attorneyEmail)
+    );
+  }
+
+  createCaseHint(): string {
+    if (!this.newCase.title.trim()) {
+      return 'Agrega un título para el caso.';
+    }
+    if (!this.newCase.caseTypeId) {
+      return 'Selecciona un tipo de caso.';
+    }
+    if (!this.newCase.statusId) {
+      return 'Selecciona un estado inicial.';
+    }
+    if (!this.isValidEmail(this.newCase.attorneyEmail)) {
+      return 'Agrega el correo del abogado responsable.';
+    }
+    return '';
+  }
+
+  private isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  }
 }

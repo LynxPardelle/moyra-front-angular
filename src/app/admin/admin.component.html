@@ -69,8 +69,9 @@
 
     @if (showAside === true) {
     <div id="adminSidebarPanel" class="admin-sidebar__panel">
-      <h2>Panel de administración</h2>
+      <h2>{{ panelTitle() }}</h2>
       <ul class="admin-sidebar__nav">
+        @if (showAdminMenu()) {
         <li>
           <a href="" [routerLink]="['/admin/we']"> Nosotros </a>
         </li>
@@ -90,6 +91,7 @@
             Crear usuario
           </a>
         </li>
+        }
         @if (casesFeatureEnabled()) {
         <li>
           <a href="/admin/casos" [routerLink]="['/admin/casos']" data-testid="admin-cases-link">
@@ -97,6 +99,7 @@
           </a>
         </li>
         }
+        @if (showAdminMenu()) {
         <li>
           <a href="/admin/publications" [routerLink]="['/admin/publications']"> Publicaciones </a>
         </li>
@@ -117,6 +120,7 @@
         <li>
           <a href="/admin/articulo" [routerLink]="['/admin/articulo']"> Crear nuevo artículo </a>
         </li>
+        }
         <li>
           <a
             href="/cambiar-contrasena"
