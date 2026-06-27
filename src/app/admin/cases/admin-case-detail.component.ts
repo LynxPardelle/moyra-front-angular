@@ -651,6 +651,7 @@ export class AdminCaseDetailComponent implements OnInit {
     { value: 'case.manage_status', label: 'Cambiar estado' },
     { value: 'case.approve_file_visibility', label: 'Aprobar documentos' },
     { value: 'case.read_audit', label: 'Ver auditoría' },
+    { value: 'case.manage_notifications', label: 'Administrar notificaciones' },
   ];
   editingMemberId = '';
   memberSavingId = '';

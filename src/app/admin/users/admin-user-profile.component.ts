@@ -410,6 +410,7 @@ export class AdminUserProfileComponent implements OnInit {
             'case.manage_status': 'Cambiar estado',
             'case.approve_file_visibility': 'Aprobar documentos',
             'case.read_audit': 'Ver auditoría',
+            'case.manage_notifications': 'Administrar notificaciones',
           }[permission] || permission)
       )
       .join(', ');
