@@ -28,7 +28,7 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
       <section class="case-entry-page__panel">
         <h2>{{ text('casesCommentsTitle', 'Comentarios') }}</h2>
         @for (comment of comments; track comment.id) {
-        <p>{{ comment.text }}</p>
+        <div [innerHTML]="comment.text | safeRichHtml"></div>
         }
       </section>
       } @else {

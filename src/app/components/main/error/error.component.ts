@@ -8,12 +8,12 @@ import { SharedService } from '../../../services/shared.service';
 
 // Models
 import { Main } from '../../../models/main';
-import { SafeHtmlPipe } from '../../../pipes/safe-html';
+import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { renderTemplateExpressions } from '../../../utils/template-value';
 
 @Component({
   selector: 'app-error',
-  imports: [SafeHtmlPipe],
+  imports: [SafeRichHtmlPipe],
   templateUrl: './error.component.html',
   styleUrls: ['./error.component.scss'],
 })

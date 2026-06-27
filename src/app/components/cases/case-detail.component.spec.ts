@@ -256,14 +256,12 @@ describe('CaseDetailComponent', () => {
     render();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const commentTextarea = compiled.querySelector('textarea') as HTMLTextAreaElement | null;
-    const commentLabel = compiled.querySelector(
-      `label[for="${commentTextarea?.id}"]`
-    ) as HTMLLabelElement | null;
+    const commentEditor = compiled.querySelector('app-rich-text-editor') as HTMLElement | null;
+    const commentLabel = commentEditor?.querySelector(
+      '.rich-editor__label'
+    ) as HTMLSpanElement | null;
     const entryTitle = compiled.querySelector('.case-entry__title') as HTMLAnchorElement | null;
 
-    expect(commentTextarea?.id).toBe('case-comment-entry-1');
-    expect(commentTextarea?.getAttribute('name')).toBe('comment-entry-1');
     expect(commentLabel?.textContent).toContain('Escribe un comentario');
     expect(entryTitle?.textContent).toContain('Actualización visible');
   });

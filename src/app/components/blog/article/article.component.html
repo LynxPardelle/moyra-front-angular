@@ -211,14 +211,7 @@
         [(value)]="article.intro"
       ></app-rich-text-editor>
       } @placeholder {
-      <textarea
-        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-small-textarea"
-        id="intro"
-        name="intro"
-        [(ngModel)]="article.intro"
-        placeholder="Resumen visible en el blog y metadescripción."
-        required
-      ></textarea>
+      <p class="ank ank-text-textM mb-0">Cargando editor enriquecido...</p>
       }
     </div>
     <div class="d-block w-100 mx-auto my-3">
@@ -231,13 +224,7 @@
         [(value)]="article.outro"
       ></app-rich-text-editor>
       } @placeholder {
-      <textarea
-        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
-        id="outro"
-        name="outro"
-        [(ngModel)]="article.outro"
-        placeholder="Cierre del artículo."
-      ></textarea>
+      <p class="ank ank-text-textM mb-0">Cargando editor enriquecido...</p>
       }
     </div>
     <section class="seo-editor">
@@ -379,13 +366,7 @@
           [(value)]="section.text"
         ></app-rich-text-editor>
         } @placeholder {
-        <textarea
-          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
-          [id]="'section-text-' + i"
-          [name]="'section-text-' + i"
-          [(ngModel)]="section.text"
-          placeholder="Contenido de la sección"
-        ></textarea>
+        <p class="ank ank-text-textM mb-0">Cargando editor enriquecido...</p>
         }
         <label class="ank ank-text-textM mb-1 mt-3 d-block" [for]="'section-insertions-' + i">
           Inserciones
@@ -505,13 +486,7 @@
           [(value)]="sectionDraft.text"
         ></app-rich-text-editor>
         } @placeholder {
-        <textarea
-          class="w-100 ank ank-text-bg1M ank-bg-textM border-0 article-textarea"
-          id="new-section-text"
-          name="new-section-text"
-          [(ngModel)]="sectionDraft.text"
-          placeholder="Contenido de la sección"
-        ></textarea>
+        <p class="ank ank-text-textM mb-0">Cargando editor enriquecido...</p>
         }
         <label class="ank ank-text-textM mb-1 mt-3 d-block" for="new-section-insertions">
           Inserciones

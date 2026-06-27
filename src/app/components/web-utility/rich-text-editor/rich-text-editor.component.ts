@@ -14,6 +14,7 @@ export class RichTextEditorComponent {
   @Input() help = '';
   @Input() placeholder = 'Escribe el contenido...';
   @Input() minHeight = '260px';
+  @Input() disabled = false;
   @Output() valueChange = new EventEmitter<string>();
 
   public readonly editorModules = {

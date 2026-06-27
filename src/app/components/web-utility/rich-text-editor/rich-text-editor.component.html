@@ -1,4 +1,4 @@
-<div class="rich-editor">
+<div class="rich-editor" [class.is-disabled]="disabled">
   @if (label) {
   <span class="rich-editor__label">{{ label }}</span>
   } @if (help) {
@@ -10,6 +10,8 @@
     (ngModelChange)="updateValue($event)"
     [modules]="editorModules"
     [placeholder]="placeholder"
+    [readOnly]="disabled"
+    [attr.aria-disabled]="disabled"
     [styles]="{ minHeight: minHeight }"
     [sanitize]="true"
     format="html"

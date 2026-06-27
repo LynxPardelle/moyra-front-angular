@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 
 import { CaseStatusDefinition, CaseType, caseStatusLabel } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { RichTextEditorComponent } from '../../components/web-utility/rich-text-editor/rich-text-editor.component';
 
 type CaseStatusEditor = {
   id: string;
@@ -25,7 +26,7 @@ type CaseTypeEditor = {
 
 @Component({
   selector: 'app-admin-cases-config',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, RichTextEditorComponent],
   template: `
     <section class="admin-cases-config">
       <a routerLink="/admin/casos" class="admin-cases-config__back">Casos</a>
@@ -58,15 +59,15 @@ type CaseTypeEditor = {
                 placeholder="Ej. Litigio civil"
               />
             </label>
-            <label>
-              Descripción
-              <textarea
-                name="newTypeDescription"
-                [(ngModel)]="newTypeDescription"
-                maxlength="2000"
+            <div class="admin-cases-config__rich-field">
+              <app-rich-text-editor
+                label="Descripción"
+                help="Uso interno del tipo de caso."
                 placeholder="Uso interno del tipo de caso"
-              ></textarea>
-            </label>
+                [(value)]="newTypeDescription"
+                minHeight="150px"
+              />
+            </div>
             <label>
               Primer estado
               <input
@@ -117,14 +118,15 @@ type CaseTypeEditor = {
               Nombre
               <input name="typeName" [(ngModel)]="editForm.name" maxlength="120" />
             </label>
-            <label>
-              Descripción
-              <textarea
-                name="typeDescription"
-                [(ngModel)]="editForm.description"
-                maxlength="2000"
-              ></textarea>
-            </label>
+            <div class="admin-cases-config__rich-field">
+              <app-rich-text-editor
+                label="Descripción"
+                help="Texto interno para orientar el uso de este tipo de caso."
+                placeholder="Descripción"
+                [(value)]="editForm.description"
+                minHeight="150px"
+              />
+            </div>
 
             <div class="admin-cases-config__statuses">
               <div class="admin-cases-config__statuses-head">
@@ -254,24 +256,62 @@ type CaseTypeEditor = {
         font-size: 0.82rem;
       }
 
-      input,
-      textarea,
-      button {
-        border: 1px solid rgba(41, 48, 59, 0.35);
-        min-height: 38px;
-        padding: 7px 10px;
+      .admin-cases-config__rich-field {
+        display: block;
+      }
+
+      input:not([type='checkbox']):not([type='radio']):not([type='color']),
+      select,
+      textarea {
         background: #ffffff;
+        border: 1px solid rgba(41, 48, 59, 0.28);
+        border-radius: 0;
+        box-shadow:
+          0 8px 18px rgba(41, 48, 59, 0.06),
+          inset 4px 0 0 rgba(75, 143, 245, 0.62);
         color: #29303b;
+        font-size: 1rem;
+        font-weight: 650;
+        line-height: 1.45;
+        min-height: 42px;
+        padding: 0.8rem 0.9rem 0.8rem 1rem;
+        width: 100%;
       }
 
       textarea {
-        min-height: 84px;
+        min-height: 120px;
         resize: vertical;
       }
 
+      input[type='color'] {
+        background: #ffffff;
+        border: 1px solid rgba(41, 48, 59, 0.28);
+        min-height: 42px;
+        padding: 4px;
+        width: 100%;
+      }
+
+      input:not([type='checkbox']):not([type='radio']):not([type='color']):hover,
+      select:hover,
+      textarea:hover,
+      input:not([type='checkbox']):not([type='radio']):not([type='color']):focus,
+      select:focus,
+      textarea:focus {
+        border-color: #4b8ff5;
+        box-shadow:
+          0 0 0 3px rgba(75, 143, 245, 0.22),
+          0 12px 24px rgba(41, 48, 59, 0.08),
+          inset 4px 0 0 #4b8ff5;
+        outline: 0;
+      }
+
       button {
+        background: #ffffff;
+        border: 1px solid #4b8ff5;
         border-color: #4b8ff5;
         color: #4b8ff5;
+        min-height: 38px;
+        padding: 7px 10px;
       }
 
       button:disabled {

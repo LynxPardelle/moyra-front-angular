@@ -239,20 +239,43 @@ type NewCaseForm = {
         padding-left: 18px;
       }
 
-      input,
-      select,
-      button {
-        border: 1px solid rgba(41, 48, 59, 0.35);
-        min-height: 36px;
-        padding: 6px 10px;
+      input:not([type='checkbox']):not([type='radio']):not([type='color']),
+      select {
         background: #ffffff;
+        border: 1px solid rgba(41, 48, 59, 0.28);
+        border-radius: 0;
+        box-shadow:
+          0 8px 18px rgba(41, 48, 59, 0.06),
+          inset 4px 0 0 rgba(75, 143, 245, 0.62);
         color: #29303b;
+        font-size: 1rem;
+        font-weight: 650;
+        line-height: 1.45;
+        min-height: 42px;
+        padding: 0.8rem 0.9rem 0.8rem 1rem;
+        width: 100%;
+      }
+
+      input:not([type='checkbox']):not([type='radio']):not([type='color']):hover,
+      select:hover,
+      input:not([type='checkbox']):not([type='radio']):not([type='color']):focus,
+      select:focus {
+        border-color: #4b8ff5;
+        box-shadow:
+          0 0 0 3px rgba(75, 143, 245, 0.22),
+          0 12px 24px rgba(41, 48, 59, 0.08),
+          inset 4px 0 0 #4b8ff5;
+        outline: 0;
       }
 
       button,
       .admin-cases-page__action {
+        background: #ffffff;
+        border: 1px solid #4b8ff5;
         border-color: #4b8ff5;
         color: #4b8ff5;
+        min-height: 36px;
+        padding: 6px 10px;
         text-decoration: none;
       }
 

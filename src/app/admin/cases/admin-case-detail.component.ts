@@ -18,6 +18,7 @@ import {
 } from '../../models/case';
 import { CaseService } from '../../services/case.service';
 import { isVisibleToCaseClient } from '../../utils/case-visibility';
+import { RichTextEditorComponent } from '../../components/web-utility/rich-text-editor/rich-text-editor.component';
 
 type CaseDraft = {
   title: string;
@@ -35,7 +36,7 @@ type MemberDraft = {
 
 @Component({
   selector: 'app-admin-case-detail',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, RichTextEditorComponent],
   template: `
     <section class="admin-case-detail">
       <a routerLink="/admin/casos" class="admin-case-detail__back">Casos</a>
@@ -54,10 +55,15 @@ type MemberDraft = {
             Referencia
             <input name="caseReference" [(ngModel)]="caseDraft.reference" />
           </label>
-          <label>
-            Descripción
-            <textarea name="caseDescription" [(ngModel)]="caseDraft.description"></textarea>
-          </label>
+          <div class="admin-case-rich-field">
+            <app-rich-text-editor
+              label="Descripción"
+              help="Resumen interno del caso. Puedes usar listas, negritas y enlaces."
+              placeholder="Descripción del caso"
+              [(value)]="caseDraft.description"
+              minHeight="180px"
+            />
+          </div>
           <label for="case-status">Estado</label>
           <select id="case-status" name="status" [(ngModel)]="selectedStatusId">
             @for (status of statusesForCurrentType(); track status.id) {
@@ -362,26 +368,51 @@ type MemberDraft = {
         gap: 4px;
       }
 
+      .admin-case-rich-field {
+        flex: 1 1 100%;
+      }
+
       .admin-case-form--stack {
         align-items: stretch;
         display: grid;
         margin-bottom: 16px;
       }
 
-      input,
-      textarea,
+      input:not([type='checkbox']):not([type='radio']):not([type='color']),
       select,
-      button {
-        border: 1px solid rgba(41, 48, 59, 0.35);
-        min-height: 36px;
-        padding: 6px 10px;
+      textarea {
         background: #ffffff;
+        border: 1px solid rgba(41, 48, 59, 0.28);
+        border-radius: 0;
+        box-shadow:
+          0 8px 18px rgba(41, 48, 59, 0.06),
+          inset 4px 0 0 rgba(75, 143, 245, 0.62);
         color: #29303b;
+        font-size: 1rem;
+        font-weight: 650;
+        line-height: 1.45;
+        min-height: 42px;
+        padding: 0.8rem 0.9rem 0.8rem 1rem;
+        width: 100%;
       }
 
       textarea {
-        min-width: min(420px, 100%);
-        min-height: 88px;
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      input:not([type='checkbox']):not([type='radio']):not([type='color']):hover,
+      select:hover,
+      textarea:hover,
+      input:not([type='checkbox']):not([type='radio']):not([type='color']):focus,
+      select:focus,
+      textarea:focus {
+        border-color: #4b8ff5;
+        box-shadow:
+          0 0 0 3px rgba(75, 143, 245, 0.22),
+          0 12px 24px rgba(41, 48, 59, 0.08),
+          inset 4px 0 0 #4b8ff5;
+        outline: 0;
       }
 
       .admin-case-help {
@@ -395,8 +426,12 @@ type MemberDraft = {
       }
 
       button {
+        background: #ffffff;
+        border: 1px solid #4b8ff5;
         border-color: #4b8ff5;
         color: #4b8ff5;
+        min-height: 36px;
+        padding: 6px 10px;
       }
 
       a {

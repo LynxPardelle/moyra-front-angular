@@ -1,10 +1,6 @@
 @if (main && main.errorMessage && main.errorMessage !== '') {
-<p>
-  {{ main.errorMessage }}
-</p>
-} @if (main && main.errorMessage && main.errorMessage !== '') {
 <div
   class="card-text mx-3"
-  [innerHTML]="Linkify(this.valuefy(main.errorMessage), '#000', '#4b8ff5') | safeHtml"
+  [innerHTML]="valuefy(main.errorMessage) | safeRichHtml"
 ></div>
 }

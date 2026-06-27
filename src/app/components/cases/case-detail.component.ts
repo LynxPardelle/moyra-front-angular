@@ -16,10 +16,11 @@ import { CaseService } from '../../services/case.service';
 import { MainService } from '../../services/main.service';
 import { AuthFacade } from '../../store/auth/auth.facade';
 import { isVisibleToCaseClient } from '../../utils/case-visibility';
+import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-text-editor.component';
 
 @Component({
   selector: 'app-case-detail',
-  imports: [CommonModule, FormsModule, RouterLink, SafeRichHtmlPipe],
+  imports: [CommonModule, FormsModule, RouterLink, SafeRichHtmlPipe, RichTextEditorComponent],
   template: `
     <main class="case-detail-page">
       <a routerLink="/casos" class="case-detail-page__back">
@@ -77,20 +78,16 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
               <section class="case-comments">
                 <h3>{{ text('casesCommentsTitle', 'Comentarios') }}</h3>
                 @for (comment of commentsByEntry[entry.id] || []; track comment.id) {
-                <p class="case-comment">{{ comment.text }}</p>
+                <div class="case-comment" [innerHTML]="comment.text | safeRichHtml"></div>
                 }
                 <form (ngSubmit)="submitComment(entry.id)">
-                  <label class="case-comments__label" [for]="commentControlId(entry.id)">
-                    {{ text('casesCommentLabel', 'Escribe un comentario') }}
-                  </label>
-                  <textarea
-                    [id]="commentControlId(entry.id)"
-                    [name]="'comment-' + entry.id"
-                    [attr.name]="'comment-' + entry.id"
-                    [(ngModel)]="commentDrafts[entry.id]"
-                    [disabled]="!canComment() || commentBusyEntryId === entry.id"
+                  <app-rich-text-editor
+                    [label]="text('casesCommentLabel', 'Escribe un comentario')"
                     [placeholder]="text('casesCommentPlaceholder', 'Escribe un comentario')"
-                  ></textarea>
+                    [(value)]="commentDrafts[entry.id]"
+                    [disabled]="!canComment() || commentBusyEntryId === entry.id"
+                    minHeight="150px"
+                  />
                   @if (!canComment()) {
                   <p>
                     {{
@@ -308,12 +305,6 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
         text-decoration: underline;
       }
 
-      .case-comments__label {
-        display: block;
-        font-size: 0.9rem;
-        margin-bottom: 6px;
-      }
-
       .case-onedrive-form {
         display: grid;
         gap: 8px;
@@ -329,16 +320,41 @@ import { isVisibleToCaseClient } from '../../utils/case-visibility';
         line-height: 1.45;
       }
 
-      textarea,
-      input {
-        width: 100%;
-        border: 1px solid rgba(41, 48, 59, 0.35);
+      input:not([type='checkbox']):not([type='radio']):not([type='color']),
+      select,
+      textarea {
+        background: #ffffff;
+        border: 1px solid rgba(41, 48, 59, 0.28);
+        border-radius: 0;
+        box-shadow:
+          0 8px 18px rgba(41, 48, 59, 0.06),
+          inset 4px 0 0 rgba(75, 143, 245, 0.62);
+        color: #29303b;
+        font-size: 1rem;
+        font-weight: 650;
+        line-height: 1.45;
         min-height: 42px;
-        padding: 8px;
+        padding: 0.8rem 0.9rem 0.8rem 1rem;
+        width: 100%;
       }
 
       textarea {
-        min-height: 90px;
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      input:not([type='checkbox']):not([type='radio']):not([type='color']):hover,
+      select:hover,
+      textarea:hover,
+      input:not([type='checkbox']):not([type='radio']):not([type='color']):focus,
+      select:focus,
+      textarea:focus {
+        border-color: #4b8ff5;
+        box-shadow:
+          0 0 0 3px rgba(75, 143, 245, 0.22),
+          0 12px 24px rgba(41, 48, 59, 0.08),
+          inset 4px 0 0 #4b8ff5;
+        outline: 0;
       }
 
       .case-comment,

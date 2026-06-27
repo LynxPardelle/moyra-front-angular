@@ -98,14 +98,7 @@
       [(value)]="servicio.desc"
     ></app-rich-text-editor>
     } @placeholder {
-    <textarea
-      class="w-100 ank ank-text-bg1M ank-bg-textM border-0 servicio-textarea"
-      type="text"
-      name="desc"
-      [(ngModel)]="servicio.desc"
-      placeholder="Descripción"
-      required
-    ></textarea>
+    <p class="ank ank-text-textM mb-0">Cargando editor enriquecido...</p>
     } @if (!servicio.desc) {
     <span class="ank ank-text-titleM font-weight-bold"> La descripción es obligatoria. </span>
     }
