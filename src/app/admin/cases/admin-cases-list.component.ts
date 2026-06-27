@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import {
   CaseOperationsSummary,
@@ -583,17 +583,19 @@ export class AdminCasesListComponent implements OnInit {
 
     const newAttorneyEmail = this.newCase.newAttorneyEmail.trim().toLowerCase();
     const invitingNewAttorney = this.isValidEmail(newAttorneyEmail);
-    const attorney = invitingNewAttorney ? undefined : this.selectedAttorney();
-    const initialAttorney = attorney
+    const attorney = this.selectedAttorney();
+    const initialAttorney = {
+      email: attorney?.email || '',
+      displayName: attorney ? this.userName(attorney) : '',
+      userId: attorney ? this.userKey(attorney) : undefined,
+    };
+    const attorneyInvite = invitingNewAttorney
       ? {
-          email: attorney.email || '',
-          displayName: this.userName(attorney),
-          userId: this.userKey(attorney),
-        }
-      : {
           email: newAttorneyEmail,
           displayName: this.newCase.newAttorneyName.trim(),
-        };
+          rolePreset: 'attorney' as const,
+        }
+      : null;
 
     this.createBusy = true;
     this.createError = '';
@@ -607,8 +609,20 @@ export class AdminCasesListComponent implements OnInit {
         leadUserId: attorney ? this.userKey(attorney) : undefined,
         initialAttorney,
       })
+      .pipe(
+        switchMap((response) => {
+          if (!attorneyInvite) {
+            return of({ response, inviteFailed: false });
+          }
+
+          return this._caseService.inviteMember(response.item.id, attorneyInvite).pipe(
+            map(() => ({ response, inviteFailed: false })),
+            catchError(() => of({ response, inviteFailed: true }))
+          );
+        })
+      )
       .subscribe({
-        next: (response) => {
+        next: ({ response, inviteFailed }) => {
           this.cases = [response.item, ...this.cases];
           this.newCase = {
             title: '',
@@ -622,6 +636,10 @@ export class AdminCasesListComponent implements OnInit {
           };
           this.setDefaultAttorneySelection();
           this.createBusy = false;
+          if (inviteFailed) {
+            this.createError =
+              'El caso se creó, pero no se pudo invitar al abogado nuevo. Intenta invitarlo desde el detalle del caso.';
+          }
         },
         error: (error) => {
           this.createBusy = false;
@@ -675,7 +693,10 @@ export class AdminCasesListComponent implements OnInit {
       return 'Selecciona un estado inicial.';
     }
     if (!this.hasAttorneySelection()) {
-      return 'Selecciona un abogado responsable o captura el correo para invitar uno nuevo.';
+      if (this.newCase.newAttorneyEmail.trim() && !this.isValidEmail(this.newCase.newAttorneyEmail)) {
+        return 'Captura un correo válido para invitar al abogado nuevo.';
+      }
+      return 'Selecciona un abogado responsable existente para crear el caso.';
     }
     return '';
   }
@@ -706,9 +727,10 @@ export class AdminCasesListComponent implements OnInit {
 
   private hasAttorneySelection(): boolean {
     const attorney = this.selectedAttorney();
+    const inviteEmail = this.newCase.newAttorneyEmail.trim();
     return (
-      this.isValidEmail(this.newCase.newAttorneyEmail) ||
-      Boolean(attorney?.email && this.isValidEmail(attorney.email))
+      Boolean(attorney?.email && this.isValidEmail(attorney.email)) &&
+      (!inviteEmail || this.isValidEmail(inviteEmail))
     );
   }
 

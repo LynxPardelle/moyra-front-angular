@@ -13,6 +13,7 @@ describe('AdminCasesListComponent', () => {
   let cases: CaseRecord[];
   let caseTypes: CaseType[];
   let createCaseSpy: jasmine.Spy;
+  let inviteMemberSpy: jasmine.Spy;
   let listCasesFails: boolean;
 
   beforeEach(async () => {
@@ -55,6 +56,23 @@ describe('AdminCasesListComponent', () => {
     createCaseSpy = jasmine
       .createSpy('createCase')
       .and.returnValue(of({ status: 'success', item: cases[0] }));
+    inviteMemberSpy = jasmine
+      .createSpy('inviteMember')
+      .and.returnValue(
+        of({
+          status: 'success',
+          item: {
+            id: 'membership-1',
+            caseId: 'case-1',
+            email: 'betan.pamela@gmail.com',
+            displayName: 'Pamela Betancourt',
+            memberType: 'internal',
+            rolePreset: 'attorney',
+            permissions: ['view_case'],
+            status: 'invited',
+          },
+        })
+      );
     listCasesFails = false;
 
     await TestBed.configureTestingModule({
@@ -92,8 +110,9 @@ describe('AdminCasesListComponent', () => {
                   },
                   recentAuditEvents: [],
                 },
-              }),
+            }),
             createCase: createCaseSpy,
+            inviteMember: inviteMemberSpy,
           },
         },
         {
@@ -200,7 +219,7 @@ describe('AdminCasesListComponent', () => {
     });
   });
 
-  it('uses the invited attorney email instead of the preselected admin', () => {
+  it('keeps the selected responsible attorney and invites the new attorney after creating the case', () => {
     render();
 
     fixture.componentInstance.newCase = {
@@ -222,12 +241,38 @@ describe('AdminCasesListComponent', () => {
       caseTypeId: 'corporate',
       statusId: 'draft',
       description: 'Alta inicial',
-      leadUserId: undefined,
+      leadUserId: 'admin-1',
       initialAttorney: {
-        email: 'betan.pamela@gmail.com',
-        displayName: 'Pamela Betancourt',
+        email: 'admin@moyra.org',
+        displayName: 'Admin actual',
+        userId: 'admin-1',
       },
     });
+    expect(inviteMemberSpy).toHaveBeenCalledWith('case-1', {
+      email: 'betan.pamela@gmail.com',
+      displayName: 'Pamela Betancourt',
+      rolePreset: 'attorney',
+    });
+  });
+
+  it('requires an existing responsible attorney even when inviting a new attorney', () => {
+    render();
+
+    fixture.componentInstance.newCase = {
+      title: 'Nuevo asunto',
+      reference: 'MRA-005',
+      caseTypeId: 'corporate',
+      statusId: 'draft',
+      description: 'Alta inicial',
+      attorneyUserId: '',
+      newAttorneyEmail: 'betan.pamela@gmail.com',
+      newAttorneyName: 'Pamela Betancourt',
+    };
+
+    fixture.componentInstance.createCase();
+
+    expect(createCaseSpy).not.toHaveBeenCalled();
+    expect(inviteMemberSpy).not.toHaveBeenCalled();
   });
 
   it('keeps the current admin available as responsible attorney', () => {
