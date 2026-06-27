@@ -357,7 +357,7 @@ type PlatformUser = {
               <label>
                 Visibilidad
                 <select
-                  [name]="'fileVisibility-' + file.id"
+                  [attr.name]="'fileVisibility-' + file.id"
                   [ngModel]="fileVisibilityMode(file)"
                   (ngModelChange)="updateFileAccess(file, $event)"
                 >
