@@ -9,6 +9,7 @@ type NewUserForm = {
   name: string;
   email: string;
   role: UserRole;
+  relationship: string;
   temporaryPassword: string;
   confirmTemporaryPassword: string;
 };
@@ -83,6 +84,7 @@ export class UsuariosComponent {
         name: this.user.name.trim(),
         email: this.user.email.trim().toLowerCase(),
         role: this.user.role,
+        relationship: this.user.relationship.trim(),
         temporaryPassword: this.user.temporaryPassword,
       };
 
@@ -112,6 +114,7 @@ export class UsuariosComponent {
       name: '',
       email: '',
       role: 'ROLE_USER',
+      relationship: '',
       temporaryPassword: '',
       confirmTemporaryPassword: '',
     };

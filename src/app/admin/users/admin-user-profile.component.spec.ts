@@ -12,8 +12,10 @@ describe('AdminUserProfileComponent', () => {
   let fixture: ComponentFixture<AdminUserProfileComponent>;
   let updateUserSpy: jasmine.Spy;
   let updateMemberSpy: jasmine.Spy;
+  let isAdmin: boolean;
 
   beforeEach(async () => {
+    isAdmin = true;
     updateUserSpy = jasmine.createSpy('updateUser').and.returnValue(
       of({
         status: 'success',
@@ -23,6 +25,7 @@ describe('AdminUserProfileComponent', () => {
           displayName: 'Abogada actualizada',
           email: 'abogada@moyra.org',
           role: 'ROLE_LEGAL_STAFF',
+          relationship: 'Equipo Moyra',
         },
       })
     );
@@ -75,6 +78,7 @@ describe('AdminUserProfileComponent', () => {
                     name: 'Abogada Moyra',
                     email: 'abogada@moyra.org',
                     role: 'ROLE_LEGAL_STAFF',
+                    relationship: 'Equipo Moyra',
                   },
                 ],
               }),
@@ -90,6 +94,7 @@ describe('AdminUserProfileComponent', () => {
               email: 'abogada@moyra.org',
               role: 'ROLE_LEGAL_STAFF',
             }),
+            isAdmin: () => isAdmin,
           },
         },
         {
@@ -150,6 +155,7 @@ describe('AdminUserProfileComponent', () => {
 
   it('updates basic profile data', () => {
     fixture.componentInstance.profileDraft.displayName = 'Abogada actualizada';
+    fixture.componentInstance.profileDraft.relationship = 'Equipo Moyra';
     fixture.componentInstance.saveProfile();
     fixture.detectChanges();
 
@@ -157,17 +163,18 @@ describe('AdminUserProfileComponent', () => {
       name: 'Abogada actualizada',
       displayName: 'Abogada actualizada',
       email: 'abogada@moyra.org',
+      relationship: 'Equipo Moyra',
+      role: 'ROLE_LEGAL_STAFF',
     });
     expect(fixture.nativeElement.textContent).toContain('Perfil guardado');
   });
 
-  it('updates the case membership relation from the user profile', () => {
-    fixture.componentInstance.saveMemberRelation(fixture.componentInstance.memberships[0], 'external');
+  it('keeps global role readonly for non-admin viewers', () => {
+    isAdmin = false;
+    fixture = TestBed.createComponent(AdminUserProfileComponent);
     fixture.detectChanges();
 
-    expect(updateMemberSpy).toHaveBeenCalledWith('case-1', 'membership-1', {
-      memberType: 'external',
-    });
-    expect(fixture.nativeElement.textContent).toContain('Relación guardada');
+    expect(fixture.nativeElement.querySelector('select[name="profileRole"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Equipo legal');
   });
 });

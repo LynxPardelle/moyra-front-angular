@@ -8,6 +8,7 @@
     class="rich-editor__control"
     [ngModel]="value"
     (ngModelChange)="updateValue($event)"
+    (onEditorCreated)="onEditorCreated($event)"
     [modules]="editorModules"
     [placeholder]="placeholder"
     [readOnly]="disabled"

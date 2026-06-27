@@ -17,6 +17,8 @@ type AdminUser = {
   displayName?: string;
   email?: string;
   role?: string;
+  relationship?: string;
+  relation?: string;
 };
 
 type UserCaseMembership = {
@@ -61,7 +63,28 @@ type UserCaseMembership = {
           </label>
           <label>
             Rol global
+            @if (canEditGlobalUser()) {
+            <select name="profileRole" [(ngModel)]="profileDraft.role">
+              <option value="ROLE_USER">Usuario</option>
+              <option value="ROLE_LEGAL_STAFF">Equipo legal</option>
+              <option value="ROLE_ADMIN">Administrador</option>
+            </select>
+            } @else {
             <input [value]="roleLabel(user.role)" disabled />
+            }
+          </label>
+          <label>
+            Relación
+            <input
+              name="profileRelationship"
+              [(ngModel)]="profileDraft.relationship"
+              list="profileRelationshipOptions"
+              placeholder="Ej. Equipo Moyra"
+            />
+            <datalist id="profileRelationshipOptions">
+              <option value="Equipo Moyra"></option>
+              <option value="Cliente o invitado externo"></option>
+            </datalist>
           </label>
           <button type="submit" [disabled]="savingProfile || !canSaveProfile()">
             {{ savingProfile ? 'Guardando...' : 'Guardar perfil' }}
@@ -87,7 +110,6 @@ type UserCaseMembership = {
                 <th>Caso</th>
                 <th>Referencia</th>
                 <th>Rol en el caso</th>
-                <th>Relación</th>
                 <th>Permisos</th>
                 <th>Estado</th>
               </tr>
@@ -102,17 +124,6 @@ type UserCaseMembership = {
                 </td>
                 <td>{{ membership.caseItem.reference || 'Sin referencia' }}</td>
                 <td>{{ caseRoleLabel(membership.member.rolePreset) }}</td>
-                <td>
-                  <select
-                    [name]="'membershipType' + membership.member.id"
-                    [ngModel]="membership.member.memberType || 'external'"
-                    (ngModelChange)="saveMemberRelation(membership, $event)"
-                    [disabled]="savingMemberRelationId === membership.member.id"
-                  >
-                    <option value="external">Cliente o invitado externo</option>
-                    <option value="internal">Equipo Moyra</option>
-                  </select>
-                </td>
                 <td>{{ permissionsSummary(membership.member.permissions) }}</td>
                 <td>{{ membership.member.status || 'Sin estado' }}</td>
               </tr>
@@ -184,7 +195,7 @@ type UserCaseMembership = {
       .admin-user-profile__form {
         display: grid;
         gap: 12px;
-        grid-template-columns: repeat(3, minmax(180px, 1fr)) auto;
+        grid-template-columns: repeat(4, minmax(160px, 1fr)) auto;
         align-items: end;
       }
 
@@ -271,12 +282,13 @@ export class AdminUserProfileComponent implements OnInit {
   memberships: UserCaseMembership[] = [];
   loading = true;
   savingProfile = false;
-  savingMemberRelationId = '';
   profileMessage = '';
   profileError = '';
   profileDraft = {
     displayName: '',
     email: '',
+    role: 'ROLE_USER',
+    relationship: '',
   };
 
   constructor(
@@ -339,8 +351,13 @@ export class AdminUserProfileComponent implements OnInit {
     return (
       Boolean(this.user) &&
       this.profileDraft.displayName.trim().length > 0 &&
-      this.isValidEmail(this.profileDraft.email)
+      this.isValidEmail(this.profileDraft.email) &&
+      Boolean(this.profileDraft.role)
     );
+  }
+
+  canEditGlobalUser(): boolean {
+    return this._authFacade.isAdmin?.() === true;
   }
 
   saveProfile(): void {
@@ -352,19 +369,21 @@ export class AdminUserProfileComponent implements OnInit {
     this.savingProfile = true;
     this.profileMessage = '';
     this.profileError = '';
-    this._userService
-      .updateUser(targetId, {
+    const payload = {
         name: this.profileDraft.displayName.trim(),
         displayName: this.profileDraft.displayName.trim(),
         email: this.profileDraft.email.trim().toLowerCase(),
-      })
+        relationship: this.profileDraft.relationship.trim(),
+        ...(this.canEditGlobalUser() ? { role: this.profileDraft.role } : {}),
+      };
+
+    this._userService
+      .updateUser(targetId, payload)
       .subscribe({
         next: (response) => {
           const updated = this.normalizeUser(response) || {
             ...this.user,
-            name: this.profileDraft.displayName.trim(),
-            displayName: this.profileDraft.displayName.trim(),
-            email: this.profileDraft.email.trim().toLowerCase(),
+            ...payload,
           };
           this.user = updated;
           this.resetProfileDraft();
@@ -374,29 +393,6 @@ export class AdminUserProfileComponent implements OnInit {
         error: (error) => {
           this.profileError = String(error?.error?.message || 'No se pudo guardar el perfil.');
           this.savingProfile = false;
-        },
-      });
-  }
-
-  saveMemberRelation(membership: UserCaseMembership, memberType: string): void {
-    if (!membership.member.id || membership.member.memberType === memberType) {
-      return;
-    }
-
-    this.profileMessage = '';
-    this.profileError = '';
-    this.savingMemberRelationId = membership.member.id;
-    this._caseService
-      .updateMember(membership.caseItem.id, membership.member.id, { memberType })
-      .subscribe({
-        next: (response) => {
-          membership.member = { ...membership.member, ...response.item };
-          this.profileMessage = 'Relación guardada.';
-          this.savingMemberRelationId = '';
-        },
-        error: (error) => {
-          this.profileError = String(error?.error?.message || 'No se pudo guardar la relación.');
-          this.savingMemberRelationId = '';
         },
       });
   }
@@ -425,10 +421,6 @@ export class AdminUserProfileComponent implements OnInit {
         observer: 'Observador',
       }[String(role || '')] || role || 'Sin rol'
     );
-  }
-
-  memberTypeLabel(type?: string): string {
-    return type === 'internal' ? 'Equipo Moyra' : 'Cliente o invitado externo';
   }
 
   permissionsSummary(permissions?: string[]): string {
@@ -499,6 +491,7 @@ export class AdminUserProfileComponent implements OnInit {
       displayName: this.humanName(member.displayName),
       email: member.email,
       role: member.memberType === 'internal' ? 'ROLE_LEGAL_STAFF' : 'ROLE_USER',
+      relationship: member.memberType === 'internal' ? 'Equipo Moyra' : 'Cliente o invitado externo',
     };
   }
 
@@ -531,7 +524,13 @@ export class AdminUserProfileComponent implements OnInit {
     this.profileDraft = {
       displayName: this.userLabel(this.user),
       email: this.user?.email || '',
+      role: this.user?.role || 'ROLE_USER',
+      relationship: this.userRelationship(this.user),
     };
+  }
+
+  private userRelationship(user: AdminUser | null): string {
+    return String(user?.relationship || user?.relation || '').trim();
   }
 
   private humanName(value?: string): string {

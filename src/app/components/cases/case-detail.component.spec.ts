@@ -134,6 +134,9 @@ describe('CaseDetailComponent', () => {
                           caseId: 'case-1',
                           entryId,
                           text: 'Comentario visible',
+                          authorUserId: 'client-1',
+                          authorDisplayName: 'Cliente',
+                          createdAt: '2026-06-26T20:00:00.000Z',
                           visibility: { mode: 'case_members' },
                         },
                         {
@@ -243,6 +246,8 @@ describe('CaseDetailComponent', () => {
     expect(text).toContain('Actualización visible');
     expect(text).toContain('Texto para cliente');
     expect(text).toContain('Comentario visible');
+    expect(text).toContain('Cliente · Cliente / Cliente o invitado externo');
+    expect(text).toContain('26 jun 2026');
     expect(text).not.toContain('Nota interna');
     expect(text).not.toContain('Comentario interno');
     expect(text).toContain('aprobado.pdf');
@@ -322,6 +327,20 @@ describe('CaseDetailComponent', () => {
     });
     expect(fixture.nativeElement.textContent).toContain('Contrato firmado');
     expect(fixture.nativeElement.textContent).toContain('Abrir documento');
+  });
+
+  it('explains invalid document links instead of silently blocking submit', () => {
+    render();
+
+    fixture.componentInstance.oneDriveLink = {
+      fileName: 'Video externo',
+      linkUrl: 'https://youtu.be/no-es-onedrive',
+    };
+    fixture.componentInstance.addOneDriveLink();
+    fixture.detectChanges();
+
+    expect(createOneDriveLinkSpy).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('OneDrive o SharePoint');
   });
 
   it('enables comments and document links for global admins on the client route', () => {

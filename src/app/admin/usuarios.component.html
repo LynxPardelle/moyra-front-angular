@@ -32,6 +32,22 @@
       </small>
     </label>
 
+    <label class="admin-users-field">
+      <span>Relación</span>
+      <input
+        type="text"
+        name="relationship"
+        [(ngModel)]="user.relationship"
+        list="newUserRelationshipOptions"
+        placeholder="Ej. Equipo Moyra"
+      />
+      <datalist id="newUserRelationshipOptions">
+        <option value="Equipo Moyra"></option>
+        <option value="Cliente o invitado externo"></option>
+      </datalist>
+      <small>Puede ser Equipo Moyra, cliente, proveedor, familiar u otra relación interna.</small>
+    </label>
+
     <section class="admin-users-case-roles" aria-label="Roles disponibles en Casos">
       <h2>Roles de Casos</h2>
       <p>

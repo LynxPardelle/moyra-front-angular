@@ -148,65 +148,72 @@ type PlatformUser = {
         <section>
           <h2>Miembros</h2>
           <div class="admin-case-member-tools">
-            <form class="admin-case-form" (ngSubmit)="addExistingMember()">
-              <label>
-                Usuario existente
-                <select name="existingMemberUser" [(ngModel)]="existingMember.userKey">
-                  <option value="">Selecciona usuario</option>
-                  @for (user of availableUsersForCase(); track userKey(user)) {
-                  <option [value]="userKey(user)">{{ userOptionLabel(user) }}</option>
-                  }
-                </select>
-              </label>
-              <label>
-                Rol en el caso
-                <select name="existingMemberRole" [(ngModel)]="existingMember.rolePreset">
-                  <option value="client">Cliente</option>
-                  <option value="attorney">Abogado</option>
-                  <option value="pasante">Pasante</option>
-                  <option value="external_observer">Observador</option>
-                </select>
-              </label>
-              <label>
-                Relación
-                <select name="existingMemberType" [(ngModel)]="existingMember.memberType">
-                  <option value="external">Cliente o invitado externo</option>
-                  <option value="internal">Equipo Moyra</option>
-                </select>
-              </label>
-              <button type="submit" [disabled]="memberAdding || !canAddExistingMember()">
-                {{ memberAdding ? 'Agregando...' : 'Agregar miembro' }}
-              </button>
-            </form>
-            <form class="admin-case-form" (ngSubmit)="inviteMember()">
-              <label>
-                Correo
-                <input name="inviteEmail" [(ngModel)]="invite.email" />
-              </label>
-              <label>
-                Nombre
-                <input name="inviteName" [(ngModel)]="invite.displayName" />
-              </label>
-              <label>
-                Rol en el caso
-                <select name="inviteRole" [(ngModel)]="invite.rolePreset">
-                  <option value="client">Cliente</option>
-                  <option value="attorney">Abogado</option>
-                  <option value="pasante">Pasante</option>
-                  <option value="external_observer">Observador</option>
-                </select>
-              </label>
-              <label>
-                Relación
-                <select name="inviteMemberType" [(ngModel)]="inviteMemberType">
-                  <option value="external">Cliente o invitado externo</option>
-                  <option value="internal">Equipo Moyra</option>
-                </select>
-              </label>
-              <button type="submit" [disabled]="inviteBusy || !invite.email">
-                {{ inviteBusy ? 'Invitando...' : 'Invitar' }}
-              </button>
-            </form>
+            <article class="admin-case-member-card">
+              <h3>Agregar usuario existente</h3>
+              <form class="admin-case-form" (ngSubmit)="addExistingMember()">
+                <label>
+                  Usuario existente
+                  <select name="existingMemberUser" [(ngModel)]="existingMember.userKey">
+                    <option value="">Selecciona usuario</option>
+                    @for (user of availableUsersForCase(); track userKey(user)) {
+                    <option [value]="userKey(user)">{{ userOptionLabel(user) }}</option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  Rol en el caso
+                  <select name="existingMemberRole" [(ngModel)]="existingMember.rolePreset">
+                    <option value="client">Cliente</option>
+                    <option value="attorney">Abogado</option>
+                    <option value="pasante">Pasante</option>
+                    <option value="external_observer">Observador</option>
+                  </select>
+                </label>
+                <label>
+                  Tipo de acceso en este caso
+                  <select name="existingMemberType" [(ngModel)]="existingMember.memberType">
+                    <option value="external">Cliente o invitado externo</option>
+                    <option value="internal">Equipo Moyra</option>
+                  </select>
+                </label>
+                <button type="submit" [disabled]="memberAdding || !canAddExistingMember()">
+                  {{ memberAdding ? 'Agregando...' : 'Agregar miembro' }}
+                </button>
+              </form>
+            </article>
+            <hr />
+            <article class="admin-case-member-card">
+              <h3>Invitar usuario nuevo</h3>
+              <form class="admin-case-form" (ngSubmit)="inviteMember()">
+                <label>
+                  Correo
+                  <input name="inviteEmail" [(ngModel)]="invite.email" />
+                </label>
+                <label>
+                  Nombre
+                  <input name="inviteName" [(ngModel)]="invite.displayName" />
+                </label>
+                <label>
+                  Rol en el caso
+                  <select name="inviteRole" [(ngModel)]="invite.rolePreset">
+                    <option value="client">Cliente</option>
+                    <option value="attorney">Abogado</option>
+                    <option value="pasante">Pasante</option>
+                    <option value="external_observer">Observador</option>
+                  </select>
+                </label>
+                <label>
+                  Tipo de acceso en este caso
+                  <select name="inviteMemberType" [(ngModel)]="inviteMemberType">
+                    <option value="external">Cliente o invitado externo</option>
+                    <option value="internal">Equipo Moyra</option>
+                  </select>
+                </label>
+                <button type="submit" [disabled]="inviteBusy || !invite.email">
+                  {{ inviteBusy ? 'Invitando...' : 'Invitar' }}
+                </button>
+              </form>
+            </article>
             <small class="admin-case-help">
               Los permisos se asignan por rol del caso: clientes comentan y abren documentos,
               pasantes colaboran internamente y observadores sólo consultan. La relación indica si
@@ -220,7 +227,7 @@ type PlatformUser = {
                   <th>Nombre</th>
                   <th>Correo</th>
                   <th>Rol</th>
-                  <th>Relación</th>
+                  <th>Tipo de acceso</th>
                   <th>Permisos</th>
                   <th>Acciones</th>
                 </tr>
@@ -271,7 +278,7 @@ type PlatformUser = {
                         </select>
                       </label>
                       <label>
-                        Relación
+                        Tipo de acceso
                         <select name="memberType" [(ngModel)]="memberDraft.memberType">
                           <option value="external">Cliente o invitado externo</option>
                           <option value="internal">Equipo Moyra</option>
@@ -333,7 +340,7 @@ type PlatformUser = {
             @if (oneDriveError) {
             <p class="admin-case-error">{{ oneDriveError }}</p>
             }
-            <button type="submit" [disabled]="oneDriveBusy || !canCreateOneDriveLink()">
+            <button type="submit" [disabled]="oneDriveBusy || !hasOneDriveInputs()">
               {{ oneDriveBusy ? 'Guardando...' : 'Agregar enlace' }}
             </button>
           </form>
@@ -1281,9 +1288,15 @@ export class AdminCaseDetailComponent implements OnInit {
 
   canCreateOneDriveLink(): boolean {
     return (
-      this.oneDriveLink.fileName.trim().length > 0 &&
-      this.oneDriveLink.linkUrl.trim().length > 0 &&
+      this.hasOneDriveInputs() &&
       this.looksLikeMicrosoftLink(this.oneDriveLink.linkUrl)
+    );
+  }
+
+  hasOneDriveInputs(): boolean {
+    return (
+      this.oneDriveLink.fileName.trim().length > 0 &&
+      this.oneDriveLink.linkUrl.trim().length > 0
     );
   }
 
@@ -1428,7 +1441,7 @@ export class AdminCaseDetailComponent implements OnInit {
         caseTypeId: 'Tipo de caso',
         visibility: 'Visibilidad',
         rolePreset: 'Rol en el caso',
-        memberType: 'Relación',
+      memberType: 'Tipo de acceso',
         permissions: 'Permisos',
         displayName: 'Nombre',
         email: 'Correo',
