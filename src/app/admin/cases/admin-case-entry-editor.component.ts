@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import Swal from 'sweetalert2';
 
 import { CaseEntry, CaseVisibility } from '../../models/case';
 import { CaseService } from '../../services/case.service';
@@ -228,11 +229,21 @@ export class AdminCaseEntryEditorComponent implements OnInit {
     request.subscribe({
       next: (response) => {
         this.saving = false;
+        void Swal.fire({
+          title: 'Entrada guardada',
+          text: 'La entrada del caso quedó actualizada.',
+          icon: 'success',
+        });
         void this._router.navigate(['/admin/casos', this.caseId, 'entradas', response.item.id]);
       },
-      error: () => {
+      error: (error) => {
         this.saving = false;
         this.errorMessage = 'No se pudo guardar la entrada.';
+        void Swal.fire({
+          title: 'No se pudo guardar la entrada',
+          text: String(error?.error?.message || error?.message || this.errorMessage),
+          icon: 'error',
+        });
       },
     });
   }

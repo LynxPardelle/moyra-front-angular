@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import Swal from 'sweetalert2';
 
 import { AdminCasesListComponent } from './admin-cases-list.component';
 import { CaseService } from '../../services/case.service';
@@ -74,6 +75,7 @@ describe('AdminCasesListComponent', () => {
         })
       );
     listCasesFails = false;
+    spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any);
 
     await TestBed.configureTestingModule({
       imports: [AdminCasesListComponent],
@@ -113,6 +115,23 @@ describe('AdminCasesListComponent', () => {
             }),
             createCase: createCaseSpy,
             inviteMember: inviteMemberSpy,
+            listMembers: () =>
+              of({
+                status: 'success',
+                items: [
+                  {
+                    id: 'membership-pamela',
+                    caseId: 'case-1',
+                    userId: 'legal-2',
+                    email: 'betan.pamela@gmail.com',
+                    displayName: 'Pamela Betancourt',
+                    memberType: 'internal',
+                    rolePreset: 'attorney',
+                    permissions: ['case.read'],
+                    status: 'active',
+                  },
+                ],
+              }),
           },
         },
         {
@@ -280,6 +299,9 @@ describe('AdminCasesListComponent', () => {
 
     expect(fixture.componentInstance.availableAttorneys.map((user) => user.email)).toContain(
       'admin@moyra.org'
+    );
+    expect(fixture.componentInstance.availableAttorneys.map((user) => user.email)).toContain(
+      'betan.pamela@gmail.com'
     );
     expect(fixture.componentInstance.availableAttorneys[0].email).toBe('admin@moyra.org');
     expect(fixture.componentInstance.newCase.attorneyUserId).toBe('admin-1');

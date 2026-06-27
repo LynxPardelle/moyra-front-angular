@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
+import Swal from 'sweetalert2';
 
 import { AdminCaseEntryEditorComponent } from './admin-case-entry-editor.component';
 import { CaseService } from '../../services/case.service';
@@ -9,6 +10,10 @@ describe('AdminCaseEntryEditorComponent', () => {
   let fixture: ComponentFixture<AdminCaseEntryEditorComponent>;
   let createEntrySpy: jasmine.Spy;
   let updateEntrySpy: jasmine.Spy;
+
+  beforeEach(() => {
+    spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any);
+  });
 
   async function render(entryId = ''): Promise<void> {
     createEntrySpy = jasmine

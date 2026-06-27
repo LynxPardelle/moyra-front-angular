@@ -102,7 +102,17 @@ type UserCaseMembership = {
                 </td>
                 <td>{{ membership.caseItem.reference || 'Sin referencia' }}</td>
                 <td>{{ caseRoleLabel(membership.member.rolePreset) }}</td>
-                <td>{{ memberTypeLabel(membership.member.memberType) }}</td>
+                <td>
+                  <select
+                    [name]="'membershipType' + membership.member.id"
+                    [ngModel]="membership.member.memberType || 'external'"
+                    (ngModelChange)="saveMemberRelation(membership, $event)"
+                    [disabled]="savingMemberRelationId === membership.member.id"
+                  >
+                    <option value="external">Cliente o invitado externo</option>
+                    <option value="internal">Equipo Moyra</option>
+                  </select>
+                </td>
                 <td>{{ permissionsSummary(membership.member.permissions) }}</td>
                 <td>{{ membership.member.status || 'Sin estado' }}</td>
               </tr>
@@ -186,7 +196,8 @@ type UserCaseMembership = {
         gap: 4px;
       }
 
-      input {
+      input,
+      select {
         background: #ffffff;
         border: 1px solid rgba(41, 48, 59, 0.28);
         box-shadow:
@@ -198,6 +209,10 @@ type UserCaseMembership = {
         min-height: 42px;
         padding: 0.8rem 0.9rem 0.8rem 1rem;
         width: 100%;
+      }
+
+      select {
+        min-width: 180px;
       }
 
       button {
@@ -256,6 +271,7 @@ export class AdminUserProfileComponent implements OnInit {
   memberships: UserCaseMembership[] = [];
   loading = true;
   savingProfile = false;
+  savingMemberRelationId = '';
   profileMessage = '';
   profileError = '';
   profileDraft = {
@@ -358,6 +374,29 @@ export class AdminUserProfileComponent implements OnInit {
         error: (error) => {
           this.profileError = String(error?.error?.message || 'No se pudo guardar el perfil.');
           this.savingProfile = false;
+        },
+      });
+  }
+
+  saveMemberRelation(membership: UserCaseMembership, memberType: string): void {
+    if (!membership.member.id || membership.member.memberType === memberType) {
+      return;
+    }
+
+    this.profileMessage = '';
+    this.profileError = '';
+    this.savingMemberRelationId = membership.member.id;
+    this._caseService
+      .updateMember(membership.caseItem.id, membership.member.id, { memberType })
+      .subscribe({
+        next: (response) => {
+          membership.member = { ...membership.member, ...response.item };
+          this.profileMessage = 'Relación guardada.';
+          this.savingMemberRelationId = '';
+        },
+        error: (error) => {
+          this.profileError = String(error?.error?.message || 'No se pudo guardar la relación.');
+          this.savingMemberRelationId = '';
         },
       });
   }

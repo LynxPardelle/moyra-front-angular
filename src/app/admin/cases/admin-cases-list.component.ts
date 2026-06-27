@@ -2,9 +2,11 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
+import Swal from 'sweetalert2';
 
 import {
+  CaseMembership,
   CaseOperationsSummary,
   CaseRecord,
   CaseStatusDefinition,
@@ -515,12 +517,15 @@ export class AdminCasesListComponent implements OnInit {
       caseTypes: this._caseService.listCaseTypes(),
       operations: this._caseService.getOperationsSummary(),
       users: this._userService.getUsers(0, 100, '-create_at').pipe(catchError(() => of([]))),
+      knownCaseUsers: this.caseMemberUsers(),
     }).subscribe({
-      next: ({ cases, caseTypes, operations, users }) => {
+      next: ({ cases, caseTypes, operations, users, knownCaseUsers }) => {
         this.cases = cases.items || [];
         this.caseTypes = caseTypes.items || [];
         this.operationsSummary = operations.item;
-        this.users = this.withCurrentUser(this.normalizeUsers(users));
+        this.users = this.withCurrentUser(
+          this.mergeUsers([...this.normalizeUsers(users), ...knownCaseUsers])
+        );
         this.setDefaultAttorneySelection();
         this.loading = false;
       },
@@ -639,11 +644,27 @@ export class AdminCasesListComponent implements OnInit {
           if (inviteFailed) {
             this.createError =
               'El caso se creó, pero no se pudo invitar al abogado nuevo. Intenta invitarlo desde el detalle del caso.';
+            void Swal.fire({
+              title: 'Caso creado con pendiente',
+              text: this.createError,
+              icon: 'warning',
+            });
+          } else {
+            void Swal.fire({
+              title: 'Caso creado',
+              text: 'El caso quedó guardado con abogado responsable.',
+              icon: 'success',
+            });
           }
         },
         error: (error) => {
           this.createBusy = false;
           this.createError = this.errorMessageFrom(error, 'No se pudo crear el caso.');
+          void Swal.fire({
+            title: 'No se pudo crear el caso',
+            text: this.createError,
+            icon: 'error',
+          });
         },
       });
   }
@@ -744,6 +765,54 @@ export class AdminCasesListComponent implements OnInit {
       ? response
       : response?.users || response?.items || response?.data || [];
     return Array.isArray(list) ? list : [];
+  }
+
+  private caseMemberUsers(): Observable<PlatformUser[]> {
+    return this._caseService.listCases().pipe(
+      catchError(() => of({ status: 'error', items: [] as CaseRecord[] })),
+      switchMap((casesResponse) => {
+        const cases = casesResponse.items || [];
+        if (cases.length === 0) {
+          return of([]);
+        }
+        return forkJoin(
+          cases.map((caseItem) =>
+            this._caseService.listMembers(caseItem.id).pipe(
+              catchError(() => of({ status: 'error', items: [] as CaseMembership[] })),
+              map((membersResponse) =>
+                (membersResponse.items || []).map((member) => this.userFromMember(member))
+              )
+            )
+          )
+        ).pipe(map((items) => items.flat()));
+      })
+    );
+  }
+
+  private userFromMember(member: CaseMembership): PlatformUser {
+    const isLegalTeam =
+      member.memberType === 'internal' ||
+      member.rolePreset === 'attorney' ||
+      member.rolePreset === 'pasante';
+    return {
+      id: member.userId || member.email || member.id,
+      name: this.humanName(member.displayName) || member.email || 'Usuario',
+      displayName: this.humanName(member.displayName),
+      email: member.email,
+      role: isLegalTeam ? 'ROLE_LEGAL_STAFF' : 'ROLE_USER',
+    };
+  }
+
+  private mergeUsers(users: PlatformUser[]): PlatformUser[] {
+    const seen = new Set<string>();
+    return users.filter((user) => {
+      const key = (this.userKey(user) || user.email || '').toLowerCase();
+      if (!key || seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
   }
 
   private withCurrentUser(users: PlatformUser[]): PlatformUser[] {

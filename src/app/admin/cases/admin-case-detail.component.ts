@@ -2,15 +2,18 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
+import Swal from 'sweetalert2';
 
 import {
   CaseAuditEvent,
   CaseEntry,
   CaseFile,
+  CaseMemberType,
   CaseMembership,
   CasePermission,
   CaseRecord,
+  CaseRolePreset,
   CaseStatusDefinition,
   CaseType,
   InviteCaseMemberRequest,
@@ -35,6 +38,12 @@ type MemberDraft = {
   memberType: string;
   rolePreset: string;
   permissions: CasePermission[];
+};
+
+type ExistingMemberDraft = {
+  userKey: string;
+  memberType: CaseMemberType;
+  rolePreset: CaseRolePreset;
 };
 
 type PlatformUser = {
@@ -138,31 +147,72 @@ type PlatformUser = {
 
         <section>
           <h2>Miembros</h2>
-          <form class="admin-case-form" (ngSubmit)="inviteMember()">
-            <label>
-              Correo
-              <input name="inviteEmail" [(ngModel)]="invite.email" />
-            </label>
-            <label>
-              Nombre
-              <input name="inviteName" [(ngModel)]="invite.displayName" />
-            </label>
-            <label>
-              Rol en el caso
-              <select name="inviteRole" [(ngModel)]="invite.rolePreset">
-                <option value="client">Cliente</option>
-                <option value="attorney">Abogado</option>
-                <option value="pasante">Pasante</option>
-                <option value="external_observer">Observador</option>
-              </select>
-            </label>
-            <button type="submit">Invitar</button>
+          <div class="admin-case-member-tools">
+            <form class="admin-case-form" (ngSubmit)="addExistingMember()">
+              <label>
+                Usuario existente
+                <select name="existingMemberUser" [(ngModel)]="existingMember.userKey">
+                  <option value="">Selecciona usuario</option>
+                  @for (user of availableUsersForCase(); track userKey(user)) {
+                  <option [value]="userKey(user)">{{ userOptionLabel(user) }}</option>
+                  }
+                </select>
+              </label>
+              <label>
+                Rol en el caso
+                <select name="existingMemberRole" [(ngModel)]="existingMember.rolePreset">
+                  <option value="client">Cliente</option>
+                  <option value="attorney">Abogado</option>
+                  <option value="pasante">Pasante</option>
+                  <option value="external_observer">Observador</option>
+                </select>
+              </label>
+              <label>
+                Relación
+                <select name="existingMemberType" [(ngModel)]="existingMember.memberType">
+                  <option value="external">Cliente o invitado externo</option>
+                  <option value="internal">Equipo Moyra</option>
+                </select>
+              </label>
+              <button type="submit" [disabled]="memberAdding || !canAddExistingMember()">
+                {{ memberAdding ? 'Agregando...' : 'Agregar miembro' }}
+              </button>
+            </form>
+            <form class="admin-case-form" (ngSubmit)="inviteMember()">
+              <label>
+                Correo
+                <input name="inviteEmail" [(ngModel)]="invite.email" />
+              </label>
+              <label>
+                Nombre
+                <input name="inviteName" [(ngModel)]="invite.displayName" />
+              </label>
+              <label>
+                Rol en el caso
+                <select name="inviteRole" [(ngModel)]="invite.rolePreset">
+                  <option value="client">Cliente</option>
+                  <option value="attorney">Abogado</option>
+                  <option value="pasante">Pasante</option>
+                  <option value="external_observer">Observador</option>
+                </select>
+              </label>
+              <label>
+                Relación
+                <select name="inviteMemberType" [(ngModel)]="inviteMemberType">
+                  <option value="external">Cliente o invitado externo</option>
+                  <option value="internal">Equipo Moyra</option>
+                </select>
+              </label>
+              <button type="submit" [disabled]="inviteBusy || !invite.email">
+                {{ inviteBusy ? 'Invitando...' : 'Invitar' }}
+              </button>
+            </form>
             <small class="admin-case-help">
               Los permisos se asignan por rol del caso: clientes comentan y abren documentos,
               pasantes colaboran internamente y observadores sólo consultan. La relación indica si
               pertenece al equipo de Moyra o es cliente/invitado del caso.
             </small>
-          </form>
+          </div>
           <div class="admin-case-table-wrap">
             <table class="admin-case-table">
               <thead>
@@ -465,6 +515,16 @@ type PlatformUser = {
         margin-bottom: 16px;
       }
 
+      .admin-case-member-tools {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .admin-case-member-tools .admin-case-form {
+        margin-bottom: 0;
+      }
+
       .admin-case-form--stack {
         align-items: stretch;
         display: grid;
@@ -522,7 +582,6 @@ type PlatformUser = {
       button {
         background: #ffffff;
         border: 1px solid #4b8ff5;
-        border-color: #4b8ff5;
         color: #4b8ff5;
         min-height: 36px;
         padding: 6px 10px;
@@ -640,6 +699,13 @@ export class AdminCaseDetailComponent implements OnInit {
     displayName: '',
     rolePreset: 'client',
   };
+  inviteMemberType: CaseMemberType = 'external';
+  inviteBusy = false;
+  existingMember: ExistingMemberDraft = {
+    userKey: '',
+    memberType: 'internal',
+    rolePreset: 'attorney',
+  };
   readonly permissionOptions: Array<{ value: CasePermission; label: string }> = [
     { value: 'case.read', label: 'Ver caso' },
     { value: 'case.write_entry', label: 'Publicar entradas' },
@@ -656,6 +722,7 @@ export class AdminCaseDetailComponent implements OnInit {
   editingMemberId = '';
   memberSavingId = '';
   memberRemovingId = '';
+  memberAdding = false;
   memberDraft: MemberDraft = {
     displayName: '',
     memberType: 'external',
@@ -691,14 +758,17 @@ export class AdminCaseDetailComponent implements OnInit {
       files: this._caseService.listFiles(this.caseId),
       auditEvents: this._caseService.listAuditEvents(this.caseId),
       users: this._userService.getUsers(0, 200, '-create_at').pipe(catchError(() => of([]))),
-    }).subscribe(({ caseRecord, caseTypes, entries, members, files, auditEvents, users }) => {
+      knownCaseUsers: this.caseMemberUsers(),
+    }).subscribe(({ caseRecord, caseTypes, entries, members, files, auditEvents, users, knownCaseUsers }) => {
       this.caseRecord = caseRecord.item;
       this.caseTypes = caseTypes.items || [];
       this.entries = entries.items || [];
       this.members = members.items || [];
       this.files = files.items || [];
       this.auditEvents = auditEvents.items || [];
-      this.users = this.withCurrentUser(this.normalizeUsers(users));
+      this.users = this.withCurrentUser(
+        this.mergeUsers([...this.normalizeUsers(users), ...knownCaseUsers])
+      );
       this.selectedStatusId = this.caseRecord.statusId;
       this.caseDraft = {
         title: this.caseRecord.title || '',
@@ -734,17 +804,25 @@ export class AdminCaseDetailComponent implements OnInit {
                 next: (statusResponse) => {
                   this.caseRecord = statusResponse.item;
                   this.caseSaving = false;
+                  this.showSuccess('Caso guardado', 'Los datos del caso se actualizaron.');
                 },
-                error: () => {
+                error: (error) => {
                   this.caseSaving = false;
+                  this.showError(
+                    'No se pudo actualizar el estado',
+                    'Los datos principales se guardaron, pero el estado no se pudo actualizar.',
+                    error
+                  );
                 },
               });
             return;
           }
           this.caseSaving = false;
+          this.showSuccess('Caso guardado', 'Los datos del caso se actualizaron.');
         },
-        error: () => {
+        error: (error) => {
           this.caseSaving = false;
+          this.showError('No se pudo guardar el caso', 'Intenta nuevamente.', error);
         },
       });
   }
@@ -754,14 +832,73 @@ export class AdminCaseDetailComponent implements OnInit {
       return;
     }
     const payload = this.cleanInvitePayload();
-    this._caseService.inviteMember(this.caseId, payload).subscribe((response) => {
-      this.members = [response.item, ...this.members];
-      this.invite = {
-        email: '',
-        displayName: '',
-        rolePreset: 'client',
-      };
+    this.inviteBusy = true;
+    this._caseService.inviteMember(this.caseId, payload).subscribe({
+      next: (response) => {
+        this.finishAddedMember(
+          response.item,
+          this.inviteMemberType,
+          () => {
+            this.invite = {
+              email: '',
+              displayName: '',
+              rolePreset: 'client',
+            };
+            this.inviteMemberType = 'external';
+            this.inviteBusy = false;
+          },
+          'Invitación enviada'
+        );
+      },
+      error: (error) => {
+        this.inviteBusy = false;
+        this.showError('No se pudo invitar al miembro', 'Revisa el correo e intenta nuevamente.', error);
+      },
     });
+  }
+
+  addExistingMember(): void {
+    if (!this.canAddExistingMember()) {
+      return;
+    }
+
+    const user = this.selectedExistingUser();
+    if (!user?.email) {
+      return;
+    }
+
+    this.memberAdding = true;
+    this._caseService
+      .inviteMember(this.caseId, {
+        email: user.email.trim().toLowerCase(),
+        displayName: this.userName(user) || user.email,
+        rolePreset: this.existingMember.rolePreset,
+      })
+      .subscribe({
+        next: (response) => {
+          this.finishAddedMember(
+            response.item,
+            this.existingMember.memberType,
+            () => {
+              this.existingMember = {
+                userKey: '',
+                memberType: 'internal',
+                rolePreset: 'attorney',
+              };
+              this.memberAdding = false;
+            },
+            'Miembro agregado'
+          );
+        },
+        error: (error) => {
+          this.memberAdding = false;
+          this.showError(
+            'No se pudo agregar el miembro',
+            'Revisa que el usuario no esté ya asignado a este caso.',
+            error
+          );
+        },
+      });
   }
 
   addOneDriveLink(): void {
@@ -781,10 +918,12 @@ export class AdminCaseDetailComponent implements OnInit {
         this.files = [response.item, ...this.files];
         this.oneDriveLink = { fileName: '', linkUrl: '' };
         this.oneDriveBusy = false;
+        this.showSuccess('Enlace agregado', 'El documento de OneDrive quedó registrado.');
       },
-      error: () => {
+      error: (error) => {
         this.oneDriveBusy = false;
         this.oneDriveError = 'No se pudo agregar el enlace de OneDrive.';
+        this.showError('No se pudo agregar el enlace', this.oneDriveError, error);
       },
     });
   }
@@ -795,7 +934,15 @@ export class AdminCaseDetailComponent implements OnInit {
         externalVisibilityStatus: 'approved',
         visibility: { mode: 'case_members' },
       })
-      .subscribe();
+      .subscribe({
+        next: (response) => {
+          this.files = this.files.map((file) => (file.id === fileId ? response.item : file));
+          this.showSuccess('Documento aprobado', 'El documento ya puede verse según sus permisos.');
+        },
+        error: (error) => {
+          this.showError('No se pudo aprobar el documento', 'Intenta nuevamente.', error);
+        },
+      });
   }
 
   startEditMember(member: CaseMembership): void {
@@ -845,23 +992,40 @@ export class AdminCaseDetailComponent implements OnInit {
                   item.id === updated.id ? updated : item
                 );
                 this.cancelEditMember();
+                this.showSuccess('Miembro guardado', 'Rol, relación y permisos quedaron actualizados.');
               },
-              error: () => {
+              error: (error) => {
                 this.memberSavingId = '';
+                this.showError(
+                  'No se pudieron guardar los permisos',
+                  'El miembro se actualizó, pero sus permisos no pudieron guardarse.',
+                  error
+                );
               },
             });
         },
-        error: () => {
+        error: (error) => {
           this.memberSavingId = '';
+          this.showError('No se pudo guardar el miembro', 'Intenta nuevamente.', error);
         },
       });
   }
 
-  removeMember(member: CaseMembership): void {
-    if (
-      !member.id ||
-      !window.confirm(`¿Quitar a ${this.memberName(member)} del caso?`)
-    ) {
+  async removeMember(member: CaseMembership): Promise<void> {
+    if (!member.id) {
+      return;
+    }
+
+    const confirmation = await Swal.fire({
+      title: 'Quitar miembro',
+      text: `¿Quitar a ${this.memberName(member)} del caso? El usuario no será eliminado.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Quitar',
+      cancelButtonText: 'Cancelar',
+    });
+
+    if (!confirmation.isConfirmed) {
       return;
     }
 
@@ -873,11 +1037,39 @@ export class AdminCaseDetailComponent implements OnInit {
           this.cancelEditMember();
         }
         this.memberRemovingId = '';
+        this.showSuccess('Miembro quitado', 'El usuario dejó de estar asignado a este caso.');
       },
-      error: () => {
+      error: (error) => {
         this.memberRemovingId = '';
+        this.showError('No se pudo quitar el miembro', 'Intenta nuevamente.', error);
       },
     });
+  }
+
+  availableUsersForCase(): PlatformUser[] {
+    const assigned = new Set<string>();
+    this.members.forEach((member) => {
+      if (member.userId) {
+        assigned.add(member.userId.toLowerCase());
+      }
+      if (member.email) {
+        assigned.add(member.email.toLowerCase());
+      }
+    });
+    return this.users.filter((user) => {
+      const key = this.userKey(user).toLowerCase();
+      const email = String(user.email || '').toLowerCase();
+      return Boolean(email) && !assigned.has(key) && !assigned.has(email);
+    });
+  }
+
+  canAddExistingMember(): boolean {
+    return Boolean(this.selectedExistingUser()?.email);
+  }
+
+  userOptionLabel(user: PlatformUser): string {
+    const name = this.userName(user) || user.email || 'Usuario';
+    return user.email && name !== user.email ? `${name} - ${user.email}` : name;
   }
 
   statusesForCurrentType(): CaseStatusDefinition[] {
@@ -1103,6 +1295,118 @@ export class AdminCaseDetailComponent implements OnInit {
     return file.storageProvider === 'onedrive' || file.type === 'onedrive-link';
   }
 
+  userKey(user?: PlatformUser): string {
+    return String(user?.id || user?._id || user?.sub || user?.email || '').trim();
+  }
+
+  private selectedExistingUser(): PlatformUser | undefined {
+    return this.availableUsersForCase().find(
+      (user) => this.userKey(user) === this.existingMember.userKey
+    );
+  }
+
+  private finishAddedMember(
+    member: CaseMembership,
+    memberType: CaseMemberType,
+    resetForm: () => void,
+    successTitle: string
+  ): void {
+    if (!member.id) {
+      this.upsertMember(member);
+      resetForm();
+      this.showSuccess(successTitle, 'La membresía quedó registrada.');
+      return;
+    }
+
+    this._caseService.updateMember(this.caseId, member.id, { memberType }).subscribe({
+      next: (response) => {
+        this.upsertMember(response.item);
+        resetForm();
+        this.showSuccess(successTitle, 'La membresía quedó registrada.');
+      },
+      error: (error) => {
+        this.upsertMember(member);
+        resetForm();
+        this.showWarning(
+          successTitle,
+          'El miembro se agregó, pero no se pudo actualizar su relación. Edita el miembro para corregirlo.',
+          error
+        );
+      },
+    });
+  }
+
+  private upsertMember(member: CaseMembership): void {
+    const exists = this.members.some((item) => item.id === member.id);
+    this.members = exists
+      ? this.members.map((item) => (item.id === member.id ? member : item))
+      : [member, ...this.members];
+  }
+
+  private caseMemberUsers(): Observable<PlatformUser[]> {
+    return this._caseService.listCases().pipe(
+      catchError(() => of({ status: 'error', items: [] as CaseRecord[] })),
+      switchMap((casesResponse) => {
+        const cases = casesResponse.items || [];
+        if (cases.length === 0) {
+          return of([]);
+        }
+        return forkJoin(
+          cases.map((caseItem) =>
+            this._caseService.listMembers(caseItem.id).pipe(
+              catchError(() => of({ status: 'error', items: [] as CaseMembership[] })),
+              map((membersResponse) =>
+                (membersResponse.items || []).map((member) => this.userFromMember(member))
+              )
+            )
+          )
+        ).pipe(map((items) => items.flat()));
+      })
+    );
+  }
+
+  private userFromMember(member: CaseMembership): PlatformUser {
+    const isLegalTeam =
+      member.memberType === 'internal' ||
+      member.rolePreset === 'attorney' ||
+      member.rolePreset === 'pasante';
+    return {
+      id: member.userId || member.email || member.id,
+      name: this.humanName(member.displayName, member.userId) || member.email || 'Usuario',
+      displayName: this.humanName(member.displayName, member.userId),
+      email: member.email,
+      role: isLegalTeam ? 'ROLE_LEGAL_STAFF' : 'ROLE_USER',
+    };
+  }
+
+  private mergeUsers(users: PlatformUser[]): PlatformUser[] {
+    const seen = new Set<string>();
+    return users.filter((user) => {
+      const key = (this.userKey(user) || user.email || '').toLowerCase();
+      if (!key || seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  }
+
+  private showSuccess(title: string, text: string): void {
+    void Swal.fire({ title, text, icon: 'success' });
+  }
+
+  private showWarning(title: string, text: string, error?: unknown): void {
+    void Swal.fire({ title, text: this.errorMessageFrom(error, text), icon: 'warning' });
+  }
+
+  private showError(title: string, fallback: string, error?: unknown): void {
+    void Swal.fire({ title, text: this.errorMessageFrom(error, fallback), icon: 'error' });
+  }
+
+  private errorMessageFrom(error: any, fallback: string): string {
+    return String(error?.error?.message || error?.message || fallback);
+  }
+
   private cleanInvitePayload(): InviteCaseMemberRequest {
     return {
       email: this.invite.email.trim().toLowerCase(),
@@ -1279,10 +1583,6 @@ export class AdminCaseDetailComponent implements OnInit {
       return undefined;
     }
     return this.users.find((user) => this.userKey(user) === idOrEmail || user.email === idOrEmail);
-  }
-
-  private userKey(user?: PlatformUser): string {
-    return String(user?.id || user?._id || user?.sub || user?.email || '').trim();
   }
 
   private userName(user?: PlatformUser): string {

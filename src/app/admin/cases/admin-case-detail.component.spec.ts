@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
+import Swal from 'sweetalert2';
 
 import { AdminCaseDetailComponent } from './admin-case-detail.component';
 import { CaseService } from '../../services/case.service';
@@ -84,6 +85,7 @@ describe('AdminCaseDetailComponent', () => {
           visibility: { mode: 'case_members' },
         },
       }));
+    spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any);
 
     await TestBed.configureTestingModule({
       imports: [AdminCaseDetailComponent],
@@ -101,6 +103,18 @@ describe('AdminCaseDetailComponent', () => {
         {
           provide: CaseService,
           useValue: {
+            listCases: () =>
+              of({
+                status: 'success',
+                items: [
+                  {
+                    id: 'case-1',
+                    title: 'Contrato corporativo',
+                    caseTypeId: 'corporate',
+                    statusId: 'draft',
+                  },
+                ],
+              }),
             getCase: () =>
               of({
                 status: 'success',
@@ -223,6 +237,12 @@ describe('AdminCaseDetailComponent', () => {
                     email: 'cliente@moyra.org',
                     role: 'ROLE_USER',
                   },
+                  {
+                    id: 'legal-2',
+                    name: 'Pasante Moyra',
+                    email: 'pasante@moyra.org',
+                    role: 'ROLE_LEGAL_STAFF',
+                  },
                 ],
               }),
           },
@@ -307,6 +327,58 @@ describe('AdminCaseDetailComponent', () => {
     });
   });
 
+  it('adds existing users as case members with role and relation', () => {
+    inviteMemberSpy.and.returnValue(
+      of({
+        status: 'success',
+        item: {
+          id: 'member-2',
+          caseId: 'case-1',
+          userId: 'legal-2',
+          displayName: 'Pasante Moyra',
+          email: 'pasante@moyra.org',
+          rolePreset: 'pasante',
+          memberType: 'external',
+          permissions: ['case.read'],
+          status: 'active',
+        },
+      })
+    );
+    updateMemberSpy.and.returnValue(
+      of({
+        status: 'success',
+        item: {
+          id: 'member-2',
+          caseId: 'case-1',
+          userId: 'legal-2',
+          displayName: 'Pasante Moyra',
+          email: 'pasante@moyra.org',
+          rolePreset: 'pasante',
+          memberType: 'internal',
+          permissions: ['case.read'],
+          status: 'active',
+        },
+      })
+    );
+
+    fixture.componentInstance.existingMember = {
+      userKey: 'legal-2',
+      rolePreset: 'pasante',
+      memberType: 'internal',
+    };
+    fixture.componentInstance.addExistingMember();
+
+    expect(inviteMemberSpy).toHaveBeenCalledWith('case-1', {
+      email: 'pasante@moyra.org',
+      displayName: 'Pasante Moyra',
+      rolePreset: 'pasante',
+    });
+    expect(updateMemberSpy).toHaveBeenCalledWith('case-1', 'member-2', {
+      memberType: 'internal',
+    });
+    expect(fixture.componentInstance.members.some((member) => member.id === 'member-2')).toBeTrue();
+  });
+
   it('adds OneDrive links as case documents', () => {
     fixture.componentInstance.oneDriveLink = {
       fileName: 'Contrato firmado',
@@ -324,10 +396,8 @@ describe('AdminCaseDetailComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Contrato firmado');
   });
 
-  it('removes a case membership without deleting the user', () => {
-    spyOn(window, 'confirm').and.returnValue(true);
-
-    fixture.componentInstance.removeMember(fixture.componentInstance.members[0]);
+  it('removes a case membership without deleting the user', async () => {
+    await fixture.componentInstance.removeMember(fixture.componentInstance.members[0]);
 
     expect(removeMemberSpy).toHaveBeenCalledWith('case-1', 'member-1');
     expect(fixture.componentInstance.members.length).toBe(0);

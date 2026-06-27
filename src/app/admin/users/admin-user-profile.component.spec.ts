@@ -11,6 +11,7 @@ import { AuthFacade } from '../../store/auth/auth.facade';
 describe('AdminUserProfileComponent', () => {
   let fixture: ComponentFixture<AdminUserProfileComponent>;
   let updateUserSpy: jasmine.Spy;
+  let updateMemberSpy: jasmine.Spy;
 
   beforeEach(async () => {
     updateUserSpy = jasmine.createSpy('updateUser').and.returnValue(
@@ -22,6 +23,22 @@ describe('AdminUserProfileComponent', () => {
           displayName: 'Abogada actualizada',
           email: 'abogada@moyra.org',
           role: 'ROLE_LEGAL_STAFF',
+        },
+      })
+    );
+    updateMemberSpy = jasmine.createSpy('updateMember').and.returnValue(
+      of({
+        status: 'success',
+        item: {
+          id: 'membership-1',
+          caseId: 'case-1',
+          userId: 'legal-1',
+          displayName: 'Abogada Moyra',
+          email: 'abogada@moyra.org',
+          rolePreset: 'attorney',
+          memberType: 'external',
+          permissions: ['case.read', 'case.write_entry'],
+          status: 'active',
         },
       })
     );
@@ -108,6 +125,7 @@ describe('AdminUserProfileComponent', () => {
                   },
                 ],
               }),
+            updateMember: updateMemberSpy,
           },
         },
       ],
@@ -141,5 +159,15 @@ describe('AdminUserProfileComponent', () => {
       email: 'abogada@moyra.org',
     });
     expect(fixture.nativeElement.textContent).toContain('Perfil guardado');
+  });
+
+  it('updates the case membership relation from the user profile', () => {
+    fixture.componentInstance.saveMemberRelation(fixture.componentInstance.memberships[0], 'external');
+    fixture.detectChanges();
+
+    expect(updateMemberSpy).toHaveBeenCalledWith('case-1', 'membership-1', {
+      memberType: 'external',
+    });
+    expect(fixture.nativeElement.textContent).toContain('Relación guardada');
   });
 });
