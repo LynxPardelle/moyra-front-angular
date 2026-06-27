@@ -133,8 +133,21 @@ type PlatformUser = {
 
       <div class="admin-cases-filters">
         <label>
+          Buscar
+          <input
+            name="caseSearch"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="resetPage()"
+            placeholder="Título, referencia, tipo o estado"
+          />
+        </label>
+        <label>
           Tipo de caso
-          <select [(ngModel)]="caseTypeFilter" aria-label="Filtrar por tipo">
+          <select
+            [(ngModel)]="caseTypeFilter"
+            (ngModelChange)="resetPage()"
+            aria-label="Filtrar por tipo"
+          >
             <option value="">Todos los tipos</option>
             @for (caseType of caseTypes; track caseType.id) {
             <option [value]="caseType.id">{{ caseType.name }}</option>
@@ -143,7 +156,11 @@ type PlatformUser = {
         </label>
         <label>
           Estado
-          <select [(ngModel)]="statusFilter" aria-label="Filtrar por estado">
+          <select
+            [(ngModel)]="statusFilter"
+            (ngModelChange)="resetPage()"
+            aria-label="Filtrar por estado"
+          >
             <option value="">Todos los estados</option>
             @for (status of allStatuses(); track $index) {
             <option [value]="status.id">{{ statusLabel(status) }}</option>
@@ -174,7 +191,7 @@ type PlatformUser = {
             </tr>
           </thead>
           <tbody>
-            @for (caseItem of filteredCases(); track caseItem.id) {
+            @for (caseItem of pagedCases(); track caseItem.id) {
             <tr>
               <td>{{ caseItem.reference || 'Sin referencia' }}</td>
               <td>
@@ -188,6 +205,21 @@ type PlatformUser = {
           </tbody>
         </table>
       </div>
+      @if (filteredCases().length > pageSize) {
+      <nav class="admin-cases-pagination" aria-label="Paginación de casos">
+        <button type="button" (click)="setPage(currentPage - 1)" [disabled]="boundedPage() <= 1">
+          Anterior
+        </button>
+        <span>Página {{ boundedPage() }} de {{ totalPages() }}</span>
+        <button
+          type="button"
+          (click)="setPage(currentPage + 1)"
+          [disabled]="boundedPage() >= totalPages()"
+        >
+          Siguiente
+        </button>
+      </nav>
+      }
       }
     </section>
   `,
@@ -203,7 +235,8 @@ type PlatformUser = {
       .admin-cases-page__header,
       .admin-cases-ops,
       .admin-cases-queue,
-      .admin-cases-filters {
+      .admin-cases-filters,
+      .admin-cases-pagination {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
@@ -229,7 +262,8 @@ type PlatformUser = {
       .admin-cases-ops,
       .admin-cases-queue,
       .admin-cases-create,
-      .admin-cases-filters {
+      .admin-cases-filters,
+      .admin-cases-pagination {
         border: 1px solid rgba(41, 48, 59, 0.18);
         padding: 12px 16px;
         background: #ffffff;
@@ -320,6 +354,16 @@ type PlatformUser = {
       .admin-cases-create__hint {
         color: rgba(41, 48, 59, 0.68);
         grid-column: 1 / -1;
+      }
+
+      .admin-cases-filters label {
+        min-width: min(260px, 100%);
+      }
+
+      .admin-cases-pagination {
+        align-items: center;
+        justify-content: flex-end;
+        margin-top: 12px;
       }
 
       input:not([type='checkbox']):not([type='radio']):not([type='color']),
@@ -415,6 +459,9 @@ export class AdminCasesListComponent implements OnInit {
   errorMessage = '';
   statusFilter = '';
   caseTypeFilter = '';
+  searchTerm = '';
+  currentPage = 1;
+  readonly pageSize = 10;
   newCase: NewCaseForm = {
     title: '',
     reference: '',
@@ -459,6 +506,7 @@ export class AdminCasesListComponent implements OnInit {
   }
 
   filteredCases(): CaseRecord[] {
+    const term = this.searchTerm.trim().toLowerCase();
     return this.cases.filter((caseItem) => {
       if (this.caseTypeFilter && caseItem.caseTypeId !== this.caseTypeFilter) {
         return false;
@@ -466,8 +514,40 @@ export class AdminCasesListComponent implements OnInit {
       if (this.statusFilter && caseItem.statusId !== this.statusFilter) {
         return false;
       }
+      if (term) {
+        const haystack = [
+          caseItem.title,
+          caseItem.reference,
+          this.caseTypeName(caseItem.caseTypeId),
+          this.statusName(caseItem.statusId),
+        ]
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(term);
+      }
       return true;
     });
+  }
+
+  pagedCases(): CaseRecord[] {
+    const page = this.boundedPage();
+    return this.filteredCases().slice((page - 1) * this.pageSize, page * this.pageSize);
+  }
+
+  totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredCases().length / this.pageSize));
+  }
+
+  boundedPage(): number {
+    return Math.min(Math.max(1, this.currentPage), this.totalPages());
+  }
+
+  setPage(page: number): void {
+    this.currentPage = Math.min(Math.max(1, page), this.totalPages());
+  }
+
+  resetPage(): void {
+    this.currentPage = 1;
   }
 
   createCase(): void {

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import {
   CaseAuditEvent,
@@ -16,7 +16,9 @@ import {
   InviteCaseMemberRequest,
   caseStatusLabel,
 } from '../../models/case';
+import { SafeRichHtmlPipe } from '../../pipes/safe-rich-html';
 import { CaseService } from '../../services/case.service';
+import { UserService } from '../../services/user.service';
 import { isVisibleToCaseClient } from '../../utils/case-visibility';
 import { RichTextEditorComponent } from '../../components/web-utility/rich-text-editor/rich-text-editor.component';
 
@@ -34,9 +36,19 @@ type MemberDraft = {
   permissions: CasePermission[];
 };
 
+type PlatformUser = {
+  id?: string;
+  _id?: string;
+  sub?: string;
+  name?: string;
+  displayName?: string;
+  email?: string;
+  role?: string;
+};
+
 @Component({
   selector: 'app-admin-case-detail',
-  imports: [CommonModule, FormsModule, RouterLink, RichTextEditorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RichTextEditorComponent, SafeRichHtmlPipe],
   template: `
     <section class="admin-case-detail">
       <a routerLink="/admin/casos" class="admin-case-detail__back">Casos</a>
@@ -45,6 +57,10 @@ type MemberDraft = {
           <p class="admin-case-detail__eyebrow">Workspace</p>
           <h1>{{ caseRecord?.title || 'Caso' }}</h1>
           <p>{{ caseRecord?.reference || caseId }}</p>
+          <div class="admin-case-detail__description">
+            <strong>Descripción</strong>
+            <div [innerHTML]="summaryDescription() | safeRichHtml"></div>
+          </div>
         </div>
         <form class="admin-case-detail__case-form" (ngSubmit)="saveCaseDetails()">
           <label>
@@ -106,7 +122,7 @@ type MemberDraft = {
                   <td>{{ formatDate(entry.updatedAt || entry.createdAt) }}</td>
                   <td class="admin-case-actions">
                     @if (entryVisibleInPortal(entry)) {
-                    <a [routerLink]="['/casos', caseId, 'entrada', entry.id]">Ver portal</a>
+                    <a [routerLink]="['/casos', caseId, 'entrada', entry.id]">Ver la entrada</a>
                     }
                     <a [routerLink]="['/admin/casos', caseId, 'entradas', entry.id]">
                       Editar
@@ -161,8 +177,14 @@ type MemberDraft = {
               <tbody>
                 @for (member of members; track member.id) {
                 <tr>
-                  <td>{{ member.displayName || 'Sin nombre' }}</td>
-                  <td>{{ member.email || member.userId || member.id }}</td>
+                  <td>
+                    @if (memberProfileLink(member); as profileLink) {
+                    <a [routerLink]="profileLink">{{ member.displayName || 'Sin nombre' }}</a>
+                    } @else {
+                    {{ member.displayName || 'Sin nombre' }}
+                    }
+                  </td>
+                  <td>{{ member.email || 'Sin correo' }}</td>
                   <td>{{ roleLabel(member.rolePreset) }}</td>
                   <td>{{ memberTypeLabel(member.memberType) }}</td>
                   <td>{{ permissionsSummary(member.permissions) }}</td>
@@ -289,7 +311,13 @@ type MemberDraft = {
                 @for (event of auditEvents; track event.id) {
                 <tr>
                   <td>{{ formatDate(event.createdAt) }}</td>
-                  <td>{{ auditActor(event) }}</td>
+                  <td>
+                    @if (auditActorLink(event); as actorLink) {
+                    <a [routerLink]="actorLink">{{ auditActor(event) }}</a>
+                    } @else {
+                    {{ auditActor(event) }}
+                    }
+                  </td>
                   <td>{{ auditActionLabel(event.action) }}</td>
                   <td>
                     @if (auditTargetLink(event); as targetLink) {
@@ -331,13 +359,13 @@ type MemberDraft = {
 
       .admin-case-detail__header {
         display: grid;
-        grid-template-columns: minmax(220px, 0.34fr) minmax(0, 1fr);
+        grid-template-columns: 1fr;
         gap: 16px;
         margin: 12px 0 16px;
       }
 
       .admin-case-detail__summary {
-        min-width: min(320px, 100%);
+        width: 100%;
       }
 
       .admin-case-detail__eyebrow {
@@ -345,6 +373,21 @@ type MemberDraft = {
         color: #4b8ff5;
         text-transform: uppercase;
         font-size: 0.85rem;
+      }
+
+      .admin-case-detail__description {
+        border-top: 1px solid rgba(41, 48, 59, 0.12);
+        margin-top: 12px;
+        padding-top: 12px;
+      }
+
+      .admin-case-detail__description strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .admin-case-detail__description :where(em, i) {
+        font-style: italic;
       }
 
       .admin-case-workspace {
@@ -518,6 +561,19 @@ type MemberDraft = {
         border: 1px solid rgba(41, 48, 59, 0.18);
         display: grid;
         gap: 6px;
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+      }
+
+      .admin-case-member-editor fieldset legend {
+        font-weight: 800;
+        padding: 0 6px;
+      }
+
+      .admin-case-member-editor fieldset label {
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
       }
 
       .admin-case-file {
@@ -529,7 +585,8 @@ type MemberDraft = {
       @media (max-width: 920px) {
         .admin-case-detail__header,
         .admin-case-detail__case-form,
-        .admin-case-form {
+        .admin-case-form,
+        .admin-case-member-editor fieldset {
           grid-template-columns: 1fr;
         }
 
@@ -546,6 +603,7 @@ export class AdminCaseDetailComponent implements OnInit {
   caseTypes: CaseType[] = [];
   entries: CaseEntry[] = [];
   members: CaseMembership[] = [];
+  users: PlatformUser[] = [];
   files: CaseFile[] = [];
   auditEvents: CaseAuditEvent[] = [];
   selectedStatusId = '';
@@ -590,7 +648,8 @@ export class AdminCaseDetailComponent implements OnInit {
 
   constructor(
     private _route: ActivatedRoute,
-    private _caseService: CaseService
+    private _caseService: CaseService,
+    private _userService: UserService
   ) {
     this.caseId = this._route.snapshot.paramMap.get('caseId') || '';
   }
@@ -607,13 +666,15 @@ export class AdminCaseDetailComponent implements OnInit {
       members: this._caseService.listMembers(this.caseId),
       files: this._caseService.listFiles(this.caseId),
       auditEvents: this._caseService.listAuditEvents(this.caseId),
-    }).subscribe(({ caseRecord, caseTypes, entries, members, files, auditEvents }) => {
+      users: this._userService.getUsers(0, 200, '-create_at').pipe(catchError(() => of([]))),
+    }).subscribe(({ caseRecord, caseTypes, entries, members, files, auditEvents, users }) => {
       this.caseRecord = caseRecord.item;
       this.caseTypes = caseTypes.items || [];
       this.entries = entries.items || [];
       this.members = members.items || [];
       this.files = files.items || [];
       this.auditEvents = auditEvents.items || [];
+      this.users = this.normalizeUsers(users);
       this.selectedStatusId = this.caseRecord.statusId;
       this.caseDraft = {
         title: this.caseRecord.title || '',
@@ -811,6 +872,10 @@ export class AdminCaseDetailComponent implements OnInit {
     return type === 'internal' ? 'Equipo Moyra' : 'Cliente o invitado externo';
   }
 
+  summaryDescription(): string {
+    return this.caseRecord?.description?.trim() || '<p>Sin descripción.</p>';
+  }
+
   permissionsSummary(permissions: CasePermission[]): string {
     if (!permissions?.length) {
       return 'Sin permisos';
@@ -823,18 +888,44 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   auditActor(event: CaseAuditEvent): string {
+    const user = this.auditActorUser(event);
+    const member = this.auditActorMember(event);
+    const name = event.actorDisplayName || this.userName(user) || member?.displayName || 'Usuario';
+    const email = event.actorEmail || user?.email || member?.email || '';
+    if (name === 'Usuario' && !email && !event.actorUserId) {
+      return 'Sistema';
+    }
+    return email ? `${name} (${email})` : name;
+  }
+
+  auditActorLink(event: CaseAuditEvent): string[] | null {
+    const user = this.auditActorUser(event);
+    const member = this.auditActorMember(event);
+    const key = this.userKey(user) || member?.userId || event.actorUserId || member?.email || event.actorEmail;
+    return key ? ['/admin/usuarios', key] : null;
+  }
+
+  memberProfileLink(member: CaseMembership): string[] | null {
+    const key = member.userId || member.email;
+    return key ? ['/admin/usuarios', key] : null;
+  }
+
+  userProfileLink(userIdOrEmail: string): string[] | null {
+    return userIdOrEmail ? ['/admin/usuarios', userIdOrEmail] : null;
+  }
+
+  private auditActorUser(event: CaseAuditEvent): PlatformUser | undefined {
+    return this.findUser(event.actorUserId || event.actorEmail || '');
+  }
+
+  private auditActorMember(event: CaseAuditEvent): CaseMembership | undefined {
     const actorId = event.actorUserId || '';
-    const member = this.members.find(
-      (candidate) =>
-        (actorId && candidate.userId === actorId) ||
-        (event.actorEmail && candidate.email === event.actorEmail)
-    );
     return (
-      event.actorDisplayName ||
-      member?.displayName ||
-      event.actorEmail ||
-      member?.email ||
-      (actorId ? 'Usuario del caso' : 'Sistema')
+      this.members.find(
+        (candidate) =>
+          (actorId && candidate.userId === actorId) ||
+          (event.actorEmail && candidate.email === event.actorEmail)
+      )
     );
   }
 
@@ -875,7 +966,15 @@ export class AdminCaseDetailComponent implements OnInit {
       const entry = this.entries.find((item) => item.id === event.targetId);
       return entry?.title || 'Entrada del caso';
     }
+    if (event.targetType === 'case-entry') {
+      const entry = this.entries.find((item) => item.id === event.targetId);
+      return entry?.title || 'Entrada del caso';
+    }
     if (event.targetType === 'member') {
+      const member = this.members.find((item) => item.id === event.targetId || item.userId === event.targetId);
+      return member?.displayName || member?.email || 'Miembro del caso';
+    }
+    if (event.targetType === 'case-membership') {
       const member = this.members.find((item) => item.id === event.targetId || item.userId === event.targetId);
       return member?.displayName || member?.email || 'Miembro del caso';
     }
@@ -890,8 +989,12 @@ export class AdminCaseDetailComponent implements OnInit {
     if (event.targetType === 'case') {
       return ['/admin/casos', this.caseId];
     }
-    if (event.targetType === 'entry' && event.targetId) {
+    if ((event.targetType === 'entry' || event.targetType === 'case-entry') && event.targetId) {
       return ['/admin/casos', this.caseId, 'entradas', event.targetId];
+    }
+    if ((event.targetType === 'member' || event.targetType === 'case-membership') && event.targetId) {
+      const member = this.members.find((item) => item.id === event.targetId || item.userId === event.targetId);
+      return this.memberProfileLink(member || ({ userId: event.targetId } as CaseMembership));
     }
     return null;
   }
@@ -955,6 +1058,9 @@ export class AdminCaseDetailComponent implements OnInit {
         title: 'Título',
         reference: 'Referencia',
         description: 'Descripción',
+        id: 'Identificador',
+        caseId: 'Caso',
+        authorUserId: 'Autor',
         statusId: 'Estado',
         caseTypeId: 'Tipo de caso',
         visibility: 'Visibilidad',
@@ -975,6 +1081,12 @@ export class AdminCaseDetailComponent implements OnInit {
     if (key === 'statusId') {
       return this.statusName(String(value));
     }
+    if (key === 'id' || key === 'caseId') {
+      return this.auditReferenceLabel(String(value));
+    }
+    if (key === 'authorUserId') {
+      return this.userDisplayName(String(value));
+    }
     if (key === 'caseTypeId') {
       return this.caseTypeName(String(value));
     }
@@ -993,6 +1105,9 @@ export class AdminCaseDetailComponent implements OnInit {
     if (key === 'externalVisibilityStatus') {
       return this.fileVisibilityStatusLabel(String(value));
     }
+    if (key === 'description' || key === 'text') {
+      return this.plainRichText(String(value));
+    }
     if (typeof value === 'boolean') {
       return value ? 'Sí' : 'No';
     }
@@ -1007,7 +1122,9 @@ export class AdminCaseDetailComponent implements OnInit {
       {
         case: 'Caso',
         entry: 'Entrada del caso',
+        'case-entry': 'Entrada del caso',
         member: 'Miembro del caso',
+        'case-membership': 'Miembro del caso',
         file: 'Documento del caso',
       }[type] || type
     );
@@ -1066,5 +1183,65 @@ export class AdminCaseDetailComponent implements OnInit {
     } catch {
       return false;
     }
+  }
+
+  private auditReferenceLabel(id: string): string {
+    if (!id) {
+      return 'Sin referencia';
+    }
+    if (id === this.caseId || id === this.caseRecord?.id) {
+      return this.caseRecord?.title || this.caseRecord?.reference || 'Caso';
+    }
+    const entry = this.entries.find((item) => item.id === id);
+    if (entry) {
+      return entry.title;
+    }
+    const member = this.members.find((item) => item.id === id || item.userId === id);
+    if (member) {
+      return member.displayName || member.email || 'Miembro del caso';
+    }
+    return 'Referencia interna';
+  }
+
+  private userDisplayName(idOrEmail: string): string {
+    const user = this.findUser(idOrEmail);
+    const member = this.members.find((item) => item.userId === idOrEmail || item.email === idOrEmail);
+    const name = this.userName(user) || member?.displayName || 'Usuario';
+    const email = user?.email || member?.email || '';
+    return email ? `${name} (${email})` : name;
+  }
+
+  private findUser(idOrEmail: string): PlatformUser | undefined {
+    if (!idOrEmail) {
+      return undefined;
+    }
+    return this.users.find((user) => this.userKey(user) === idOrEmail || user.email === idOrEmail);
+  }
+
+  private userKey(user?: PlatformUser): string {
+    return String(user?.id || user?._id || user?.sub || user?.email || '').trim();
+  }
+
+  private userName(user?: PlatformUser): string {
+    return String(user?.displayName || user?.name || '').trim();
+  }
+
+  private normalizeUsers(response: any): PlatformUser[] {
+    const list = Array.isArray(response)
+      ? response
+      : response?.users || response?.items || response?.data || [];
+    return Array.isArray(list) ? list : [];
+  }
+
+  private plainRichText(value: string): string {
+    const text = value
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return text || 'Sin contenido';
   }
 }

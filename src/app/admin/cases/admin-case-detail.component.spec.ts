@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 
 import { AdminCaseDetailComponent } from './admin-case-detail.component';
 import { CaseService } from '../../services/case.service';
+import { UserService } from '../../services/user.service';
 
 describe('AdminCaseDetailComponent', () => {
   let fixture: ComponentFixture<AdminCaseDetailComponent>;
@@ -125,6 +126,7 @@ describe('AdminCaseDetailComponent', () => {
                 items: [{
                   id: 'member-1',
                   caseId: 'case-1',
+                  userId: 'user-1',
                   displayName: 'Cliente',
                   email: 'cliente@moyra.org',
                   rolePreset: 'client',
@@ -150,14 +152,32 @@ describe('AdminCaseDetailComponent', () => {
             listAuditEvents: () =>
               of({
                 status: 'success',
-                items: [{
-                  id: 'audit-1',
-                  caseId: 'case-1',
-                  action: 'case.created',
-                  targetType: 'case',
-                  actorDisplayName: 'Admin',
-                  createdAt: '2026-06-18T20:00:00.000Z',
-                }],
+                items: [
+                  {
+                    id: 'audit-1',
+                    caseId: 'case-1',
+                    action: 'case.created',
+                    targetType: 'case',
+                    actorDisplayName: 'Admin',
+                    createdAt: '2026-06-18T20:00:00.000Z',
+                  },
+                  {
+                    id: 'audit-2',
+                    caseId: 'case-1',
+                    actorUserId: 'user-1',
+                    action: 'case.entry.created',
+                    targetType: 'case-entry',
+                    targetId: 'entry-1',
+                    after: {
+                      id: 'entry-1',
+                      authorUserId: 'user-1',
+                      title: 'Primera entrada',
+                      visibility: { mode: 'case_members' },
+                      text: '<p><em>Avance privado</em></p>',
+                    },
+                    createdAt: '2026-06-18T20:00:00.000Z',
+                  },
+                ],
               }),
             updateCaseStatus: updateStatusSpy,
             updateCase: updateCaseSpy,
@@ -166,6 +186,22 @@ describe('AdminCaseDetailComponent', () => {
             updateMemberPermissions: updateMemberPermissionsSpy,
             createOneDriveLink: createOneDriveLinkSpy,
             updateFileVisibility: updateFileVisibilitySpy,
+          },
+        },
+        {
+          provide: UserService,
+          useValue: {
+            getUsers: () =>
+              of({
+                users: [
+                  {
+                    id: 'user-1',
+                    name: 'Cliente',
+                    email: 'cliente@moyra.org',
+                    role: 'ROLE_USER',
+                  },
+                ],
+              }),
           },
         },
       ],
@@ -186,6 +222,22 @@ describe('AdminCaseDetailComponent', () => {
     expect(text).toContain('Enlace de OneDrive');
     expect(fixture.nativeElement.querySelector('a[href*="amazonaws"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('.admin-case-file button')?.disabled).toBeFalse();
+  });
+
+  it('renders audit rows with readable actors, targets and details', () => {
+    const text = fixture.nativeElement.textContent;
+    const links = Array.from(
+      fixture.nativeElement.querySelectorAll('a') as NodeListOf<HTMLAnchorElement>
+    ).map((link) => link.getAttribute('href'));
+
+    expect(text).toContain('Cliente (cliente@moyra.org)');
+    expect(text).toContain('Primera entrada');
+    expect(text).toContain('Autor: Cliente (cliente@moyra.org)');
+    expect(text).toContain('Contenido: Avance privado');
+    expect(text).toContain('Visibilidad: Visible para miembros del caso');
+    expect(text).not.toContain('user-1');
+    expect(links).toContain('/admin/usuarios/user-1');
+    expect(links).toContain('/admin/casos/case-1/entradas/entry-1');
   });
 
   it('updates case details through the status notification route when needed', () => {

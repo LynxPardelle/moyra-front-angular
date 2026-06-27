@@ -16,6 +16,8 @@ import { AdminCaseDetailComponent } from './cases/admin-case-detail.component';
 import { AdminCaseEntryEditorComponent } from './cases/admin-case-entry-editor.component';
 import { AdminCasesConfigComponent } from './cases/admin-cases-config.component';
 import { AdminCasesListComponent } from './cases/admin-cases-list.component';
+import { AdminUserProfileComponent } from './users/admin-user-profile.component';
+import { AdminUsersListComponent } from './users/admin-users-list.component';
 
 /* PublicationComponents */
 import { PublicationsComponent } from '../components/publication/publications/publications.component';
@@ -48,7 +50,9 @@ const routes: Routes = [
       { path: 'configuraciones', component: ConfiguracionesComponent },
       { path: 'uso', component: UsoComponent },
       { path: 'archivos', component: ArchivosComponent },
+      { path: 'usuarios', component: AdminUsersListComponent },
       { path: 'usuarios/nuevo', component: UsuariosComponent },
+      { path: 'usuarios/:userId', component: AdminUserProfileComponent },
 
       // Casos
       { path: 'casos', component: AdminCasesListComponent, canActivate: [CasesGuard] },
