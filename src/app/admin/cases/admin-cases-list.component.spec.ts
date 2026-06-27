@@ -127,6 +127,7 @@ describe('AdminCasesListComponent', () => {
         {
           provide: AuthFacade,
           useValue: {
+            hydratedOnce$: () => of(true),
             identity: () => ({
               id: 'admin-1',
               name: 'Admin actual',
@@ -195,6 +196,36 @@ describe('AdminCasesListComponent', () => {
         email: 'abogado@moyra.org',
         displayName: 'Abogado Moyra',
         userId: 'attorney-1',
+      },
+    });
+  });
+
+  it('uses the invited attorney email instead of the preselected admin', () => {
+    render();
+
+    fixture.componentInstance.newCase = {
+      title: 'Nuevo asunto',
+      reference: 'MRA-004',
+      caseTypeId: 'corporate',
+      statusId: 'draft',
+      description: 'Alta inicial',
+      attorneyUserId: 'admin-1',
+      newAttorneyEmail: 'betan.pamela@gmail.com',
+      newAttorneyName: 'Pamela Betancourt',
+    };
+
+    fixture.componentInstance.createCase();
+
+    expect(createCaseSpy).toHaveBeenCalledWith({
+      title: 'Nuevo asunto',
+      reference: 'MRA-004',
+      caseTypeId: 'corporate',
+      statusId: 'draft',
+      description: 'Alta inicial',
+      leadUserId: undefined,
+      initialAttorney: {
+        email: 'betan.pamela@gmail.com',
+        displayName: 'Pamela Betancourt',
       },
     });
   });

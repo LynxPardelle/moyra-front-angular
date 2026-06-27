@@ -1,15 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { AdminUsersListComponent } from './admin-users-list.component';
+import { CaseService } from '../../services/case.service';
 import { UserService } from '../../services/user.service';
 import { AuthFacade } from '../../store/auth/auth.facade';
 
 describe('AdminUsersListComponent', () => {
   let fixture: ComponentFixture<AdminUsersListComponent>;
+  let getUsersFails: boolean;
 
   beforeEach(async () => {
+    getUsersFails = false;
     await TestBed.configureTestingModule({
       imports: [AdminUsersListComponent],
       providers: [
@@ -24,19 +27,48 @@ describe('AdminUsersListComponent', () => {
               role: 'ROLE_ADMIN',
             }),
             getUsers: () =>
+              getUsersFails
+                ? throwError(() => new Error('falló'))
+                : of({
+                    users: [
+                      {
+                        id: 'legal-1',
+                        name: 'Abogada Moyra',
+                        email: 'abogada@moyra.org',
+                        role: 'ROLE_LEGAL_STAFF',
+                      },
+                      {
+                        id: 'client-1',
+                        name: 'Cliente',
+                        email: 'cliente@moyra.org',
+                        role: 'ROLE_USER',
+                      },
+                    ],
+                  }),
+          },
+        },
+        {
+          provide: CaseService,
+          useValue: {
+            listCases: () =>
               of({
-                users: [
+                status: 'success',
+                items: [{ id: 'case-1', title: 'Contrato corporativo' }],
+              }),
+            listMembers: () =>
+              of({
+                status: 'success',
+                items: [
                   {
-                    id: 'legal-1',
-                    name: 'Abogada Moyra',
-                    email: 'abogada@moyra.org',
-                    role: 'ROLE_LEGAL_STAFF',
-                  },
-                  {
-                    id: 'client-1',
-                    name: 'Cliente',
-                    email: 'cliente@moyra.org',
-                    role: 'ROLE_USER',
+                    id: 'membership-1',
+                    caseId: 'case-1',
+                    userId: 'client-from-case',
+                    displayName: 'Cliente del caso',
+                    email: 'cliente-caso@moyra.org',
+                    rolePreset: 'client',
+                    memberType: 'external',
+                    permissions: ['case.read'],
+                    status: 'active',
                   },
                 ],
               }),
@@ -45,6 +77,7 @@ describe('AdminUsersListComponent', () => {
         {
           provide: AuthFacade,
           useValue: {
+            hydratedOnce$: () => of(true),
             identity: () => ({
               id: 'admin-1',
               name: 'Admin actual',
@@ -86,5 +119,17 @@ describe('AdminUsersListComponent', () => {
 
     expect(text).toContain('Admin actual');
     expect(text).toContain('admin@moyra.org');
+  });
+
+  it('keeps current user and case members when the users API fails', () => {
+    getUsersFails = true;
+    fixture = TestBed.createComponent(AdminUsersListComponent);
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+
+    expect(text).toContain('Admin actual');
+    expect(text).toContain('Cliente del caso');
+    expect(text).toContain('cliente-caso@moyra.org');
   });
 });

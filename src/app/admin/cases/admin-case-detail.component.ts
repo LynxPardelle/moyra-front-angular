@@ -180,9 +180,9 @@ type PlatformUser = {
                 <tr>
                   <td>
                     @if (memberProfileLink(member); as profileLink) {
-                    <a [routerLink]="profileLink">{{ member.displayName || 'Sin nombre' }}</a>
+                    <a [routerLink]="profileLink">{{ memberName(member) }}</a>
                     } @else {
-                    {{ member.displayName || 'Sin nombre' }}
+                    {{ memberName(member) }}
                     }
                   </td>
                   <td>{{ member.email || 'Sin correo' }}</td>
@@ -859,7 +859,7 @@ export class AdminCaseDetailComponent implements OnInit {
   removeMember(member: CaseMembership): void {
     if (
       !member.id ||
-      !window.confirm(`¿Quitar a ${member.displayName || member.email || 'este miembro'} del caso?`)
+      !window.confirm(`¿Quitar a ${this.memberName(member)} del caso?`)
     ) {
       return;
     }
@@ -916,6 +916,10 @@ export class AdminCaseDetailComponent implements OnInit {
 
   memberTypeLabel(type: string): string {
     return type === 'internal' ? 'Equipo Moyra' : 'Cliente o invitado externo';
+  }
+
+  memberName(member: CaseMembership): string {
+    return this.humanName(member.displayName, member.userId || member.id) || member.email || 'Sin nombre';
   }
 
   summaryDescription(): string {
@@ -1026,11 +1030,11 @@ export class AdminCaseDetailComponent implements OnInit {
     }
     if (event.targetType === 'member') {
       const member = this.members.find((item) => item.id === event.targetId || item.userId === event.targetId);
-      return member?.displayName || member?.email || 'Miembro del caso';
+      return member ? this.memberName(member) : 'Miembro del caso';
     }
     if (event.targetType === 'case-membership') {
       const member = this.members.find((item) => item.id === event.targetId || item.userId === event.targetId);
-      return member?.displayName || member?.email || 'Miembro del caso';
+      return member ? this.memberName(member) : 'Miembro del caso';
     }
     if (event.targetType === 'file') {
       const file = this.files.find((item) => item.id === event.targetId);
@@ -1252,7 +1256,7 @@ export class AdminCaseDetailComponent implements OnInit {
     }
     const member = this.members.find((item) => item.id === id || item.userId === id);
     if (member) {
-      return member.displayName || member.email || 'Miembro del caso';
+      return this.memberName(member);
     }
     return 'Referencia interna';
   }
@@ -1260,7 +1264,11 @@ export class AdminCaseDetailComponent implements OnInit {
   private userDisplayName(idOrEmail: string): string {
     const user = this.findUser(idOrEmail);
     const member = this.members.find((item) => item.userId === idOrEmail || item.email === idOrEmail);
-    const name = this.userName(user) || member?.displayName || 'Usuario';
+    const name =
+      this.userName(user) ||
+      this.humanName(member?.displayName, member?.userId) ||
+      member?.email ||
+      'Usuario';
     const email = user?.email || member?.email || '';
     return email ? `${name} (${email})` : name;
   }
@@ -1277,7 +1285,10 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   private userName(user?: PlatformUser): string {
-    return String(user?.displayName || user?.name || '').trim();
+    return (
+      this.humanName(user?.displayName, this.userKey(user)) ||
+      this.humanName(user?.name, this.userKey(user))
+    );
   }
 
   private humanName(value?: string, id?: string): string {

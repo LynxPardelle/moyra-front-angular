@@ -2,7 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
 
+import { CaseMembership } from '../../models/case';
+import { CaseService } from '../../services/case.service';
 import { UserService } from '../../services/user.service';
 import { AuthFacade } from '../../store/auth/auth.facade';
 
@@ -155,20 +158,31 @@ export class AdminUsersListComponent implements OnInit {
 
   constructor(
     private _userService: UserService,
+    private _caseService: CaseService,
     private _authFacade: AuthFacade
   ) {}
 
   ngOnInit(): void {
-    this._userService.getUsers(0, 200, '-create_at').subscribe({
-      next: (response) => {
-        this.users = this.withCurrentUser(this.normalizeUsers(response));
-        this.loading = false;
-      },
-      error: () => {
-        this.users = [];
-        this.loading = false;
-      },
-    });
+    this._authFacade
+      .hydratedOnce$()
+      .pipe(
+        switchMap(() =>
+          forkJoin({
+            users: this._userService.getUsers(0, 200, '-create_at').pipe(catchError(() => of([]))),
+            caseUsers: this.caseUsers(),
+          })
+        )
+      )
+      .subscribe({
+        next: ({ users, caseUsers }) => {
+          this.users = this.withCurrentUser(this.mergeUsers([...this.normalizeUsers(users), ...caseUsers]));
+          this.loading = false;
+        },
+        error: () => {
+          this.users = this.withCurrentUser([]);
+          this.loading = false;
+        },
+      });
   }
 
   filteredUsers(): AdminUser[] {
@@ -189,7 +203,7 @@ export class AdminUsersListComponent implements OnInit {
   }
 
   userLabel(user: AdminUser): string {
-    return String(user.displayName || user.name || user.email || 'Usuario').trim();
+    return this.humanName(user.displayName) || this.humanName(user.name) || user.email || 'Usuario';
   }
 
   roleLabel(role?: string): string {
@@ -224,5 +238,53 @@ export class AdminUsersListComponent implements OnInit {
 
   private currentIdentity(): AdminUser | null {
     return (this._authFacade.identity() || this._userService.getIdentity()) as AdminUser | null;
+  }
+
+  private caseUsers(): Observable<AdminUser[]> {
+    return this._caseService.listCases().pipe(
+      catchError(() => of({ items: [] as CaseMembership[] })),
+      switchMap((response) => {
+        const cases = response.items || [];
+        if (!cases.length) {
+          return of([]);
+        }
+        return forkJoin(
+          cases.map((caseItem) =>
+            this._caseService.listMembers(caseItem.id).pipe(
+              catchError(() => of({ items: [] })),
+              map((members) => (members.items || []).map((member) => this.userFromMember(member)))
+            )
+          )
+        ).pipe(map((groups) => groups.flat()));
+      })
+    );
+  }
+
+  private userFromMember(member: CaseMembership): AdminUser {
+    return {
+      id: member.userId || member.email || member.id,
+      name: this.humanName(member.displayName) || member.email || 'Usuario',
+      displayName: this.humanName(member.displayName),
+      email: member.email,
+      role: member.memberType === 'internal' ? 'ROLE_LEGAL_STAFF' : 'ROLE_USER',
+    };
+  }
+
+  private mergeUsers(users: AdminUser[]): AdminUser[] {
+    const merged = new Map<string, AdminUser>();
+    for (const user of users) {
+      const key = (user.email || this.userKey(user)).toLowerCase();
+      if (!key) {
+        continue;
+      }
+      const current = merged.get(key);
+      merged.set(key, current ? { ...user, ...current, name: current.name || user.name } : user);
+    }
+    return [...merged.values()];
+  }
+
+  private humanName(value?: string): string {
+    const name = String(value || '').trim();
+    return name && !/^[0-9a-f-]{24,}$/i.test(name) ? name : '';
   }
 }

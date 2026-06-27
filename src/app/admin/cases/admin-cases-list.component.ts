@@ -504,7 +504,7 @@ export class AdminCasesListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.load();
+    this._authFacade.hydratedOnce$().subscribe(() => this.load());
   }
 
   load(): void {
@@ -581,8 +581,9 @@ export class AdminCasesListComponent implements OnInit {
       return;
     }
 
-    const attorney = this.selectedAttorney();
     const newAttorneyEmail = this.newCase.newAttorneyEmail.trim().toLowerCase();
+    const invitingNewAttorney = this.isValidEmail(newAttorneyEmail);
+    const attorney = invitingNewAttorney ? undefined : this.selectedAttorney();
     const initialAttorney = attorney
       ? {
           email: attorney.email || '',
@@ -696,7 +697,7 @@ export class AdminCasesListComponent implements OnInit {
   }
 
   private userName(user: PlatformUser): string {
-    return String(user.displayName || user.name || user.email || 'Usuario').trim();
+    return this.humanName(user.displayName) || this.humanName(user.name) || user.email || 'Usuario';
   }
 
   private selectedAttorney(): PlatformUser | undefined {
@@ -706,9 +707,14 @@ export class AdminCasesListComponent implements OnInit {
   private hasAttorneySelection(): boolean {
     const attorney = this.selectedAttorney();
     return (
-      Boolean(attorney?.email && this.isValidEmail(attorney.email)) ||
-      this.isValidEmail(this.newCase.newAttorneyEmail)
+      this.isValidEmail(this.newCase.newAttorneyEmail) ||
+      Boolean(attorney?.email && this.isValidEmail(attorney.email))
     );
+  }
+
+  private humanName(value?: string): string {
+    const name = String(value || '').trim();
+    return name && !/^[0-9a-f-]{24,}$/i.test(name) ? name : '';
   }
 
   private normalizeUsers(response: any): PlatformUser[] {

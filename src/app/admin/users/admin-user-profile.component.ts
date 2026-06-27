@@ -272,7 +272,7 @@ export class AdminUserProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.userId = this._route.snapshot.paramMap.get('userId') || '';
-    this.load();
+    this._authFacade.hydratedOnce$().subscribe(() => this.load());
   }
 
   load(): void {
@@ -311,6 +311,10 @@ export class AdminUserProfileComponent implements OnInit {
       )
       .subscribe((memberships) => {
         this.memberships = memberships;
+        if (!this.user && memberships[0]) {
+          this.user = this.userFromMember(memberships[0].member);
+          this.resetProfileDraft();
+        }
         this.loading = false;
       });
   }
@@ -352,14 +356,14 @@ export class AdminUserProfileComponent implements OnInit {
           this.savingProfile = false;
         },
         error: (error) => {
-          this.profileError = String(error?.error?.message || error?.message || 'No se pudo guardar el perfil.');
+          this.profileError = String(error?.error?.message || 'No se pudo guardar el perfil.');
           this.savingProfile = false;
         },
       });
   }
 
   userLabel(user: AdminUser | null): string {
-    return String(user?.displayName || user?.name || user?.email || 'Usuario').trim();
+    return this.humanName(user?.displayName) || this.humanName(user?.name) || user?.email || 'Usuario';
   }
 
   roleLabel(role?: string): string {
@@ -413,17 +417,24 @@ export class AdminUserProfileComponent implements OnInit {
 
   private matchesMember(member: CaseMembership): boolean {
     const requestedUserId = this.resolvedUserId();
-    const email = this.user?.email || requestedUserId;
-    const userKey = this.user ? this.userKey(this.user) : requestedUserId;
+    const requested = requestedUserId.toLowerCase();
+    const email = (this.user?.email || requestedUserId).toLowerCase();
+    const userKey = (this.user ? this.userKey(this.user) : requestedUserId).toLowerCase();
+    const memberUserId = String(member.userId || '').toLowerCase();
+    const memberEmail = String(member.email || '').toLowerCase();
     return (
-      Boolean(userKey && member.userId === userKey) ||
-      Boolean(email && member.email === email) ||
+      Boolean(userKey && memberUserId === userKey) ||
+      Boolean(email && memberEmail === email) ||
+      Boolean(requested && memberEmail === requested) ||
       Boolean(member.id && member.id === this.userId)
     );
   }
 
   private matchesUser(user: AdminUser, idOrEmail: string): boolean {
-    return this.userKey(user) === idOrEmail || user.email === idOrEmail;
+    const key = this.userKey(user).toLowerCase();
+    const email = String(user.email || '').toLowerCase();
+    const requested = idOrEmail.toLowerCase();
+    return key === requested || email === requested;
   }
 
   private userKey(user: AdminUser): string {
@@ -439,6 +450,16 @@ export class AdminUserProfileComponent implements OnInit {
 
   private normalizeUser(response: any): AdminUser | null {
     return response?.user || response?.item || response?.data || null;
+  }
+
+  private userFromMember(member: CaseMembership): AdminUser {
+    return {
+      id: member.userId || member.email || member.id,
+      name: this.humanName(member.displayName) || member.email || 'Usuario',
+      displayName: this.humanName(member.displayName),
+      email: member.email,
+      role: member.memberType === 'internal' ? 'ROLE_LEGAL_STAFF' : 'ROLE_USER',
+    };
   }
 
   private withCurrentUser(users: AdminUser[]): AdminUser[] {
@@ -471,6 +492,11 @@ export class AdminUserProfileComponent implements OnInit {
       displayName: this.userLabel(this.user),
       email: this.user?.email || '',
     };
+  }
+
+  private humanName(value?: string): string {
+    const name = String(value || '').trim();
+    return name && !/^[0-9a-f-]{24,}$/i.test(name) ? name : '';
   }
 
   private isValidEmail(value: string): boolean {

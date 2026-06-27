@@ -66,6 +66,7 @@ describe('AdminUserProfileComponent', () => {
         {
           provide: AuthFacade,
           useValue: {
+            hydratedOnce$: () => of(true),
             identity: () => ({
               id: 'legal-1',
               name: 'Abogada Moyra',
