@@ -118,6 +118,17 @@ import { MainService } from '../../services/main.service';
         padding: 8px 12px;
       }
 
+      .cases-page__notifications:hover,
+      .cases-page__notifications:focus-visible,
+      .case-row a:hover,
+      .case-row a:focus-visible,
+      button:not(:disabled):hover,
+      button:not(:disabled):focus-visible {
+        background: #4b8ff5;
+        color: #ffffff;
+        outline: 0;
+      }
+
       .cases-page__state,
       .case-row {
         border: 1px solid rgba(41, 48, 59, 0.18);

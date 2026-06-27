@@ -144,6 +144,15 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
         color: rgba(41, 48, 59, 0.45);
       }
 
+      button:not(:disabled):hover,
+      button:not(:disabled):focus-visible,
+      .admin-case-entry-editor__actions a:hover,
+      .admin-case-entry-editor__actions a:focus-visible {
+        background: #4b8ff5;
+        color: #ffffff;
+        outline: 0;
+      }
+
       .admin-case-entry-editor__actions {
         display: flex;
         flex-wrap: wrap;

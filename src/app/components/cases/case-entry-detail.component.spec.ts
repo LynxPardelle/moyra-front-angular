@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { CaseEntryDetailComponent } from './case-entry-detail.component';
 import { CaseService } from '../../services/case.service';
 import { MainService } from '../../services/main.service';
+import { AuthFacade } from '../../store/auth/auth.facade';
 
 describe('CaseEntryDetailComponent', () => {
   let fixture: ComponentFixture<CaseEntryDetailComponent>;
@@ -53,12 +54,47 @@ describe('CaseEntryDetailComponent', () => {
                   },
                 ],
               }),
+            listMembers: () =>
+              of({
+                status: 'success',
+                items: [
+                  {
+                    id: 'member-1',
+                    caseId: 'case-1',
+                    userId: 'user-1',
+                    email: 'cliente@moyra.org',
+                    displayName: 'Cliente',
+                    rolePreset: 'client',
+                    memberType: 'external',
+                    status: 'active',
+                    permissions: ['case.read', 'case.comment'],
+                  },
+                ],
+              }),
+            createComment: () =>
+              of({
+                status: 'success',
+                item: {
+                  id: 'comment-2',
+                  caseId: 'case-1',
+                  entryId: 'entry-1',
+                  text: 'Nuevo comentario',
+                  visibility: { mode: 'case_members' },
+                },
+              }),
           },
         },
         {
           provide: MainService,
           useValue: {
             getMain: () => of({ main: { pageTexts: {} } }),
+          },
+        },
+        {
+          provide: AuthFacade,
+          useValue: {
+            isAdmin: () => false,
+            identity: () => ({ id: 'user-1', email: 'cliente@moyra.org' }),
           },
         },
       ],

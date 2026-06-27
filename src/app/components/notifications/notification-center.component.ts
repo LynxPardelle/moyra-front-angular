@@ -122,6 +122,15 @@ import { CaseService } from '../../services/case.service';
         text-decoration: none;
       }
 
+      button:not(:disabled):hover,
+      button:not(:disabled):focus-visible,
+      a:hover,
+      a:focus-visible {
+        background: #4b8ff5;
+        color: #ffffff;
+        outline: 0;
+      }
+
       @media (max-width: 760px) {
         .notification-center__header,
         .notification-item {

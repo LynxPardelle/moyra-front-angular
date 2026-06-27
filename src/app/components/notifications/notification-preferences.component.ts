@@ -119,6 +119,15 @@ import { CaseWebPushService } from './case-web-push.service';
         padding: 8px 12px;
       }
 
+      button:not(:disabled):hover,
+      button:not(:disabled):focus-visible,
+      .notification-preferences__back:hover,
+      .notification-preferences__back:focus-visible {
+        background: #4b8ff5;
+        color: #ffffff;
+        outline: 0;
+      }
+
       .notification-preferences__error {
         color: #b42318;
       }

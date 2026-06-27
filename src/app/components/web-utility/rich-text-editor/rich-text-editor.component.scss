@@ -46,6 +46,14 @@
   padding: 1rem 1rem 1rem 1.25rem;
 }
 
+:host ::ng-deep .ql-editor :where(em, i) {
+  font-style: italic;
+}
+
+:host ::ng-deep .ql-editor :where(strong, b) {
+  font-weight: 800;
+}
+
 :host ::ng-deep .ql-container.ql-snow:focus-within {
   box-shadow:
     0 0 0 3px rgba(75, 143, 245, 0.22),

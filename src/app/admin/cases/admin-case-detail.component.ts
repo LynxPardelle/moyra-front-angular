@@ -64,13 +64,19 @@ type MemberDraft = {
               minHeight="180px"
             />
           </div>
-          <label for="case-status">Estado</label>
-          <select id="case-status" name="status" [(ngModel)]="selectedStatusId">
-            @for (status of statusesForCurrentType(); track status.id) {
-            <option [value]="status.id">{{ statusLabel(status) }}</option>
-            }
-          </select>
-          <button type="submit" [disabled]="caseSaving || !canSaveCaseDetails()">
+          <label>
+            Estado
+            <select id="case-status" name="status" [(ngModel)]="selectedStatusId">
+              @for (status of statusesForCurrentType(); track status.id) {
+              <option [value]="status.id">{{ statusLabel(status) }}</option>
+              }
+            </select>
+          </label>
+          <button
+            type="submit"
+            class="admin-case-detail__save"
+            [disabled]="caseSaving || !canSaveCaseDetails()"
+          >
             {{ caseSaving ? 'Guardando...' : 'Guardar caso' }}
           </button>
         </form>
@@ -97,7 +103,7 @@ type MemberDraft = {
                 <tr>
                   <td>{{ entry.title }}</td>
                   <td>{{ entryVisibilityLabel(entry) }}</td>
-                  <td>{{ entry.updatedAt || entry.createdAt || 'Sin fecha' }}</td>
+                  <td>{{ formatDate(entry.updatedAt || entry.createdAt) }}</td>
                   <td class="admin-case-actions">
                     @if (entryVisibleInPortal(entry)) {
                     <a [routerLink]="['/casos', caseId, 'entrada', entry.id]">Ver portal</a>
@@ -116,19 +122,29 @@ type MemberDraft = {
         <section>
           <h2>Miembros</h2>
           <form class="admin-case-form" (ngSubmit)="inviteMember()">
-            <input name="inviteEmail" [(ngModel)]="invite.email" placeholder="Correo" />
-            <input name="inviteName" [(ngModel)]="invite.displayName" placeholder="Nombre" />
-            <select name="inviteRole" [(ngModel)]="invite.rolePreset">
-              <option value="client">Cliente</option>
-              <option value="attorney">Abogado</option>
-              <option value="pasante">Pasante</option>
-              <option value="external_observer">Observador</option>
-            </select>
+            <label>
+              Correo
+              <input name="inviteEmail" [(ngModel)]="invite.email" />
+            </label>
+            <label>
+              Nombre
+              <input name="inviteName" [(ngModel)]="invite.displayName" />
+            </label>
+            <label>
+              Rol en el caso
+              <select name="inviteRole" [(ngModel)]="invite.rolePreset">
+                <option value="client">Cliente</option>
+                <option value="attorney">Abogado</option>
+                <option value="pasante">Pasante</option>
+                <option value="external_observer">Observador</option>
+              </select>
+            </label>
+            <button type="submit">Invitar</button>
             <small class="admin-case-help">
               Los permisos se asignan por rol del caso: clientes comentan y abren documentos,
-              pasantes colaboran internamente y observadores sólo consultan.
+              pasantes colaboran internamente y observadores sólo consultan. La relación indica si
+              pertenece al equipo de Moyra o es cliente/invitado del caso.
             </small>
-            <button type="submit">Invitar</button>
           </form>
           <div class="admin-case-table-wrap">
             <table class="admin-case-table">
@@ -137,7 +153,7 @@ type MemberDraft = {
                   <th>Nombre</th>
                   <th>Correo</th>
                   <th>Rol</th>
-                  <th>Tipo</th>
+                  <th>Relación</th>
                   <th>Permisos</th>
                   <th>Acciones</th>
                 </tr>
@@ -172,10 +188,10 @@ type MemberDraft = {
                         </select>
                       </label>
                       <label>
-                        Tipo
+                        Relación
                         <select name="memberType" [(ngModel)]="memberDraft.memberType">
-                          <option value="external">Externo</option>
-                          <option value="internal">Interno</option>
+                          <option value="external">Cliente o invitado externo</option>
+                          <option value="internal">Equipo Moyra</option>
                         </select>
                       </label>
                       <fieldset>
@@ -272,10 +288,16 @@ type MemberDraft = {
               <tbody>
                 @for (event of auditEvents; track event.id) {
                 <tr>
-                  <td>{{ event.createdAt || 'Sin fecha' }}</td>
+                  <td>{{ formatDate(event.createdAt) }}</td>
                   <td>{{ auditActor(event) }}</td>
                   <td>{{ auditActionLabel(event.action) }}</td>
-                  <td>{{ event.targetType }} {{ event.targetId || '' }}</td>
+                  <td>
+                    @if (auditTargetLink(event); as targetLink) {
+                    <a [routerLink]="targetLink">{{ auditTargetLabel(event) }}</a>
+                    } @else {
+                    {{ auditTargetLabel(event) }}
+                    }
+                  </td>
                   <td>{{ auditDetails(event) }}</td>
                 </tr>
                 }
@@ -308,9 +330,8 @@ type MemberDraft = {
       }
 
       .admin-case-detail__header {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: minmax(220px, 0.34fr) minmax(0, 1fr);
         gap: 16px;
         margin: 12px 0 16px;
       }
@@ -358,23 +379,42 @@ type MemberDraft = {
       }
 
       .admin-case-detail__case-form {
-        flex: 1 1 560px;
-        justify-content: flex-end;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(160px, 1fr)) auto;
+        align-items: end;
+        width: 100%;
       }
 
       .admin-case-detail__case-form label,
+      .admin-case-form label,
       .admin-case-member-editor label {
         display: grid;
         gap: 4px;
+        color: rgba(41, 48, 59, 0.72);
+        font-size: 0.82rem;
+        font-weight: 700;
       }
 
       .admin-case-rich-field {
-        flex: 1 1 100%;
+        grid-column: 1 / -1;
+      }
+
+      .admin-case-detail__save {
+        justify-self: end;
+        min-width: 132px;
+      }
+
+      .admin-case-form {
+        display: grid;
+        grid-template-columns: minmax(220px, 1.1fr) minmax(180px, 0.9fr) minmax(160px, 220px) auto;
+        align-items: end;
+        margin-bottom: 16px;
       }
 
       .admin-case-form--stack {
         align-items: stretch;
         display: grid;
+        grid-template-columns: 1fr;
         margin-bottom: 16px;
       }
 
@@ -439,6 +479,15 @@ type MemberDraft = {
         text-decoration: none;
       }
 
+      button:not(:disabled):hover,
+      button:not(:disabled):focus-visible,
+      a:hover,
+      a:focus-visible {
+        background: #4b8ff5;
+        color: #ffffff;
+        outline: 0;
+      }
+
       .admin-case-table-wrap {
         overflow-x: auto;
       }
@@ -475,6 +524,18 @@ type MemberDraft = {
         justify-content: space-between;
         border-top: 1px solid rgba(41, 48, 59, 0.12);
         padding: 10px 0;
+      }
+
+      @media (max-width: 920px) {
+        .admin-case-detail__header,
+        .admin-case-detail__case-form,
+        .admin-case-form {
+          grid-template-columns: 1fr;
+        }
+
+        .admin-case-detail__save {
+          justify-self: stretch;
+        }
       }
     `,
   ],
@@ -747,7 +808,7 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   memberTypeLabel(type: string): string {
-    return type === 'internal' ? 'Interno' : 'Externo';
+    return type === 'internal' ? 'Equipo Moyra' : 'Cliente o invitado externo';
   }
 
   permissionsSummary(permissions: CasePermission[]): string {
@@ -762,7 +823,19 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   auditActor(event: CaseAuditEvent): string {
-    return event.actorDisplayName || event.actorEmail || event.actorUserId || 'Sistema';
+    const actorId = event.actorUserId || '';
+    const member = this.members.find(
+      (candidate) =>
+        (actorId && candidate.userId === actorId) ||
+        (event.actorEmail && candidate.email === event.actorEmail)
+    );
+    return (
+      event.actorDisplayName ||
+      member?.displayName ||
+      event.actorEmail ||
+      member?.email ||
+      (actorId ? 'Usuario del caso' : 'Sistema')
+    );
   }
 
   auditActionLabel(action: string): string {
@@ -784,9 +857,58 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   auditDetails(event: CaseAuditEvent): string {
-    const after = event.after ? Object.keys(event.after).join(', ') : '';
-    const before = event.before ? Object.keys(event.before).join(', ') : '';
-    return after || before || 'Sin detalle';
+    const source = event.after || event.before;
+    if (!source) {
+      return 'Sin detalle';
+    }
+    const details = Object.entries(source)
+      .filter(([, value]) => value !== undefined && value !== null && value !== '')
+      .map(([key, value]) => `${this.auditFieldLabel(key)}: ${this.auditValueLabel(key, value)}`);
+    return details.length ? details.join('; ') : 'Sin detalle';
+  }
+
+  auditTargetLabel(event: CaseAuditEvent): string {
+    if (event.targetType === 'case') {
+      return this.caseRecord?.title || this.caseRecord?.reference || 'Caso';
+    }
+    if (event.targetType === 'entry') {
+      const entry = this.entries.find((item) => item.id === event.targetId);
+      return entry?.title || 'Entrada del caso';
+    }
+    if (event.targetType === 'member') {
+      const member = this.members.find((item) => item.id === event.targetId || item.userId === event.targetId);
+      return member?.displayName || member?.email || 'Miembro del caso';
+    }
+    if (event.targetType === 'file') {
+      const file = this.files.find((item) => item.id === event.targetId);
+      return file ? this.displayFileName(file) : 'Documento del caso';
+    }
+    return this.auditTargetTypeLabel(event.targetType);
+  }
+
+  auditTargetLink(event: CaseAuditEvent): string[] | null {
+    if (event.targetType === 'case') {
+      return ['/admin/casos', this.caseId];
+    }
+    if (event.targetType === 'entry' && event.targetId) {
+      return ['/admin/casos', this.caseId, 'entradas', event.targetId];
+    }
+    return null;
+  }
+
+  formatDate(value?: string): string {
+    if (!value) {
+      return 'Sin fecha';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return new Intl.DateTimeFormat('es-MX', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'America/Mexico_City',
+    }).format(date);
   }
 
   canApproveFile(file: CaseFile): boolean {
@@ -825,6 +947,107 @@ export class AdminCaseDetailComponent implements OnInit {
       displayName: this.invite.displayName?.trim(),
       rolePreset: this.invite.rolePreset,
     };
+  }
+
+  private auditFieldLabel(key: string): string {
+    return (
+      {
+        title: 'Título',
+        reference: 'Referencia',
+        description: 'Descripción',
+        statusId: 'Estado',
+        caseTypeId: 'Tipo de caso',
+        visibility: 'Visibilidad',
+        rolePreset: 'Rol en el caso',
+        memberType: 'Relación',
+        permissions: 'Permisos',
+        displayName: 'Nombre',
+        email: 'Correo',
+        fileName: 'Documento',
+        linkUrl: 'Enlace',
+        externalVisibilityStatus: 'Visibilidad del documento',
+        text: 'Contenido',
+      }[key] || key
+    );
+  }
+
+  private auditValueLabel(key: string, value: unknown): string {
+    if (key === 'statusId') {
+      return this.statusName(String(value));
+    }
+    if (key === 'caseTypeId') {
+      return this.caseTypeName(String(value));
+    }
+    if (key === 'rolePreset') {
+      return this.roleLabel(String(value));
+    }
+    if (key === 'memberType') {
+      return this.memberTypeLabel(String(value));
+    }
+    if (key === 'permissions' && Array.isArray(value)) {
+      return this.permissionsSummary(value as CasePermission[]);
+    }
+    if (key === 'visibility') {
+      return this.visibilityLabel(value);
+    }
+    if (key === 'externalVisibilityStatus') {
+      return this.fileVisibilityStatusLabel(String(value));
+    }
+    if (typeof value === 'boolean') {
+      return value ? 'Sí' : 'No';
+    }
+    if (typeof value === 'object' && value !== null) {
+      return this.visibilityLabel(value);
+    }
+    return String(value);
+  }
+
+  private auditTargetTypeLabel(type: string): string {
+    return (
+      {
+        case: 'Caso',
+        entry: 'Entrada del caso',
+        member: 'Miembro del caso',
+        file: 'Documento del caso',
+      }[type] || type
+    );
+  }
+
+  private visibilityLabel(value: unknown): string {
+    const mode =
+      typeof value === 'object' && value !== null
+        ? String((value as { mode?: string }).mode || '')
+        : String(value || '');
+    return (
+      {
+        case_members: 'Visible para miembros del caso',
+        internal_only: 'Sólo equipo Moyra',
+        selected_members: 'Miembros seleccionados',
+        selected_parties: 'Partes seleccionadas',
+      }[mode] || mode || 'Sin visibilidad'
+    );
+  }
+
+  private fileVisibilityStatusLabel(status: string): string {
+    return (
+      {
+        pending: 'Pendiente de revisión',
+        approved: 'Visible para cliente',
+        restricted: 'Restringido',
+        rejected: 'Rechazado',
+      }[status] || status
+    );
+  }
+
+  private caseTypeName(caseTypeId: string): string {
+    return this.caseTypes.find((caseType) => caseType.id === caseTypeId)?.name || caseTypeId;
+  }
+
+  private statusName(statusId: string): string {
+    const status = this.caseTypes
+      .flatMap((caseType) => caseType.statuses || [])
+      .find((candidate) => candidate.id === statusId);
+    return status ? this.statusLabel(status) : statusId;
   }
 
   private looksLikeMicrosoftLink(value: string): boolean {

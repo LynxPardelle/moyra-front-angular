@@ -265,6 +265,17 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         padding: 8px 12px;
       }
 
+      .case-detail-page__notifications:hover,
+      .case-detail-page__notifications:focus-visible,
+      .case-file a:hover,
+      .case-file a:focus-visible,
+      button:not(:disabled):hover,
+      button:not(:disabled):focus-visible {
+        background: #4b8ff5;
+        color: #ffffff;
+        outline: 0;
+      }
+
       .case-detail-page__notifications {
         position: relative;
         display: inline-flex;
@@ -303,6 +314,17 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
       .case-entry__title:hover,
       .case-entry__title:focus-visible {
         text-decoration: underline;
+      }
+
+      .case-entry__body :where(em, i),
+      .case-comment :where(em, i) {
+        font-style: italic;
+      }
+
+      .case-comments form button {
+        display: block;
+        margin-left: auto;
+        margin-top: 12px;
       }
 
       .case-onedrive-form {

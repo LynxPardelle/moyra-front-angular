@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { AdminCasesListComponent } from './admin-cases-list.component';
 import { CaseService } from '../../services/case.service';
 import { CaseRecord, CaseType } from '../../models/case';
+import { UserService } from '../../services/user.service';
 
 describe('AdminCasesListComponent', () => {
   let fixture: ComponentFixture<AdminCasesListComponent>;
@@ -94,6 +95,28 @@ describe('AdminCasesListComponent', () => {
             createCase: createCaseSpy,
           },
         },
+        {
+          provide: UserService,
+          useValue: {
+            getUsers: () =>
+              of({
+                users: [
+                  {
+                    id: 'attorney-1',
+                    name: 'Abogado Moyra',
+                    email: 'abogado@moyra.org',
+                    role: 'ROLE_LEGAL_STAFF',
+                  },
+                  {
+                    id: 'client-1',
+                    name: 'Cliente',
+                    email: 'cliente@moyra.org',
+                    role: 'ROLE_USER',
+                  },
+                ],
+              }),
+          },
+        },
       ],
     }).compileComponents();
   });
@@ -136,8 +159,9 @@ describe('AdminCasesListComponent', () => {
       caseTypeId: 'corporate',
       statusId: 'draft',
       description: 'Alta inicial',
-      attorneyEmail: 'abogado@moyra.org',
-      attorneyName: 'Abogado Moyra',
+      attorneyUserId: 'attorney-1',
+      newAttorneyEmail: '',
+      newAttorneyName: '',
     };
 
     fixture.componentInstance.createCase();
@@ -148,9 +172,11 @@ describe('AdminCasesListComponent', () => {
       caseTypeId: 'corporate',
       statusId: 'draft',
       description: 'Alta inicial',
+      leadUserId: 'attorney-1',
       initialAttorney: {
         email: 'abogado@moyra.org',
         displayName: 'Abogado Moyra',
+        userId: 'attorney-1',
       },
     });
   });

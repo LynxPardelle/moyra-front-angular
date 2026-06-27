@@ -319,6 +319,15 @@ type CaseTypeEditor = {
         color: rgba(41, 48, 59, 0.48);
       }
 
+      button:not(:disabled):hover,
+      button:not(:disabled):focus-visible,
+      .admin-cases-config__back:hover,
+      .admin-cases-config__back:focus-visible {
+        background: #4b8ff5;
+        color: #ffffff;
+        outline: 0;
+      }
+
       .admin-cases-config__types button {
         display: grid;
         gap: 2px;

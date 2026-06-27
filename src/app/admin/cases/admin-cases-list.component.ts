@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import {
   CaseOperationsSummary,
@@ -12,6 +12,7 @@ import {
   caseStatusLabel,
 } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { UserService } from '../../services/user.service';
 
 type NewCaseForm = {
   title: string;
@@ -19,8 +20,19 @@ type NewCaseForm = {
   description: string;
   caseTypeId: string;
   statusId: string;
-  attorneyEmail: string;
-  attorneyName: string;
+  attorneyUserId: string;
+  newAttorneyEmail: string;
+  newAttorneyName: string;
+};
+
+type PlatformUser = {
+  id?: string;
+  _id?: string;
+  sub?: string;
+  name?: string;
+  displayName?: string;
+  email?: string;
+  role?: string;
 };
 
 @Component({
@@ -53,69 +65,91 @@ type NewCaseForm = {
           <strong>{{ operationsSummary.files.pendingUpload }}</strong>
         </div>
         <div>
-          <span>Push fallidos</span>
+          <span>Notificaciones móviles fallidas</span>
           <strong>{{ operationsSummary.notifications.webPush['failed'] || 0 }}</strong>
         </div>
       </section>
       }
 
       <form class="admin-cases-create" (ngSubmit)="createCase()">
-        <input
-          name="title"
-          [(ngModel)]="newCase.title"
-          placeholder="Título del caso"
-          aria-label="Título del caso"
-        />
-        <input
-          name="reference"
-          [(ngModel)]="newCase.reference"
-          placeholder="Referencia"
-          aria-label="Referencia"
-        />
-        <select name="caseTypeId" [(ngModel)]="newCase.caseTypeId" aria-label="Tipo de caso">
-          <option value="">Tipo</option>
-          @for (caseType of caseTypes; track caseType.id) {
-          <option [value]="caseType.id">{{ caseType.name }}</option>
-          }
-        </select>
-        <select name="statusId" [(ngModel)]="newCase.statusId" aria-label="Estado inicial">
-          <option value="">Estado</option>
-          @for (status of statusesForType(newCase.caseTypeId); track status.id) {
-          <option [value]="status.id">{{ statusLabel(status) }}</option>
-          }
-        </select>
-        <input
-          name="attorneyName"
-          [(ngModel)]="newCase.attorneyName"
-          placeholder="Abogado responsable"
-          aria-label="Abogado responsable"
-        />
-        <input
-          name="attorneyEmail"
-          [(ngModel)]="newCase.attorneyEmail"
-          placeholder="Correo del abogado"
-          aria-label="Correo del abogado"
-          type="email"
-        />
-        <button type="submit" [disabled]="!canCreateCase()">Crear caso</button>
+        <label>
+          Título del caso
+          <input name="title" [(ngModel)]="newCase.title" />
+        </label>
+        <label>
+          Referencia
+          <input name="reference" [(ngModel)]="newCase.reference" />
+        </label>
+        <label>
+          Tipo
+          <select name="caseTypeId" [(ngModel)]="newCase.caseTypeId">
+            <option value="">Selecciona un tipo</option>
+            @for (caseType of caseTypes; track caseType.id) {
+            <option [value]="caseType.id">{{ caseType.name }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Estado inicial
+          <select name="statusId" [(ngModel)]="newCase.statusId">
+            <option value="">Selecciona un estado</option>
+            @for (status of statusesForType(newCase.caseTypeId); track status.id) {
+            <option [value]="status.id">{{ statusLabel(status) }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Abogado responsable
+          <select name="attorneyUserId" [(ngModel)]="newCase.attorneyUserId">
+            <option value="">Selecciona un abogado o administrador</option>
+            @for (attorney of availableAttorneys; track userKey(attorney)) {
+            <option [value]="userKey(attorney)">
+              {{ userLabel(attorney) }}
+            </option>
+            }
+          </select>
+        </label>
+
+        <fieldset class="admin-cases-invite-attorney">
+          <legend>Invitar nuevo abogado</legend>
+          <p>Usa esta opción sólo si el abogado todavía no aparece en la lista.</p>
+          <label>
+            Nombre
+            <input name="newAttorneyName" [(ngModel)]="newCase.newAttorneyName" />
+          </label>
+          <label>
+            Correo
+            <input name="newAttorneyEmail" [(ngModel)]="newCase.newAttorneyEmail" type="email" />
+          </label>
+        </fieldset>
+
+        <div class="admin-cases-create__actions">
+          <button type="submit" [disabled]="!canCreateCase()">Crear caso</button>
+        </div>
         @if (createCaseHint()) {
-        <small>{{ createCaseHint() }}</small>
+        <small class="admin-cases-create__hint">{{ createCaseHint() }}</small>
         }
       </form>
 
       <div class="admin-cases-filters">
-        <select [(ngModel)]="caseTypeFilter" aria-label="Filtrar por tipo">
-          <option value="">Todos los tipos</option>
-          @for (caseType of caseTypes; track caseType.id) {
-          <option [value]="caseType.id">{{ caseType.name }}</option>
-          }
-        </select>
-        <select [(ngModel)]="statusFilter" aria-label="Filtrar por estado">
-          <option value="">Todos los estados</option>
-          @for (status of allStatuses(); track $index) {
-          <option [value]="status.id">{{ statusLabel(status) }}</option>
-          }
-        </select>
+        <label>
+          Tipo de caso
+          <select [(ngModel)]="caseTypeFilter" aria-label="Filtrar por tipo">
+            <option value="">Todos los tipos</option>
+            @for (caseType of caseTypes; track caseType.id) {
+            <option [value]="caseType.id">{{ caseType.name }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Estado
+          <select [(ngModel)]="statusFilter" aria-label="Filtrar por estado">
+            <option value="">Todos los estados</option>
+            @for (status of allStatuses(); track $index) {
+            <option [value]="status.id">{{ statusLabel(status) }}</option>
+            }
+          </select>
+        </label>
       </div>
 
       @if (loading) {
@@ -169,8 +203,7 @@ type NewCaseForm = {
       .admin-cases-page__header,
       .admin-cases-ops,
       .admin-cases-queue,
-      .admin-cases-filters,
-      .admin-cases-create {
+      .admin-cases-filters {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
@@ -239,6 +272,56 @@ type NewCaseForm = {
         padding-left: 18px;
       }
 
+      .admin-cases-create {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .admin-cases-create label,
+      .admin-cases-filters label {
+        color: rgba(41, 48, 59, 0.72);
+        display: grid;
+        font-size: 0.82rem;
+        font-weight: 700;
+        gap: 4px;
+      }
+
+      .admin-cases-invite-attorney {
+        border: 1px solid rgba(41, 48, 59, 0.18);
+        display: grid;
+        grid-column: 1 / -1;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+        margin: 0;
+        padding: 12px;
+      }
+
+      .admin-cases-invite-attorney legend {
+        font-weight: 800;
+        padding: 0 6px;
+      }
+
+      .admin-cases-invite-attorney p {
+        color: rgba(41, 48, 59, 0.68);
+        grid-column: 1 / -1;
+        margin: 0;
+      }
+
+      .admin-cases-create__actions {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        grid-column: 1 / -1;
+      }
+
+      .admin-cases-create__hint {
+        color: rgba(41, 48, 59, 0.68);
+        grid-column: 1 / -1;
+      }
+
       input:not([type='checkbox']):not([type='radio']):not([type='color']),
       select {
         background: #ffffff;
@@ -285,6 +368,17 @@ type NewCaseForm = {
         cursor: not-allowed;
       }
 
+      button:not(:disabled):hover,
+      button:not(:disabled):focus-visible,
+      .admin-cases-page__action:hover,
+      .admin-cases-page__action:focus-visible,
+      .admin-cases-table a:hover,
+      .admin-cases-table a:focus-visible {
+        background: #4b8ff5;
+        color: #ffffff;
+        outline: 0;
+      }
+
       .admin-cases-table-wrap {
         overflow-x: auto;
       }
@@ -302,12 +396,20 @@ type NewCaseForm = {
         text-align: left;
         vertical-align: top;
       }
+
+      @media (max-width: 720px) {
+        .admin-cases-create,
+        .admin-cases-invite-attorney {
+          grid-template-columns: 1fr;
+        }
+      }
     `,
   ],
 })
 export class AdminCasesListComponent implements OnInit {
   cases: CaseRecord[] = [];
   caseTypes: CaseType[] = [];
+  users: PlatformUser[] = [];
   operationsSummary: CaseOperationsSummary | null = null;
   loading = true;
   errorMessage = '';
@@ -319,11 +421,15 @@ export class AdminCasesListComponent implements OnInit {
     description: '',
     caseTypeId: '',
     statusId: '',
-    attorneyEmail: '',
-    attorneyName: '',
+    attorneyUserId: '',
+    newAttorneyEmail: '',
+    newAttorneyName: '',
   };
 
-  constructor(private _caseService: CaseService) {}
+  constructor(
+    private _caseService: CaseService,
+    private _userService: UserService
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -336,11 +442,13 @@ export class AdminCasesListComponent implements OnInit {
       cases: this._caseService.listCases(),
       caseTypes: this._caseService.listCaseTypes(),
       operations: this._caseService.getOperationsSummary(),
+      users: this._userService.getUsers(0, 100, '-create_at').pipe(catchError(() => of([]))),
     }).subscribe({
-      next: ({ cases, caseTypes, operations }) => {
+      next: ({ cases, caseTypes, operations, users }) => {
         this.cases = cases.items || [];
         this.caseTypes = caseTypes.items || [];
         this.operationsSummary = operations.item;
+        this.users = this.normalizeUsers(users);
         this.loading = false;
       },
       error: () => {
@@ -367,16 +475,27 @@ export class AdminCasesListComponent implements OnInit {
       return;
     }
 
+    const attorney = this.selectedAttorney();
+    const newAttorneyEmail = this.newCase.newAttorneyEmail.trim().toLowerCase();
+    const initialAttorney = attorney
+      ? {
+          email: attorney.email || '',
+          displayName: this.userName(attorney),
+          userId: this.userKey(attorney),
+        }
+      : {
+          email: newAttorneyEmail,
+          displayName: this.newCase.newAttorneyName.trim(),
+        };
+
     this._caseService.createCase({
-      title: this.newCase.title,
-      reference: this.newCase.reference,
-      description: this.newCase.description,
+      title: this.newCase.title.trim(),
+      reference: this.newCase.reference.trim(),
+      description: this.newCase.description.trim(),
       caseTypeId: this.newCase.caseTypeId,
       statusId: this.newCase.statusId,
-      initialAttorney: {
-        email: this.newCase.attorneyEmail.trim().toLowerCase(),
-        displayName: this.newCase.attorneyName.trim(),
-      },
+      leadUserId: attorney ? this.userKey(attorney) : undefined,
+      initialAttorney,
     }).subscribe((response) => {
       this.cases = [response.item, ...this.cases];
       this.newCase = {
@@ -385,8 +504,9 @@ export class AdminCasesListComponent implements OnInit {
         description: '',
         caseTypeId: '',
         statusId: '',
-        attorneyEmail: '',
-        attorneyName: '',
+        attorneyUserId: '',
+        newAttorneyEmail: '',
+        newAttorneyName: '',
       };
     });
   }
@@ -421,7 +541,7 @@ export class AdminCasesListComponent implements OnInit {
       this.newCase.title.trim().length > 0 &&
       Boolean(this.newCase.caseTypeId) &&
       Boolean(this.newCase.statusId) &&
-      this.isValidEmail(this.newCase.attorneyEmail)
+      this.hasAttorneySelection()
     );
   }
 
@@ -435,10 +555,49 @@ export class AdminCasesListComponent implements OnInit {
     if (!this.newCase.statusId) {
       return 'Selecciona un estado inicial.';
     }
-    if (!this.isValidEmail(this.newCase.attorneyEmail)) {
-      return 'Agrega el correo del abogado responsable.';
+    if (!this.hasAttorneySelection()) {
+      return 'Selecciona un abogado responsable o captura el correo para invitar uno nuevo.';
     }
     return '';
+  }
+
+  get availableAttorneys(): PlatformUser[] {
+    return this.users.filter((user) =>
+      ['ROLE_ADMIN', 'ROLE_LEGAL_STAFF'].includes(String(user.role || '').trim())
+    );
+  }
+
+  userKey(user: PlatformUser): string {
+    return String(user.id || user._id || user.sub || user.email || '').trim();
+  }
+
+  userLabel(user: PlatformUser): string {
+    const name = this.userName(user);
+    const email = user.email ? ` - ${user.email}` : '';
+    return `${name}${email}`.trim();
+  }
+
+  private userName(user: PlatformUser): string {
+    return String(user.displayName || user.name || user.email || 'Usuario').trim();
+  }
+
+  private selectedAttorney(): PlatformUser | undefined {
+    return this.availableAttorneys.find((user) => this.userKey(user) === this.newCase.attorneyUserId);
+  }
+
+  private hasAttorneySelection(): boolean {
+    const attorney = this.selectedAttorney();
+    return (
+      Boolean(attorney?.email && this.isValidEmail(attorney.email)) ||
+      this.isValidEmail(this.newCase.newAttorneyEmail)
+    );
+  }
+
+  private normalizeUsers(response: any): PlatformUser[] {
+    const list = Array.isArray(response)
+      ? response
+      : response?.users || response?.items || response?.data || [];
+    return Array.isArray(list) ? list : [];
   }
 
   private isValidEmail(value: string): boolean {
