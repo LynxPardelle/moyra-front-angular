@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
@@ -414,7 +415,7 @@ export class AdminUserProfileComponent implements OnInit {
           this.savingProfile = false;
         },
         error: (error) => {
-          this.profileError = String(error?.error?.message || 'No se pudo guardar el perfil.');
+          this.profileError = this.profileSaveErrorMessage(error);
           this.savingProfile = false;
         },
       });
@@ -583,5 +584,37 @@ export class AdminUserProfileComponent implements OnInit {
 
   private isValidEmail(value: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  }
+
+  private profileSaveErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      const backendMessage =
+        typeof error.error?.message === 'string'
+          ? error.error.message.trim()
+          : typeof error.error === 'string'
+            ? error.error.trim()
+            : '';
+      if (backendMessage) {
+        return backendMessage;
+      }
+      if (error.status === 0) {
+        return 'No se pudo conectar con la API. Revisa tu sesión y confirma que el backend de test tenga desplegada la edición de usuarios.';
+      }
+      if (error.status === 401) {
+        return 'Tu sesión expiró o no es válida. Cierra sesión e inicia de nuevo.';
+      }
+      if (error.status === 403) {
+        return 'No tienes permiso para editar este usuario.';
+      }
+      if (error.status === 404) {
+        return 'No se encontró el usuario o la ruta de edición de usuarios no está desplegada.';
+      }
+      return `No se pudo guardar el perfil. La API respondió ${error.status}.`;
+    }
+
+    const message = error instanceof Error ? error.message : String(error || '');
+    return message && message !== 'Failed to fetch'
+      ? message
+      : 'No se pudo guardar el perfil por un error de conexión con la API.';
   }
 }

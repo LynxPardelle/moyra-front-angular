@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { AdminUserProfileComponent } from './admin-user-profile.component';
 import { CaseService } from '../../services/case.service';
@@ -167,6 +168,20 @@ describe('AdminUserProfileComponent', () => {
       role: 'ROLE_LEGAL_STAFF',
     });
     expect(fixture.nativeElement.textContent).toContain('Perfil guardado');
+  });
+
+  it('explains profile save network failures without showing raw fetch errors', () => {
+    updateUserSpy.and.returnValue(
+      throwError(() => new HttpErrorResponse({ status: 0, statusText: 'Unknown Error' }))
+    );
+
+    fixture.componentInstance.profileDraft.displayName = 'Abogada actualizada';
+    fixture.componentInstance.saveProfile();
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('No se pudo conectar con la API');
+    expect(text).not.toContain('Failed to fetch');
   });
 
   it('keeps global role readonly for non-admin viewers', () => {
