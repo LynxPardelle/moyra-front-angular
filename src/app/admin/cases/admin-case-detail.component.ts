@@ -562,11 +562,15 @@ type PlatformUser = {
         display: grid;
         gap: 6px;
         grid-template-columns: repeat(2, minmax(180px, 1fr));
+        padding: 12px 12px 12px 16px;
       }
 
       .admin-case-member-editor fieldset legend {
+        grid-column: 1 / -1;
         font-weight: 800;
+        margin-bottom: 8px;
         padding: 0 6px;
+        width: 100%;
       }
 
       .admin-case-member-editor fieldset label {
@@ -574,6 +578,7 @@ type PlatformUser = {
         display: flex;
         flex-direction: row;
         gap: 8px;
+        margin-left: 8px;
       }
 
       .admin-case-file {
@@ -674,7 +679,7 @@ export class AdminCaseDetailComponent implements OnInit {
       this.members = members.items || [];
       this.files = files.items || [];
       this.auditEvents = auditEvents.items || [];
-      this.users = this.normalizeUsers(users);
+      this.users = this.withCurrentUser(this.normalizeUsers(users));
       this.selectedStatusId = this.caseRecord.statusId;
       this.caseDraft = {
         title: this.caseRecord.title || '',
@@ -890,12 +895,19 @@ export class AdminCaseDetailComponent implements OnInit {
   auditActor(event: CaseAuditEvent): string {
     const user = this.auditActorUser(event);
     const member = this.auditActorMember(event);
-    const name = event.actorDisplayName || this.userName(user) || member?.displayName || 'Usuario';
+    const name =
+      this.humanName(event.actorDisplayName, event.actorUserId) ||
+      this.userName(user) ||
+      this.humanName(member?.displayName, member?.userId) ||
+      user?.email ||
+      member?.email ||
+      event.actorEmail ||
+      'Usuario';
     const email = event.actorEmail || user?.email || member?.email || '';
     if (name === 'Usuario' && !email && !event.actorUserId) {
       return 'Sistema';
     }
-    return email ? `${name} (${email})` : name;
+    return email && name !== email ? `${name} (${email})` : name;
   }
 
   auditActorLink(event: CaseAuditEvent): string[] | null {
@@ -1226,11 +1238,27 @@ export class AdminCaseDetailComponent implements OnInit {
     return String(user?.displayName || user?.name || '').trim();
   }
 
+  private humanName(value?: string, id?: string): string {
+    const name = String(value || '').trim();
+    if (!name || name === id || /^[0-9a-f-]{24,}$/i.test(name)) {
+      return '';
+    }
+    return name;
+  }
+
   private normalizeUsers(response: any): PlatformUser[] {
     const list = Array.isArray(response)
       ? response
       : response?.users || response?.items || response?.data || [];
     return Array.isArray(list) ? list : [];
+  }
+
+  private withCurrentUser(users: PlatformUser[]): PlatformUser[] {
+    const current = this._userService.getIdentity() as PlatformUser | null;
+    if (!current || users.some((user) => this.userKey(user) === this.userKey(current))) {
+      return users;
+    }
+    return [current, ...users];
   }
 
   private plainRichText(value: string): string {

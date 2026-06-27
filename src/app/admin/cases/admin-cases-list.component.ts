@@ -12,6 +12,7 @@ import {
   caseStatusLabel,
 } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { roleFromIdentity } from '../../services/global';
 import { UserService } from '../../services/user.service';
 
 type NewCaseForm = {
@@ -495,7 +496,7 @@ export class AdminCasesListComponent implements OnInit {
         this.cases = cases.items || [];
         this.caseTypes = caseTypes.items || [];
         this.operationsSummary = operations.item;
-        this.users = this.normalizeUsers(users);
+        this.users = this.withCurrentUser(this.normalizeUsers(users));
         this.loading = false;
       },
       error: () => {
@@ -643,7 +644,7 @@ export class AdminCasesListComponent implements OnInit {
 
   get availableAttorneys(): PlatformUser[] {
     return this.users.filter((user) =>
-      ['ROLE_ADMIN', 'ROLE_LEGAL_STAFF'].includes(String(user.role || '').trim())
+      ['ROLE_ADMIN', 'ROLE_LEGAL_STAFF'].includes(roleFromIdentity(user))
     );
   }
 
@@ -678,6 +679,14 @@ export class AdminCasesListComponent implements OnInit {
       ? response
       : response?.users || response?.items || response?.data || [];
     return Array.isArray(list) ? list : [];
+  }
+
+  private withCurrentUser(users: PlatformUser[]): PlatformUser[] {
+    const current = this._userService.getIdentity() as PlatformUser | null;
+    if (!current || users.some((user) => this.userKey(user) === this.userKey(current))) {
+      return users;
+    }
+    return [current, ...users];
   }
 
   private isValidEmail(value: string): boolean {

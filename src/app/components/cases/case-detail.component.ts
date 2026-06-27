@@ -40,6 +40,10 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         <div>
           <p class="case-detail-page__reference">{{ caseRecord?.reference || caseId }}</p>
           <h1>{{ caseRecord?.title || 'Caso' }}</h1>
+          <div class="case-detail-page__description" [innerHTML]="caseDescription() | safeRichHtml"></div>
+          @if (caseUpdatedLabel()) {
+          <p class="case-detail-page__meta">{{ caseUpdatedLabel() }}</p>
+          }
         </div>
         <a
           routerLink="/notificaciones"
@@ -218,7 +222,7 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
 
       .case-detail-page__header {
         display: flex;
-        align-items: end;
+        align-items: start;
         justify-content: space-between;
         gap: 16px;
         margin: 12px 0 16px;
@@ -241,6 +245,24 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         margin: 0;
         color: #4b8ff5;
         text-transform: uppercase;
+      }
+
+      .case-detail-page__description {
+        margin-top: 8px;
+        max-width: 760px;
+      }
+
+      .case-detail-page__description :where(p) {
+        margin: 0 0 8px;
+      }
+
+      .case-detail-page__description :where(em, i) {
+        font-style: italic;
+      }
+
+      .case-detail-page__meta {
+        color: rgba(41, 48, 59, 0.68);
+        margin: 8px 0 0;
       }
 
       .case-detail-page__grid {
@@ -396,6 +418,10 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
       @media (max-width: 860px) {
         .case-detail-page__grid {
           grid-template-columns: 1fr;
+        }
+
+        .case-detail-page__header {
+          flex-direction: column;
         }
       }
     `,
@@ -602,6 +628,26 @@ export class CaseDetailComponent implements OnInit {
 
   displayFileName(file: CaseFile): string {
     return file.title || file.originalName || file.fileName;
+  }
+
+  caseDescription(): string {
+    return this.caseRecord?.description?.trim() || '';
+  }
+
+  caseUpdatedLabel(): string {
+    const value = this.caseRecord?.lastActivityAt || this.caseRecord?.updatedAt;
+    if (!value) {
+      return '';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return `Última actividad: ${new Intl.DateTimeFormat('es-MX', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'America/Mexico_City',
+    }).format(date)}`;
   }
 
   canDownloadFile(file: CaseFile): boolean {

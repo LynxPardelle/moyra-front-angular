@@ -157,7 +157,7 @@ export class AdminUsersListComponent implements OnInit {
   ngOnInit(): void {
     this._userService.getUsers(0, 200, '-create_at').subscribe({
       next: (response) => {
-        this.users = this.normalizeUsers(response);
+        this.users = this.withCurrentUser(this.normalizeUsers(response));
         this.loading = false;
       },
       error: () => {
@@ -203,5 +203,13 @@ export class AdminUsersListComponent implements OnInit {
       ? response
       : response?.users || response?.items || response?.data || [];
     return Array.isArray(list) ? list : [];
+  }
+
+  private withCurrentUser(users: AdminUser[]): AdminUser[] {
+    const current = this._userService.getIdentity() as AdminUser | null;
+    if (!current || users.some((user) => this.userKey(user) === this.userKey(current))) {
+      return users;
+    }
+    return [current, ...users];
   }
 }

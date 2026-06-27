@@ -41,6 +41,21 @@ describe('UserService auth transport', () => {
     });
   });
 
+  it('lists users through the v2 users endpoint with auth query params', () => {
+    service.getUsers(0, 200, '-create_at').subscribe();
+
+    const request = http.expectOne(
+      (candidate) =>
+        candidate.url === apiUrl('/users') &&
+        candidate.params.get('page') === '0' &&
+        candidate.params.get('ipp') === '200' &&
+        candidate.params.get('sort') === '-create_at'
+    );
+    expect(request.request.method).toBe('GET');
+
+    request.flush({ status: 'success', users: [] });
+  });
+
   it('skips refresh calls locally when credentialed auth cookies are unavailable', (done) => {
     service.refreshSession().subscribe((response) => {
       expect(response).toBeNull();

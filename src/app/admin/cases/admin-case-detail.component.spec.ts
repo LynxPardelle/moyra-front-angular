@@ -191,6 +191,12 @@ describe('AdminCaseDetailComponent', () => {
         {
           provide: UserService,
           useValue: {
+            getIdentity: () => ({
+              id: 'admin-1',
+              name: 'Admin actual',
+              email: 'admin@moyra.org',
+              role: 'ROLE_ADMIN',
+            }),
             getUsers: () =>
               of({
                 users: [

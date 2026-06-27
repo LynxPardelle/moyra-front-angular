@@ -97,8 +97,10 @@ describe('CaseDetailComponent', () => {
                   id: 'case-1',
                   title: 'Contrato corporativo',
                   reference: 'MRA-001',
+                  description: '<p>Descripción visible para el cliente</p>',
                   caseTypeId: 'corporate',
                   statusId: 'review',
+                  updatedAt: '2026-06-26T20:00:00.000Z',
                 },
               }),
             listEntries: () =>
@@ -236,6 +238,8 @@ describe('CaseDetailComponent', () => {
     const text = compiled.textContent || '';
 
     expect(text).toContain('Contrato corporativo');
+    expect(text).toContain('Descripción visible para el cliente');
+    expect(text).toContain('Última actividad');
     expect(text).toContain('Actualización visible');
     expect(text).toContain('Texto para cliente');
     expect(text).toContain('Comentario visible');

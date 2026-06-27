@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, catchError, of, switchMap, throwError } from 'rxjs';
 import {
   ApiRuntime,
@@ -46,6 +46,18 @@ export class UserService {
     ipp: number = 0,
     sort: string = '-create_at'
   ): Observable<any> {
+    if (ApiRuntime.isV2) {
+      const params = new HttpParams()
+        .set('page', `${page}`)
+        .set('ipp', `${ipp}`)
+        .set('sort', sort);
+
+      return this._http.get(apiUrl('/users'), {
+        headers: this.authHeaders(),
+        params,
+      });
+    }
+
     const users = 'users/' + page + '/' + ipp + '/' + sort;
 
     return this._http.get(this.urlUser + users);

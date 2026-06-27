@@ -16,6 +16,12 @@ describe('AdminUsersListComponent', () => {
         {
           provide: UserService,
           useValue: {
+            getIdentity: () => ({
+              id: 'admin-1',
+              name: 'Admin actual',
+              email: 'admin@moyra.org',
+              role: 'ROLE_ADMIN',
+            }),
             getUsers: () =>
               of({
                 users: [
@@ -61,5 +67,12 @@ describe('AdminUsersListComponent', () => {
 
     expect(text).toContain('Cliente');
     expect(text).not.toContain('Abogada Moyra');
+  });
+
+  it('includes the current authenticated user when the API list omits it', () => {
+    const text = fixture.nativeElement.textContent;
+
+    expect(text).toContain('Admin actual');
+    expect(text).toContain('admin@moyra.org');
   });
 });

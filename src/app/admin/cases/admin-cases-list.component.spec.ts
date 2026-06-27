@@ -98,6 +98,12 @@ describe('AdminCasesListComponent', () => {
         {
           provide: UserService,
           useValue: {
+            getIdentity: () => ({
+              id: 'admin-1',
+              name: 'Admin actual',
+              email: 'admin@moyra.org',
+              role: 'ROLE_ADMIN',
+            }),
             getUsers: () =>
               of({
                 users: [
@@ -179,6 +185,14 @@ describe('AdminCasesListComponent', () => {
         userId: 'attorney-1',
       },
     });
+  });
+
+  it('keeps the current admin available as responsible attorney', () => {
+    render();
+
+    expect(fixture.componentInstance.availableAttorneys.map((user) => user.email)).toContain(
+      'admin@moyra.org'
+    );
   });
 
 });
