@@ -161,6 +161,21 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
                 "
                 type="url"
               />
+              <label for="case-onedrive-visibility">
+                {{ text('casesOneDriveVisibilityLabel', 'Visibilidad') }}
+              </label>
+              <select
+                id="case-onedrive-visibility"
+                name="caseOneDriveVisibility"
+                [(ngModel)]="oneDriveLink.visibilityMode"
+              >
+                <option value="case_members">
+                  {{ text('casesOneDriveVisibleToClientOption', 'Visible para el cliente') }}
+                </option>
+                <option value="internal_only">
+                  {{ text('casesOneDriveInternalOnlyOption', 'Sólo interno') }}
+                </option>
+              </select>
               <small>
                 {{
                   text(
@@ -190,9 +205,10 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
               @for (file of files; track file.id) {
               <article class="case-file">
                 <strong>{{ displayFileName(file) }}</strong>
+                <span>{{ fileTypeLabel(file) }}</span>
                 <span>{{ fileReviewLabel(file) }}</span>
                 @if (canDownloadFile(file)) {
-                <a [href]="downloadUrl(file.id)" target="_blank" rel="noopener noreferrer">
+                <a [href]="fileHref(file)" target="_blank" rel="noopener noreferrer">
                   {{ fileActionLabel(file) }}
                 </a>
                 }
@@ -456,6 +472,7 @@ export class CaseDetailComponent implements OnInit {
   oneDriveLink = {
     fileName: '',
     linkUrl: '',
+    visibilityMode: 'case_members',
   };
   oneDriveBusy = false;
   oneDriveError = '';
@@ -618,11 +635,15 @@ export class CaseDetailComponent implements OnInit {
     this._caseService.createOneDriveLink(this.caseId, {
       fileName: this.oneDriveLink.fileName.trim(),
       linkUrl: this.oneDriveLink.linkUrl.trim(),
-      visibility: { mode: 'case_members' },
+      visibility: { mode: this.oneDriveLink.visibilityMode },
     }).subscribe({
       next: (response) => {
         this.files = [response.item, ...this.files];
-        this.oneDriveLink = { fileName: '', linkUrl: '' };
+        this.oneDriveLink = {
+          fileName: '',
+          linkUrl: '',
+          visibilityMode: 'case_members',
+        };
         this.oneDriveBusy = false;
       },
       error: () => {
@@ -649,6 +670,21 @@ export class CaseDetailComponent implements OnInit {
 
   displayFileName(file: CaseFile): string {
     return file.title || file.originalName || file.fileName;
+  }
+
+  fileTypeLabel(file: CaseFile): string {
+    if (this.isOneDriveFile(file)) {
+      return this.text('casesOneDriveFileTypeLabel', 'Enlace de OneDrive o SharePoint');
+    }
+    return file.contentType || file.type || this.text('casesFileTypeFallbackLabel', 'Documento');
+  }
+
+  fileHref(file: CaseFile): string {
+    const linkUrl = String(file.webUrl || file.linkUrl || '').trim();
+    if (this.isOneDriveFile(file) && linkUrl) {
+      return linkUrl;
+    }
+    return this.downloadUrl(file.id);
   }
 
   caseDescription(): string {

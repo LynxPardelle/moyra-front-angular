@@ -383,6 +383,7 @@ describe('AdminCaseDetailComponent', () => {
     fixture.componentInstance.oneDriveLink = {
       fileName: 'Contrato firmado',
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
+      visibilityMode: 'case_members',
     };
 
     fixture.componentInstance.addOneDriveLink();

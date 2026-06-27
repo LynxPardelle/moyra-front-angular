@@ -316,6 +316,7 @@ describe('CaseDetailComponent', () => {
     fixture.componentInstance.oneDriveLink = {
       fileName: 'Contrato firmado',
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
+      visibilityMode: 'case_members',
     };
     fixture.componentInstance.addOneDriveLink();
     fixture.detectChanges();
@@ -335,6 +336,7 @@ describe('CaseDetailComponent', () => {
     fixture.componentInstance.oneDriveLink = {
       fileName: 'Video externo',
       linkUrl: 'https://youtu.be/no-es-onedrive',
+      visibilityMode: 'case_members',
     };
     fixture.componentInstance.addOneDriveLink();
     fixture.detectChanges();

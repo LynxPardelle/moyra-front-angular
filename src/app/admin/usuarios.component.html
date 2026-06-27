@@ -34,17 +34,25 @@
 
     <label class="admin-users-field">
       <span>Relación</span>
+      <select
+        name="relationshipPreset"
+        [(ngModel)]="relationshipPreset"
+        (ngModelChange)="onRelationshipPresetChange($event)"
+      >
+        <option value="">Sin relación definida</option>
+        @for (option of relationshipOptions; track option) {
+        <option [value]="option">{{ option }}</option>
+        }
+        <option [value]="customRelationshipValue">Otra relación</option>
+      </select>
+      @if (relationshipPreset === customRelationshipValue) {
       <input
         type="text"
         name="relationship"
         [(ngModel)]="user.relationship"
-        list="newUserRelationshipOptions"
-        placeholder="Ej. Equipo Moyra"
+        placeholder="Ej. Representante legal"
       />
-      <datalist id="newUserRelationshipOptions">
-        <option value="Equipo Moyra"></option>
-        <option value="Cliente o invitado externo"></option>
-      </datalist>
+      }
       <small>Puede ser Equipo Moyra, cliente, proveedor, familiar u otra relación interna.</small>
     </label>
 

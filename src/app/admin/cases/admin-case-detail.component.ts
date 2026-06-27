@@ -131,9 +131,7 @@ type PlatformUser = {
                   <td>{{ entryVisibilityLabel(entry) }}</td>
                   <td>{{ formatDate(entry.updatedAt || entry.createdAt) }}</td>
                   <td class="admin-case-actions">
-                    @if (entryVisibleInPortal(entry)) {
-                    <a [routerLink]="['/casos', caseId, 'entrada', entry.id]">Ver la entrada</a>
-                    }
+                    <a [routerLink]="entryViewLink(entry)">Ver la entrada</a>
                     <a [routerLink]="['/admin/casos', caseId, 'entradas', entry.id]">
                       Editar
                     </a>
@@ -147,79 +145,6 @@ type PlatformUser = {
 
         <section>
           <h2>Miembros</h2>
-          <div class="admin-case-member-tools">
-            <article class="admin-case-member-card">
-              <h3>Agregar usuario existente</h3>
-              <form class="admin-case-form" (ngSubmit)="addExistingMember()">
-                <label>
-                  Usuario existente
-                  <select name="existingMemberUser" [(ngModel)]="existingMember.userKey">
-                    <option value="">Selecciona usuario</option>
-                    @for (user of availableUsersForCase(); track userKey(user)) {
-                    <option [value]="userKey(user)">{{ userOptionLabel(user) }}</option>
-                    }
-                  </select>
-                </label>
-                <label>
-                  Rol en el caso
-                  <select name="existingMemberRole" [(ngModel)]="existingMember.rolePreset">
-                    <option value="client">Cliente</option>
-                    <option value="attorney">Abogado</option>
-                    <option value="pasante">Pasante</option>
-                    <option value="external_observer">Observador</option>
-                  </select>
-                </label>
-                <label>
-                  Tipo de acceso en este caso
-                  <select name="existingMemberType" [(ngModel)]="existingMember.memberType">
-                    <option value="external">Cliente o invitado externo</option>
-                    <option value="internal">Equipo Moyra</option>
-                  </select>
-                </label>
-                <button type="submit" [disabled]="memberAdding || !canAddExistingMember()">
-                  {{ memberAdding ? 'Agregando...' : 'Agregar miembro' }}
-                </button>
-              </form>
-            </article>
-            <hr />
-            <article class="admin-case-member-card">
-              <h3>Invitar usuario nuevo</h3>
-              <form class="admin-case-form" (ngSubmit)="inviteMember()">
-                <label>
-                  Correo
-                  <input name="inviteEmail" [(ngModel)]="invite.email" />
-                </label>
-                <label>
-                  Nombre
-                  <input name="inviteName" [(ngModel)]="invite.displayName" />
-                </label>
-                <label>
-                  Rol en el caso
-                  <select name="inviteRole" [(ngModel)]="invite.rolePreset">
-                    <option value="client">Cliente</option>
-                    <option value="attorney">Abogado</option>
-                    <option value="pasante">Pasante</option>
-                    <option value="external_observer">Observador</option>
-                  </select>
-                </label>
-                <label>
-                  Tipo de acceso en este caso
-                  <select name="inviteMemberType" [(ngModel)]="inviteMemberType">
-                    <option value="external">Cliente o invitado externo</option>
-                    <option value="internal">Equipo Moyra</option>
-                  </select>
-                </label>
-                <button type="submit" [disabled]="inviteBusy || !invite.email">
-                  {{ inviteBusy ? 'Invitando...' : 'Invitar' }}
-                </button>
-              </form>
-            </article>
-            <small class="admin-case-help">
-              Los permisos se asignan por rol del caso: clientes comentan y abren documentos,
-              pasantes colaboran internamente y observadores sólo consultan. La relación indica si
-              pertenece al equipo de Moyra o es cliente/invitado del caso.
-            </small>
-          </div>
           <div class="admin-case-table-wrap">
             <table class="admin-case-table">
               <thead>
@@ -311,6 +236,79 @@ type PlatformUser = {
               </tbody>
             </table>
           </div>
+          <div class="admin-case-member-tools">
+            <article class="admin-case-member-card">
+              <h3>Agregar usuario existente</h3>
+              <form class="admin-case-form" (ngSubmit)="addExistingMember()">
+                <label>
+                  Usuario existente
+                  <select name="existingMemberUser" [(ngModel)]="existingMember.userKey">
+                    <option value="">Selecciona usuario</option>
+                    @for (user of availableUsersForCase(); track userKey(user)) {
+                    <option [value]="userKey(user)">{{ userOptionLabel(user) }}</option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  Rol en el caso
+                  <select name="existingMemberRole" [(ngModel)]="existingMember.rolePreset">
+                    <option value="client">Cliente</option>
+                    <option value="attorney">Abogado</option>
+                    <option value="pasante">Pasante</option>
+                    <option value="external_observer">Observador</option>
+                  </select>
+                </label>
+                <label>
+                  Tipo de acceso en este caso
+                  <select name="existingMemberType" [(ngModel)]="existingMember.memberType">
+                    <option value="external">Cliente o invitado externo</option>
+                    <option value="internal">Equipo Moyra</option>
+                  </select>
+                </label>
+                <button type="submit" [disabled]="memberAdding || !canAddExistingMember()">
+                  {{ memberAdding ? 'Agregando...' : 'Agregar miembro' }}
+                </button>
+              </form>
+            </article>
+            <hr />
+            <article class="admin-case-member-card">
+              <h3>Invitar usuario nuevo</h3>
+              <form class="admin-case-form" (ngSubmit)="inviteMember()">
+                <label>
+                  Correo
+                  <input name="inviteEmail" [(ngModel)]="invite.email" />
+                </label>
+                <label>
+                  Nombre
+                  <input name="inviteName" [(ngModel)]="invite.displayName" />
+                </label>
+                <label>
+                  Rol en el caso
+                  <select name="inviteRole" [(ngModel)]="invite.rolePreset">
+                    <option value="client">Cliente</option>
+                    <option value="attorney">Abogado</option>
+                    <option value="pasante">Pasante</option>
+                    <option value="external_observer">Observador</option>
+                  </select>
+                </label>
+                <label>
+                  Tipo de acceso en este caso
+                  <select name="inviteMemberType" [(ngModel)]="inviteMemberType">
+                    <option value="external">Cliente o invitado externo</option>
+                    <option value="internal">Equipo Moyra</option>
+                  </select>
+                </label>
+                <button type="submit" [disabled]="inviteBusy || !invite.email">
+                  {{ inviteBusy ? 'Invitando...' : 'Invitar' }}
+                </button>
+              </form>
+            </article>
+            <small class="admin-case-help">
+              Los permisos se asignan por rol del caso: clientes comentan y abren documentos,
+              pasantes colaboran internamente y observadores sólo consultan. La relación indica si
+              pertenece al equipo de Moyra o es cliente/invitado del caso.
+            </small>
+          </div>
         </section>
 
         <section>
@@ -333,6 +331,13 @@ type PlatformUser = {
                 type="url"
               />
             </label>
+            <label>
+              Visibilidad
+              <select name="oneDriveVisibility" [(ngModel)]="oneDriveLink.visibilityMode">
+                <option value="case_members">Visible para el cliente</option>
+                <option value="internal_only">Sólo interno</option>
+              </select>
+            </label>
             <small class="admin-case-help">
               Para Casos se guardan enlaces privados de OneDrive o SharePoint; los demás módulos
               siguen usando S3.
@@ -348,9 +353,20 @@ type PlatformUser = {
             @for (file of files; track file.id) {
             <article class="admin-case-file">
               <strong>{{ displayFileName(file) }}</strong>
-              <span>{{ file.externalVisibilityStatus }}</span>
+              <span>{{ fileTypeLabel(file) }}</span>
+              <label>
+                Visibilidad
+                <select
+                  [name]="'fileVisibility-' + file.id"
+                  [ngModel]="fileVisibilityMode(file)"
+                  (ngModelChange)="updateFileAccess(file, $event)"
+                >
+                  <option value="case_members">Visible para el cliente</option>
+                  <option value="internal_only">Sólo interno</option>
+                </select>
+              </label>
               @if (canDownloadFile(file)) {
-              <a [href]="downloadUrl(file.id)" target="_blank" rel="noopener noreferrer">
+              <a [href]="fileHref(file)" target="_blank" rel="noopener noreferrer">
                 {{ isOneDriveFile(file) ? 'Abrir documento' : 'Descargar' }}
               </a>
               }
@@ -739,6 +755,7 @@ export class AdminCaseDetailComponent implements OnInit {
   oneDriveLink = {
     fileName: '',
     linkUrl: '',
+    visibilityMode: 'case_members',
   };
   oneDriveBusy = false;
   oneDriveError = '';
@@ -919,11 +936,15 @@ export class AdminCaseDetailComponent implements OnInit {
     this._caseService.createOneDriveLink(this.caseId, {
       fileName: this.oneDriveLink.fileName.trim(),
       linkUrl: this.oneDriveLink.linkUrl.trim(),
-      visibility: { mode: 'case_members' },
+      visibility: { mode: this.oneDriveLink.visibilityMode },
     }).subscribe({
       next: (response) => {
         this.files = [response.item, ...this.files];
-        this.oneDriveLink = { fileName: '', linkUrl: '' };
+        this.oneDriveLink = {
+          fileName: '',
+          linkUrl: '',
+          visibilityMode: 'case_members',
+        };
         this.oneDriveBusy = false;
         this.showSuccess('Enlace agregado', 'El documento de OneDrive quedó registrado.');
       },
@@ -948,6 +969,24 @@ export class AdminCaseDetailComponent implements OnInit {
         },
         error: (error) => {
           this.showError('No se pudo aprobar el documento', 'Intenta nuevamente.', error);
+        },
+      });
+  }
+
+  updateFileAccess(file: CaseFile, visibilityMode: string): void {
+    const mode = visibilityMode === 'internal_only' ? 'internal_only' : 'case_members';
+    this._caseService
+      .updateFileVisibility(this.caseId, file.id, {
+        externalVisibilityStatus: mode === 'case_members' ? 'approved' : 'restricted',
+        visibility: { mode },
+      })
+      .subscribe({
+        next: (response) => {
+          this.files = this.files.map((item) => (item.id === file.id ? response.item : item));
+          this.showSuccess('Documento actualizado', 'La visibilidad del documento se actualizó.');
+        },
+        error: (error) => {
+          this.showError('No se pudo actualizar el documento', 'Intenta nuevamente.', error);
         },
       });
   }
@@ -1100,6 +1139,13 @@ export class AdminCaseDetailComponent implements OnInit {
 
   entryVisibilityLabel(entry: CaseEntry): string {
     return this.entryVisibleInPortal(entry) ? 'Visible para cliente' : 'Sólo interno';
+  }
+
+  entryViewLink(entry: CaseEntry): string[] {
+    if (this.entryVisibleInPortal(entry)) {
+      return ['/casos', this.caseId, 'entrada', entry.id];
+    }
+    return ['/admin/casos', this.caseId, 'entradas', entry.id];
   }
 
   roleLabel(role: string): string {
@@ -1286,6 +1332,14 @@ export class AdminCaseDetailComponent implements OnInit {
     )}/download`;
   }
 
+  fileHref(file: CaseFile): string {
+    const linkUrl = String(file.webUrl || file.linkUrl || '').trim();
+    if (this.isOneDriveFile(file) && linkUrl) {
+      return linkUrl;
+    }
+    return this.downloadUrl(file.id);
+  }
+
   canCreateOneDriveLink(): boolean {
     return (
       this.hasOneDriveInputs() &&
@@ -1302,6 +1356,19 @@ export class AdminCaseDetailComponent implements OnInit {
 
   displayFileName(file: CaseFile): string {
     return file.title || file.originalName || file.fileName;
+  }
+
+  fileTypeLabel(file: CaseFile): string {
+    if (this.isOneDriveFile(file)) {
+      return 'Enlace de OneDrive o SharePoint';
+    }
+    return file.contentType || file.type || 'Documento';
+  }
+
+  fileVisibilityMode(file: CaseFile): 'case_members' | 'internal_only' {
+    return file.externalVisibilityStatus === 'approved' && isVisibleToCaseClient(file.visibility)
+      ? 'case_members'
+      : 'internal_only';
   }
 
   isOneDriveFile(file: CaseFile): boolean {

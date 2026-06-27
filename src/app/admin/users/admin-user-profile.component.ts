@@ -75,17 +75,28 @@ type UserCaseMembership = {
           </label>
           <label>
             Relación
-            <input
-              name="profileRelationship"
-              [(ngModel)]="profileDraft.relationship"
-              list="profileRelationshipOptions"
-              placeholder="Ej. Equipo Moyra"
-            />
-            <datalist id="profileRelationshipOptions">
-              <option value="Equipo Moyra"></option>
-              <option value="Cliente o invitado externo"></option>
-            </datalist>
+            <select
+              name="profileRelationshipPreset"
+              [(ngModel)]="profileRelationshipPreset"
+              (ngModelChange)="onProfileRelationshipPresetChange($event)"
+            >
+              <option value="">Sin relación definida</option>
+              @for (option of relationshipOptions; track option) {
+              <option [value]="option">{{ option }}</option>
+              }
+              <option [value]="customRelationshipValue">Otra relación</option>
+            </select>
           </label>
+          @if (profileRelationshipPreset === customRelationshipValue) {
+          <label>
+            Especificar relación
+            <input
+              name="profileRelationshipCustom"
+              [(ngModel)]="profileDraft.relationship"
+              placeholder="Ej. Representante legal"
+            />
+          </label>
+          }
           <button type="submit" [disabled]="savingProfile || !canSaveProfile()">
             {{ savingProfile ? 'Guardando...' : 'Guardar perfil' }}
           </button>
@@ -290,6 +301,18 @@ export class AdminUserProfileComponent implements OnInit {
     role: 'ROLE_USER',
     relationship: '',
   };
+  readonly customRelationshipValue = '__custom__';
+  readonly relationshipOptions = [
+    'Equipo Moyra',
+    'Cliente o invitado externo',
+    'Cliente',
+    'Proveedor',
+    'Familiar',
+    'Representante legal',
+    'Perito',
+    'Testigo',
+  ];
+  profileRelationshipPreset = '';
 
   constructor(
     private _route: ActivatedRoute,
@@ -395,6 +418,16 @@ export class AdminUserProfileComponent implements OnInit {
           this.savingProfile = false;
         },
       });
+  }
+
+  onProfileRelationshipPresetChange(value: string): void {
+    if (value === this.customRelationshipValue) {
+      if (this.relationshipOptions.includes(this.profileDraft.relationship)) {
+        this.profileDraft.relationship = '';
+      }
+      return;
+    }
+    this.profileDraft.relationship = value;
   }
 
   userLabel(user: AdminUser | null): string {
@@ -527,6 +560,16 @@ export class AdminUserProfileComponent implements OnInit {
       role: this.user?.role || 'ROLE_USER',
       relationship: this.userRelationship(this.user),
     };
+    this.profileRelationshipPreset = this.relationshipPresetFor(
+      this.profileDraft.relationship
+    );
+  }
+
+  private relationshipPresetFor(value: string): string {
+    if (!value) {
+      return '';
+    }
+    return this.relationshipOptions.includes(value) ? value : this.customRelationshipValue;
   }
 
   private userRelationship(user: AdminUser | null): string {

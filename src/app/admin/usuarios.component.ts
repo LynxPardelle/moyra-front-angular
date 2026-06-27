@@ -21,6 +21,17 @@ type NewUserForm = {
   styleUrls: ['./usuarios.component.scss'],
 })
 export class UsuariosComponent {
+  public readonly customRelationshipValue = '__custom__';
+  public readonly relationshipOptions = [
+    'Equipo Moyra',
+    'Cliente o invitado externo',
+    'Cliente',
+    'Proveedor',
+    'Familiar',
+    'Representante legal',
+    'Perito',
+    'Testigo',
+  ];
   public readonly caseRoleOptions = [
     {
       name: 'Cliente',
@@ -41,6 +52,7 @@ export class UsuariosComponent {
   ];
   public saving = false;
   public user: NewUserForm = this.emptyUser();
+  public relationshipPreset = '';
 
   constructor(private _userService: UserService) {}
 
@@ -98,6 +110,7 @@ export class UsuariosComponent {
       });
 
       this.user = this.emptyUser();
+      this.relationshipPreset = '';
     } catch (error: any) {
       await Swal.fire({
         title: 'No se pudo crear el usuario',
@@ -107,6 +120,16 @@ export class UsuariosComponent {
     } finally {
       this.saving = false;
     }
+  }
+
+  onRelationshipPresetChange(value: string): void {
+    if (value === this.customRelationshipValue) {
+      if (this.relationshipOptions.includes(this.user.relationship)) {
+        this.user.relationship = '';
+      }
+      return;
+    }
+    this.user.relationship = value;
   }
 
   private emptyUser(): NewUserForm {
