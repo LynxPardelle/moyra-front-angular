@@ -181,6 +181,16 @@ export class CaseService {
     );
   }
 
+  removeMember(
+    caseId: string,
+    membershipId: string
+  ): Observable<CaseItemResponse<CaseMembership>> {
+    return this._http.delete<CaseItemResponse<CaseMembership>>(
+      apiUrl(`/cases/${encodeURIComponent(caseId)}/members/${encodeURIComponent(membershipId)}`),
+      { headers: this.authHeaders() }
+    );
+  }
+
   listEntries(caseId: string): Observable<CaseListResponse<CaseEntry>> {
     return this._http.get<CaseListResponse<CaseEntry>>(
       apiUrl(`/cases/${encodeURIComponent(caseId)}/entries`),

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { UserService } from '../../services/user.service';
+import { AuthFacade } from '../../store/auth/auth.facade';
 
 type AdminUser = {
   id?: string;
@@ -152,7 +153,10 @@ export class AdminUsersListComponent implements OnInit {
   searchTerm = '';
   loading = true;
 
-  constructor(private _userService: UserService) {}
+  constructor(
+    private _userService: UserService,
+    private _authFacade: AuthFacade
+  ) {}
 
   ngOnInit(): void {
     this._userService.getUsers(0, 200, '-create_at').subscribe({
@@ -206,10 +210,19 @@ export class AdminUsersListComponent implements OnInit {
   }
 
   private withCurrentUser(users: AdminUser[]): AdminUser[] {
-    const current = this._userService.getIdentity() as AdminUser | null;
-    if (!current || users.some((user) => this.userKey(user) === this.userKey(current))) {
+    const current = this.currentIdentity();
+    if (!current || !this.userKey(current)) {
       return users;
     }
-    return [current, ...users];
+    return [
+      current,
+      ...users.filter(
+        (user) => this.userKey(user) !== this.userKey(current) && user.email !== current.email
+      ),
+    ];
+  }
+
+  private currentIdentity(): AdminUser | null {
+    return (this._authFacade.identity() || this._userService.getIdentity()) as AdminUser | null;
   }
 }

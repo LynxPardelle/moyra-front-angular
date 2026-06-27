@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { AdminCaseDetailComponent } from './admin-case-detail.component';
 import { CaseService } from '../../services/case.service';
 import { UserService } from '../../services/user.service';
+import { AuthFacade } from '../../store/auth/auth.facade';
 
 describe('AdminCaseDetailComponent', () => {
   let fixture: ComponentFixture<AdminCaseDetailComponent>;
@@ -13,6 +14,7 @@ describe('AdminCaseDetailComponent', () => {
   let inviteMemberSpy: jasmine.Spy;
   let updateMemberSpy: jasmine.Spy;
   let updateMemberPermissionsSpy: jasmine.Spy;
+  let removeMemberSpy: jasmine.Spy;
   let updateFileVisibilitySpy: jasmine.Spy;
   let createOneDriveLinkSpy: jasmine.Spy;
 
@@ -50,6 +52,20 @@ describe('AdminCaseDetailComponent', () => {
         permissions: ['case.read', 'case.comment'],
       },
     }));
+    removeMemberSpy = jasmine.createSpy('removeMember').and.returnValue(
+      of({
+        status: 'success',
+        item: {
+          id: 'member-1',
+          caseId: 'case-1',
+          displayName: 'Cliente',
+          rolePreset: 'client',
+          memberType: 'external',
+          permissions: ['case.read'],
+          status: 'removed',
+        },
+      })
+    );
     updateFileVisibilitySpy = jasmine
       .createSpy('updateFileVisibility')
       .and.returnValue(of({ status: 'success', item: {} }));
@@ -184,6 +200,7 @@ describe('AdminCaseDetailComponent', () => {
             inviteMember: inviteMemberSpy,
             updateMember: updateMemberSpy,
             updateMemberPermissions: updateMemberPermissionsSpy,
+            removeMember: removeMemberSpy,
             createOneDriveLink: createOneDriveLinkSpy,
             updateFileVisibility: updateFileVisibilitySpy,
           },
@@ -208,6 +225,17 @@ describe('AdminCaseDetailComponent', () => {
                   },
                 ],
               }),
+          },
+        },
+        {
+          provide: AuthFacade,
+          useValue: {
+            identity: () => ({
+              id: 'admin-1',
+              name: 'Admin actual',
+              email: 'admin@moyra.org',
+              role: 'ROLE_ADMIN',
+            }),
           },
         },
       ],
@@ -294,5 +322,14 @@ describe('AdminCaseDetailComponent', () => {
       visibility: { mode: 'case_members' },
     });
     expect(fixture.nativeElement.textContent).toContain('Contrato firmado');
+  });
+
+  it('removes a case membership without deleting the user', () => {
+    spyOn(window, 'confirm').and.returnValue(true);
+
+    fixture.componentInstance.removeMember(fixture.componentInstance.members[0]);
+
+    expect(removeMemberSpy).toHaveBeenCalledWith('case-1', 'member-1');
+    expect(fixture.componentInstance.members.length).toBe(0);
   });
 });

@@ -174,6 +174,7 @@ describe('CaseService', () => {
     service.updateMemberPermissions('case-1', 'membership-1', {
       permissions: ['case.read', 'case.comment'],
     }).subscribe();
+    service.removeMember('case-1', 'membership-1').subscribe();
     service.presignCaseFile('case-1', {
       fileName: 'evidencia.pdf',
       contentType: 'application/pdf',
@@ -218,6 +219,10 @@ describe('CaseService', () => {
     expect(permissionsReq.request.method).toBe('PUT');
     expect(permissionsReq.request.body.permissions).toEqual(['case.read', 'case.comment']);
     permissionsReq.flush({ status: 'success', item: {} });
+
+    const removeMemberReq = http.expectOne(apiUrl('/cases/case-1/members/membership-1'));
+    expect(removeMemberReq.request.method).toBe('DELETE');
+    removeMemberReq.flush({ status: 'success', item: {} });
 
     const presignReq = http.expectOne(apiUrl('/cases/case-1/files/presign'));
     expect(presignReq.request.method).toBe('POST');

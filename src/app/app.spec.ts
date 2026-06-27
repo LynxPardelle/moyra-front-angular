@@ -14,6 +14,7 @@ import { CaseWebPushService } from './components/notifications/case-web-push.ser
 
 describe('App', () => {
   let isAdmin: boolean;
+  let isLegalStaff: boolean;
   let isAuthenticated: boolean;
   let casesEnabled: boolean;
   let unreadCount: number;
@@ -22,6 +23,7 @@ describe('App', () => {
 
   beforeEach(async () => {
     isAdmin = false;
+    isLegalStaff = false;
     isAuthenticated = false;
     casesEnabled = false;
     unreadCount = 0;
@@ -64,6 +66,7 @@ describe('App', () => {
             hydrate: () => undefined,
             state$: defer(() => of({ hydrated: true, isAuthenticated })),
             isAdmin: () => isAdmin,
+            isLegalStaff: () => isLegalStaff,
             isAuthenticated: () => isAuthenticated,
             logout: logoutSpy,
             authStateOnceAfterHydration$: () => of({ isAuthenticated: false }),

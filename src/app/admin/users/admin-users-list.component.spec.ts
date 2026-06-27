@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 
 import { AdminUsersListComponent } from './admin-users-list.component';
 import { UserService } from '../../services/user.service';
+import { AuthFacade } from '../../store/auth/auth.facade';
 
 describe('AdminUsersListComponent', () => {
   let fixture: ComponentFixture<AdminUsersListComponent>;
@@ -39,6 +40,17 @@ describe('AdminUsersListComponent', () => {
                   },
                 ],
               }),
+          },
+        },
+        {
+          provide: AuthFacade,
+          useValue: {
+            identity: () => ({
+              id: 'admin-1',
+              name: 'Admin actual',
+              email: 'admin@moyra.org',
+              role: 'ROLE_ADMIN',
+            }),
           },
         },
       ],

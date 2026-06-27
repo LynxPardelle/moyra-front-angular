@@ -247,6 +247,10 @@ export class App implements OnDestroy, OnInit {
     return this._authFacade.isAdmin();
   }
 
+  canOpenAdminProfile(): boolean {
+    return this._authFacade.isAdmin() || this._authFacade.isLegalStaff();
+  }
+
   isAuthenticatedUser(): boolean {
     return this._authFacade.isAuthenticated();
   }

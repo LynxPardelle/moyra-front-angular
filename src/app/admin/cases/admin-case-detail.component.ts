@@ -21,6 +21,7 @@ import { CaseService } from '../../services/case.service';
 import { UserService } from '../../services/user.service';
 import { isVisibleToCaseClient } from '../../utils/case-visibility';
 import { RichTextEditorComponent } from '../../components/web-utility/rich-text-editor/rich-text-editor.component';
+import { AuthFacade } from '../../store/auth/auth.facade';
 
 type CaseDraft = {
   title: string;
@@ -189,7 +190,17 @@ type PlatformUser = {
                   <td>{{ memberTypeLabel(member.memberType) }}</td>
                   <td>{{ permissionsSummary(member.permissions) }}</td>
                   <td>
-                    <button type="button" (click)="startEditMember(member)">Editar</button>
+                    <div class="admin-case-actions">
+                      <button type="button" (click)="startEditMember(member)">Editar</button>
+                      <button
+                        type="button"
+                        class="admin-case-button-danger"
+                        [disabled]="memberRemovingId === member.id"
+                        (click)="removeMember(member)"
+                      >
+                        {{ memberRemovingId === member.id ? 'Quitando...' : 'Quitar' }}
+                      </button>
+                    </div>
                   </td>
                 </tr>
                 @if (editingMemberId === member.id) {
@@ -517,6 +528,11 @@ type PlatformUser = {
         padding: 6px 10px;
       }
 
+      .admin-case-button-danger {
+        border-color: #b42318;
+        color: #b42318;
+      }
+
       a {
         color: #4b8ff5;
         text-decoration: none;
@@ -638,6 +654,7 @@ export class AdminCaseDetailComponent implements OnInit {
   ];
   editingMemberId = '';
   memberSavingId = '';
+  memberRemovingId = '';
   memberDraft: MemberDraft = {
     displayName: '',
     memberType: 'external',
@@ -654,7 +671,8 @@ export class AdminCaseDetailComponent implements OnInit {
   constructor(
     private _route: ActivatedRoute,
     private _caseService: CaseService,
-    private _userService: UserService
+    private _userService: UserService,
+    private _authFacade: AuthFacade
   ) {
     this.caseId = this._route.snapshot.paramMap.get('caseId') || '';
   }
@@ -838,6 +856,29 @@ export class AdminCaseDetailComponent implements OnInit {
       });
   }
 
+  removeMember(member: CaseMembership): void {
+    if (
+      !member.id ||
+      !window.confirm(`¿Quitar a ${member.displayName || member.email || 'este miembro'} del caso?`)
+    ) {
+      return;
+    }
+
+    this.memberRemovingId = member.id;
+    this._caseService.removeMember(this.caseId, member.id).subscribe({
+      next: () => {
+        this.members = this.members.filter((item) => item.id !== member.id);
+        if (this.editingMemberId === member.id) {
+          this.cancelEditMember();
+        }
+        this.memberRemovingId = '';
+      },
+      error: () => {
+        this.memberRemovingId = '';
+      },
+    });
+  }
+
   statusesForCurrentType(): CaseStatusDefinition[] {
     const caseTypeId = this.caseRecord?.caseTypeId || '';
     const currentStatusId = this.caseRecord?.statusId || this.selectedStatusId;
@@ -953,6 +994,7 @@ export class AdminCaseDetailComponent implements OnInit {
         'case.member.invited': 'Invitó miembro',
         'case.member.updated': 'Editó miembro',
         'case.member.permissions_updated': 'Cambió permisos',
+        'case.member.removed': 'Quitó miembro',
         'case.file.onedrive_link_added': 'Agregó enlace OneDrive',
         'case.file.visibility_updated': 'Cambió visibilidad de archivo',
       }[action] || action
@@ -1254,11 +1296,20 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   private withCurrentUser(users: PlatformUser[]): PlatformUser[] {
-    const current = this._userService.getIdentity() as PlatformUser | null;
-    if (!current || users.some((user) => this.userKey(user) === this.userKey(current))) {
+    const current = this.currentIdentity();
+    if (!current || !this.userKey(current)) {
       return users;
     }
-    return [current, ...users];
+    return [
+      current,
+      ...users.filter(
+        (user) => this.userKey(user) !== this.userKey(current) && user.email !== current.email
+      ),
+    ];
+  }
+
+  private currentIdentity(): PlatformUser | null {
+    return (this._authFacade.identity() || this._userService.getIdentity()) as PlatformUser | null;
   }
 
   private plainRichText(value: string): string {

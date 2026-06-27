@@ -14,6 +14,7 @@ import {
 import { CaseService } from '../../services/case.service';
 import { roleFromIdentity } from '../../services/global';
 import { UserService } from '../../services/user.service';
+import { AuthFacade } from '../../store/auth/auth.facade';
 
 type NewCaseForm = {
   title: string;
@@ -80,6 +81,10 @@ type PlatformUser = {
         <label>
           Referencia
           <input name="reference" [(ngModel)]="newCase.reference" />
+          <small class="admin-cases-create__field-help">
+            Identificador interno del despacho: expediente, cliente, folio o clave que ayude a ubicar
+            el caso.
+          </small>
         </label>
         <label>
           Tipo
@@ -125,8 +130,13 @@ type PlatformUser = {
         </fieldset>
 
         <div class="admin-cases-create__actions">
-          <button type="submit" [disabled]="!canCreateCase()">Crear caso</button>
+          <button type="submit" [disabled]="createBusy || !canCreateCase()">
+            {{ createBusy ? 'Creando...' : 'Crear caso' }}
+          </button>
         </div>
+        @if (createError) {
+        <small class="admin-cases-create__error">{{ createError }}</small>
+        }
         @if (createCaseHint()) {
         <small class="admin-cases-create__hint">{{ createCaseHint() }}</small>
         }
@@ -357,6 +367,17 @@ type PlatformUser = {
         grid-column: 1 / -1;
       }
 
+      .admin-cases-create__field-help {
+        color: rgba(41, 48, 59, 0.62);
+        font-weight: 500;
+        line-height: 1.35;
+      }
+
+      .admin-cases-create__error {
+        color: #b42318;
+        grid-column: 1 / -1;
+      }
+
       .admin-cases-filters label {
         min-width: min(260px, 100%);
       }
@@ -462,6 +483,8 @@ export class AdminCasesListComponent implements OnInit {
   caseTypeFilter = '';
   searchTerm = '';
   currentPage = 1;
+  createBusy = false;
+  createError = '';
   readonly pageSize = 10;
   newCase: NewCaseForm = {
     title: '',
@@ -476,7 +499,8 @@ export class AdminCasesListComponent implements OnInit {
 
   constructor(
     private _caseService: CaseService,
-    private _userService: UserService
+    private _userService: UserService,
+    private _authFacade: AuthFacade
   ) {}
 
   ngOnInit(): void {
@@ -497,6 +521,7 @@ export class AdminCasesListComponent implements OnInit {
         this.caseTypes = caseTypes.items || [];
         this.operationsSummary = operations.item;
         this.users = this.withCurrentUser(this.normalizeUsers(users));
+        this.setDefaultAttorneySelection();
         this.loading = false;
       },
       error: () => {
@@ -569,27 +594,39 @@ export class AdminCasesListComponent implements OnInit {
           displayName: this.newCase.newAttorneyName.trim(),
         };
 
-    this._caseService.createCase({
-      title: this.newCase.title.trim(),
-      reference: this.newCase.reference.trim(),
-      description: this.newCase.description.trim(),
-      caseTypeId: this.newCase.caseTypeId,
-      statusId: this.newCase.statusId,
-      leadUserId: attorney ? this.userKey(attorney) : undefined,
-      initialAttorney,
-    }).subscribe((response) => {
-      this.cases = [response.item, ...this.cases];
-      this.newCase = {
-        title: '',
-        reference: '',
-        description: '',
-        caseTypeId: '',
-        statusId: '',
-        attorneyUserId: '',
-        newAttorneyEmail: '',
-        newAttorneyName: '',
-      };
-    });
+    this.createBusy = true;
+    this.createError = '';
+    this._caseService
+      .createCase({
+        title: this.newCase.title.trim(),
+        reference: this.newCase.reference.trim(),
+        description: this.newCase.description.trim(),
+        caseTypeId: this.newCase.caseTypeId,
+        statusId: this.newCase.statusId,
+        leadUserId: attorney ? this.userKey(attorney) : undefined,
+        initialAttorney,
+      })
+      .subscribe({
+        next: (response) => {
+          this.cases = [response.item, ...this.cases];
+          this.newCase = {
+            title: '',
+            reference: '',
+            description: '',
+            caseTypeId: '',
+            statusId: '',
+            attorneyUserId: '',
+            newAttorneyEmail: '',
+            newAttorneyName: '',
+          };
+          this.setDefaultAttorneySelection();
+          this.createBusy = false;
+        },
+        error: (error) => {
+          this.createBusy = false;
+          this.createError = this.errorMessageFrom(error, 'No se pudo crear el caso.');
+        },
+      });
   }
 
   statusesForType(caseTypeId: string): CaseStatusDefinition[] {
@@ -682,11 +719,36 @@ export class AdminCasesListComponent implements OnInit {
   }
 
   private withCurrentUser(users: PlatformUser[]): PlatformUser[] {
-    const current = this._userService.getIdentity() as PlatformUser | null;
-    if (!current || users.some((user) => this.userKey(user) === this.userKey(current))) {
+    const current = this.currentIdentity();
+    if (!current || !this.userKey(current)) {
       return users;
     }
-    return [current, ...users];
+    return [
+      current,
+      ...users.filter(
+        (user) => this.userKey(user) !== this.userKey(current) && user.email !== current.email
+      ),
+    ];
+  }
+
+  private setDefaultAttorneySelection(): void {
+    const current = this.currentIdentity();
+    if (
+      this.newCase.attorneyUserId ||
+      !current ||
+      !this.availableAttorneys.some((user) => this.userKey(user) === this.userKey(current))
+    ) {
+      return;
+    }
+    this.newCase.attorneyUserId = this.userKey(current);
+  }
+
+  private currentIdentity(): PlatformUser | null {
+    return (this._authFacade.identity() || this._userService.getIdentity()) as PlatformUser | null;
+  }
+
+  private errorMessageFrom(error: any, fallback: string): string {
+    return String(error?.error?.message || error?.message || fallback);
   }
 
   private isValidEmail(value: string): boolean {

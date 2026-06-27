@@ -38,6 +38,22 @@ describe('AdminCasesConfigComponent', () => {
           },
         ],
       },
+      {
+        id: 'family',
+        name: 'Familiar',
+        description: 'Divorcios y acuerdos',
+        active: true,
+        statuses: [
+          {
+            id: 'family:status:mediation',
+            label: 'Mediación',
+            color: '#2f5d50',
+            order: 1,
+            active: true,
+            isDefault: true,
+          },
+        ],
+      },
     ];
     listFails = false;
     createCaseTypeSpy = jasmine.createSpy('createCaseType').and.callFake((body) =>
@@ -148,6 +164,52 @@ describe('AdminCasesConfigComponent', () => {
     expect(body.statuses[0].label).toBe('En análisis');
     expect(body.statuses[1].label).toBe('Cerrado');
     expect(body.statuses[1].active).toBeFalse();
+  });
+
+  it('adds a fully editable status and saves automatically', () => {
+    render();
+
+    fixture.componentInstance.newStatusDraft = {
+      id: '',
+      label: 'Firma pendiente',
+      color: '#2f5d50',
+      order: 3,
+      active: true,
+      isDefault: false,
+    };
+    fixture.componentInstance.addStatus();
+
+    expect(updateCaseTypeSpy).toHaveBeenCalled();
+    const [, body] = updateCaseTypeSpy.calls.mostRecent().args;
+    const added = body.statuses.find((status: any) => status.label === 'Firma pendiente');
+    expect(added).toEqual(
+      jasmine.objectContaining({
+        color: '#2f5d50',
+        order: 3,
+        active: true,
+        isDefault: false,
+      })
+    );
+  });
+
+  it('copies a status from another case type at the end and never as default', () => {
+    render();
+
+    fixture.componentInstance.copyStatusTypeId = 'family';
+    fixture.componentInstance.copyStatusId = 'family:status:mediation';
+    fixture.componentInstance.copyStatusFromSource();
+
+    expect(updateCaseTypeSpy).toHaveBeenCalled();
+    const [, body] = updateCaseTypeSpy.calls.mostRecent().args;
+    const copied = body.statuses.find((status: any) => status.label === 'Mediación');
+    expect(copied).toEqual(
+      jasmine.objectContaining({
+        color: '#2f5d50',
+        order: 3,
+        active: true,
+        isDefault: false,
+      })
+    );
   });
 
   it('shows a retryable error state when configuration cannot load', () => {

@@ -56,6 +56,21 @@ describe('UserService auth transport', () => {
     request.flush({ status: 'success', users: [] });
   });
 
+  it('updates users through the authenticated v2 users endpoint', () => {
+    const token = jwt({ exp: 2000000000, token_use: 'access' });
+    localStorage.setItem('token', token);
+
+    service.updateUser('user-1', { displayName: 'Usuario editado' }).subscribe();
+
+    const request = http.expectOne(apiUrl('/users/user-1'));
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.headers.get('Authorization')).toBe(token);
+    expect(request.request.body).toBe(JSON.stringify({ displayName: 'Usuario editado' }));
+
+    request.flush({ status: 'success', item: { id: 'user-1', displayName: 'Usuario editado' } });
+    localStorage.removeItem('token');
+  });
+
   it('skips refresh calls locally when credentialed auth cookies are unavailable', (done) => {
     service.refreshSession().subscribe((response) => {
       expect(response).toBeNull();

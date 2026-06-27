@@ -100,7 +100,7 @@ export class AdminGuard implements CanActivate, CanActivateChild {
   }
 
   private legalStaffDecision(url: string): true | UrlTree {
-    if (url.startsWith('/admin/casos')) {
+    if (url.startsWith('/admin/casos') || url === '/admin/usuarios/me') {
       this._authUiStore.clearDeniedAdminUrl();
       return true;
     }

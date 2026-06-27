@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { CaseMembership, CaseRecord } from '../../models/case';
 import { CaseService } from '../../services/case.service';
 import { UserService } from '../../services/user.service';
+import { AuthFacade } from '../../store/auth/auth.facade';
 
 type AdminUser = {
   id?: string;
@@ -24,7 +26,7 @@ type UserCaseMembership = {
 
 @Component({
   selector: 'app-admin-user-profile',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <section class="admin-user-profile">
       <a routerLink="/admin/usuarios" class="admin-user-profile__back">Usuarios</a>
@@ -45,6 +47,34 @@ type UserCaseMembership = {
         No se encontró información para este usuario en los datos disponibles.
       </p>
       } @else {
+      @if (user) {
+      <section class="admin-user-profile__panel">
+        <h2>Datos del usuario</h2>
+        <form class="admin-user-profile__form" (ngSubmit)="saveProfile()">
+          <label>
+            Nombre
+            <input name="profileDisplayName" [(ngModel)]="profileDraft.displayName" />
+          </label>
+          <label>
+            Correo
+            <input name="profileEmail" type="email" [(ngModel)]="profileDraft.email" />
+          </label>
+          <label>
+            Rol global
+            <input [value]="roleLabel(user.role)" disabled />
+          </label>
+          <button type="submit" [disabled]="savingProfile || !canSaveProfile()">
+            {{ savingProfile ? 'Guardando...' : 'Guardar perfil' }}
+          </button>
+          @if (profileMessage) {
+          <small class="admin-user-profile__success">{{ profileMessage }}</small>
+          }
+          @if (profileError) {
+          <small class="admin-user-profile__error">{{ profileError }}</small>
+          }
+        </form>
+      </section>
+      }
       <section class="admin-user-profile__panel">
         <h2>Casos asignados</h2>
         @if (memberships.length === 0) {
@@ -141,6 +171,51 @@ type UserCaseMembership = {
         width: 100%;
       }
 
+      .admin-user-profile__form {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(3, minmax(180px, 1fr)) auto;
+        align-items: end;
+      }
+
+      .admin-user-profile__form label {
+        color: rgba(41, 48, 59, 0.72);
+        display: grid;
+        font-size: 0.82rem;
+        font-weight: 700;
+        gap: 4px;
+      }
+
+      input {
+        background: #ffffff;
+        border: 1px solid rgba(41, 48, 59, 0.28);
+        box-shadow:
+          0 8px 18px rgba(41, 48, 59, 0.06),
+          inset 4px 0 0 rgba(75, 143, 245, 0.62);
+        color: #29303b;
+        font-size: 1rem;
+        font-weight: 650;
+        min-height: 42px;
+        padding: 0.8rem 0.9rem 0.8rem 1rem;
+        width: 100%;
+      }
+
+      button {
+        background: #ffffff;
+        border: 1px solid #4b8ff5;
+        color: #4b8ff5;
+        min-height: 38px;
+        padding: 7px 10px;
+      }
+
+      .admin-user-profile__success {
+        color: #1f7a4d;
+      }
+
+      .admin-user-profile__error {
+        color: #b42318;
+      }
+
       th,
       td {
         border: 1px solid rgba(41, 48, 59, 0.18);
@@ -154,7 +229,9 @@ type UserCaseMembership = {
       }
 
       a:hover,
-      a:focus-visible {
+      a:focus-visible,
+      button:not(:disabled):hover,
+      button:not(:disabled):focus-visible {
         background: #4b8ff5;
         color: #ffffff;
         outline: 0;
@@ -165,6 +242,10 @@ type UserCaseMembership = {
           align-items: stretch;
           flex-direction: column;
         }
+
+        .admin-user-profile__form {
+          grid-template-columns: 1fr;
+        }
       }
     `,
   ],
@@ -174,11 +255,19 @@ export class AdminUserProfileComponent implements OnInit {
   user: AdminUser | null = null;
   memberships: UserCaseMembership[] = [];
   loading = true;
+  savingProfile = false;
+  profileMessage = '';
+  profileError = '';
+  profileDraft = {
+    displayName: '',
+    email: '',
+  };
 
   constructor(
     private _route: ActivatedRoute,
     private _userService: UserService,
-    private _caseService: CaseService
+    private _caseService: CaseService,
+    private _authFacade: AuthFacade
   ) {}
 
   ngOnInit(): void {
@@ -193,8 +282,10 @@ export class AdminUserProfileComponent implements OnInit {
       .pipe(
         catchError(() => of([])),
         switchMap((usersResponse) => {
-          const users = this.normalizeUsers(usersResponse);
-          this.user = users.find((user) => this.matchesUser(user, this.userId)) || null;
+          const users = this.withCurrentUser(this.normalizeUsers(usersResponse));
+          const requestedUserId = this.resolvedUserId();
+          this.user = users.find((user) => this.matchesUser(user, requestedUserId)) || null;
+          this.resetProfileDraft();
           return this._caseService.listCases().pipe(
             catchError(() => of({ status: 'error', items: [] })),
             switchMap((casesResponse) => {
@@ -221,6 +312,49 @@ export class AdminUserProfileComponent implements OnInit {
       .subscribe((memberships) => {
         this.memberships = memberships;
         this.loading = false;
+      });
+  }
+
+  canSaveProfile(): boolean {
+    return (
+      Boolean(this.user) &&
+      this.profileDraft.displayName.trim().length > 0 &&
+      this.isValidEmail(this.profileDraft.email)
+    );
+  }
+
+  saveProfile(): void {
+    if (!this.user || !this.canSaveProfile()) {
+      return;
+    }
+
+    const targetId = this.userKey(this.user) || this.resolvedUserId();
+    this.savingProfile = true;
+    this.profileMessage = '';
+    this.profileError = '';
+    this._userService
+      .updateUser(targetId, {
+        name: this.profileDraft.displayName.trim(),
+        displayName: this.profileDraft.displayName.trim(),
+        email: this.profileDraft.email.trim().toLowerCase(),
+      })
+      .subscribe({
+        next: (response) => {
+          const updated = this.normalizeUser(response) || {
+            ...this.user,
+            name: this.profileDraft.displayName.trim(),
+            displayName: this.profileDraft.displayName.trim(),
+            email: this.profileDraft.email.trim().toLowerCase(),
+          };
+          this.user = updated;
+          this.resetProfileDraft();
+          this.profileMessage = 'Perfil guardado.';
+          this.savingProfile = false;
+        },
+        error: (error) => {
+          this.profileError = String(error?.error?.message || error?.message || 'No se pudo guardar el perfil.');
+          this.savingProfile = false;
+        },
       });
   }
 
@@ -278,8 +412,9 @@ export class AdminUserProfileComponent implements OnInit {
   }
 
   private matchesMember(member: CaseMembership): boolean {
-    const email = this.user?.email || this.userId;
-    const userKey = this.user ? this.userKey(this.user) : this.userId;
+    const requestedUserId = this.resolvedUserId();
+    const email = this.user?.email || requestedUserId;
+    const userKey = this.user ? this.userKey(this.user) : requestedUserId;
     return (
       Boolean(userKey && member.userId === userKey) ||
       Boolean(email && member.email === email) ||
@@ -300,5 +435,45 @@ export class AdminUserProfileComponent implements OnInit {
       ? response
       : response?.users || response?.items || response?.data || [];
     return Array.isArray(list) ? list : [];
+  }
+
+  private normalizeUser(response: any): AdminUser | null {
+    return response?.user || response?.item || response?.data || null;
+  }
+
+  private withCurrentUser(users: AdminUser[]): AdminUser[] {
+    const current = this.currentIdentity();
+    if (!current || !this.userKey(current)) {
+      return users;
+    }
+    return [
+      current,
+      ...users.filter(
+        (user) => this.userKey(user) !== this.userKey(current) && user.email !== current.email
+      ),
+    ];
+  }
+
+  private currentIdentity(): AdminUser | null {
+    return (this._authFacade.identity() || this._userService.getIdentity?.()) as AdminUser | null;
+  }
+
+  private resolvedUserId(): string {
+    if (this.userId !== 'me') {
+      return this.userId;
+    }
+    const current = this.currentIdentity();
+    return current ? this.userKey(current) || current.email || 'me' : 'me';
+  }
+
+  private resetProfileDraft(): void {
+    this.profileDraft = {
+      displayName: this.userLabel(this.user),
+      email: this.user?.email || '',
+    };
+  }
+
+  private isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
   }
 }

@@ -6,6 +6,7 @@ import { AdminCasesListComponent } from './admin-cases-list.component';
 import { CaseService } from '../../services/case.service';
 import { CaseRecord, CaseType } from '../../models/case';
 import { UserService } from '../../services/user.service';
+import { AuthFacade } from '../../store/auth/auth.facade';
 
 describe('AdminCasesListComponent', () => {
   let fixture: ComponentFixture<AdminCasesListComponent>;
@@ -123,6 +124,17 @@ describe('AdminCasesListComponent', () => {
               }),
           },
         },
+        {
+          provide: AuthFacade,
+          useValue: {
+            identity: () => ({
+              id: 'admin-1',
+              name: 'Admin actual',
+              email: 'admin@moyra.org',
+              role: 'ROLE_ADMIN',
+            }),
+          },
+        },
       ],
     }).compileComponents();
   });
@@ -193,6 +205,8 @@ describe('AdminCasesListComponent', () => {
     expect(fixture.componentInstance.availableAttorneys.map((user) => user.email)).toContain(
       'admin@moyra.org'
     );
+    expect(fixture.componentInstance.availableAttorneys[0].email).toBe('admin@moyra.org');
+    expect(fixture.componentInstance.newCase.attorneyUserId).toBe('admin-1');
   });
 
 });

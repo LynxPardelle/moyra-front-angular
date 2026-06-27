@@ -6,11 +6,26 @@ import { of } from 'rxjs';
 import { AdminUserProfileComponent } from './admin-user-profile.component';
 import { CaseService } from '../../services/case.service';
 import { UserService } from '../../services/user.service';
+import { AuthFacade } from '../../store/auth/auth.facade';
 
 describe('AdminUserProfileComponent', () => {
   let fixture: ComponentFixture<AdminUserProfileComponent>;
+  let updateUserSpy: jasmine.Spy;
 
   beforeEach(async () => {
+    updateUserSpy = jasmine.createSpy('updateUser').and.returnValue(
+      of({
+        status: 'success',
+        item: {
+          id: 'legal-1',
+          name: 'Abogada actualizada',
+          displayName: 'Abogada actualizada',
+          email: 'abogada@moyra.org',
+          role: 'ROLE_LEGAL_STAFF',
+        },
+      })
+    );
+
     await TestBed.configureTestingModule({
       imports: [AdminUserProfileComponent],
       providers: [
@@ -28,6 +43,13 @@ describe('AdminUserProfileComponent', () => {
         {
           provide: UserService,
           useValue: {
+            getIdentity: () => ({
+              id: 'legal-1',
+              name: 'Abogada Moyra',
+              email: 'abogada@moyra.org',
+              role: 'ROLE_LEGAL_STAFF',
+            }),
+            updateUser: updateUserSpy,
             getUsers: () =>
               of({
                 users: [
@@ -39,6 +61,17 @@ describe('AdminUserProfileComponent', () => {
                   },
                 ],
               }),
+          },
+        },
+        {
+          provide: AuthFacade,
+          useValue: {
+            identity: () => ({
+              id: 'legal-1',
+              name: 'Abogada Moyra',
+              email: 'abogada@moyra.org',
+              role: 'ROLE_LEGAL_STAFF',
+            }),
           },
         },
         {
@@ -94,5 +127,18 @@ describe('AdminUserProfileComponent', () => {
     expect(text).toContain('Contrato corporativo');
     expect(text).toContain('Publicar entradas');
     expect(caseLink?.textContent).toContain('Contrato corporativo');
+  });
+
+  it('updates basic profile data', () => {
+    fixture.componentInstance.profileDraft.displayName = 'Abogada actualizada';
+    fixture.componentInstance.saveProfile();
+    fixture.detectChanges();
+
+    expect(updateUserSpy).toHaveBeenCalledWith('legal-1', {
+      name: 'Abogada actualizada',
+      displayName: 'Abogada actualizada',
+      email: 'abogada@moyra.org',
+    });
+    expect(fixture.nativeElement.textContent).toContain('Perfil guardado');
   });
 });

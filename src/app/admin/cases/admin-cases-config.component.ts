@@ -131,15 +131,6 @@ type CaseTypeEditor = {
             <div class="admin-cases-config__statuses">
               <div class="admin-cases-config__statuses-head">
                 <h3>Estados</h3>
-                <div class="admin-cases-config__add-status">
-                  <input
-                    name="newStatusLabel"
-                    [(ngModel)]="newStatusLabel"
-                    maxlength="120"
-                    placeholder="Nuevo estado"
-                  />
-                  <button type="button" (click)="addStatus()">Agregar estado</button>
-                </div>
               </div>
 
               @for (status of sortedEditableStatuses(); track status.id || $index; let index = $index) {
@@ -174,6 +165,72 @@ type CaseTypeEditor = {
                   Inicial
                 </label>
               </article>
+              }
+
+              <article class="admin-cases-config__status-row admin-cases-config__status-row--new">
+                <label>
+                  Nueva etiqueta
+                  <input
+                    name="newStatusLabel"
+                    [(ngModel)]="newStatusDraft.label"
+                    maxlength="120"
+                    placeholder="Nuevo estado"
+                  />
+                </label>
+                <label>
+                  Color
+                  <input name="newStatusColor" type="color" [(ngModel)]="newStatusDraft.color" />
+                </label>
+                <label>
+                  Orden
+                  <input name="newStatusOrder" type="number" [(ngModel)]="newStatusDraft.order" />
+                </label>
+                <label class="admin-cases-config__toggle">
+                  <input name="newStatusActive" type="checkbox" [(ngModel)]="newStatusDraft.active" />
+                  Activo
+                </label>
+                <label class="admin-cases-config__toggle">
+                  <input
+                    name="newStatusDefault"
+                    type="checkbox"
+                    [(ngModel)]="newStatusDraft.isDefault"
+                  />
+                  Inicial
+                </label>
+                <button type="button" [disabled]="saving" (click)="addStatus()">
+                  Agregar estado
+                </button>
+              </article>
+
+              @if (copyableCaseTypes().length > 0) {
+              <div class="admin-cases-config__copy-status">
+                <h4>Copiar estado de otro tipo</h4>
+                <label>
+                  Tipo origen
+                  <select name="copyStatusTypeId" [(ngModel)]="copyStatusTypeId" (ngModelChange)="copyStatusId = ''">
+                    <option value="">Selecciona un tipo</option>
+                    @for (caseType of copyableCaseTypes(); track caseType.id) {
+                    <option [value]="caseType.id">{{ caseType.name }}</option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  Estado
+                  <select name="copyStatusId" [(ngModel)]="copyStatusId">
+                    <option value="">Selecciona un estado</option>
+                    @for (status of statusesForCopySource(); track status.id) {
+                    <option [value]="status.id">{{ statusLabel(status) }}</option>
+                    }
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  [disabled]="saving || !copyStatusTypeId || !copyStatusId"
+                  (click)="copyStatusFromSource()"
+                >
+                  Copiar estado
+                </button>
+              </div>
               }
             </div>
 
@@ -345,8 +402,7 @@ type CaseTypeEditor = {
       }
 
       .admin-cases-config__editor-head,
-      .admin-cases-config__statuses-head,
-      .admin-cases-config__add-status {
+      .admin-cases-config__statuses-head {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
@@ -354,17 +410,32 @@ type CaseTypeEditor = {
         justify-content: space-between;
       }
 
-      .admin-cases-config__add-status {
-        justify-content: flex-start;
-      }
-
       .admin-cases-config__status-row {
         display: grid;
-        grid-template-columns: minmax(180px, 1fr) 96px 88px 96px 96px;
+        grid-template-columns: minmax(180px, 1fr) 96px 88px 96px 96px auto;
         gap: 10px;
         align-items: end;
         border-top: 1px solid rgba(41, 48, 59, 0.14);
         padding-top: 12px;
+      }
+
+      .admin-cases-config__status-row--new {
+        background: #f8fafc;
+        padding: 12px;
+      }
+
+      .admin-cases-config__copy-status {
+        border-top: 1px solid rgba(41, 48, 59, 0.14);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(180px, 1fr)) auto;
+        gap: 10px;
+        padding-top: 12px;
+        align-items: end;
+      }
+
+      .admin-cases-config__copy-status h4 {
+        grid-column: 1 / -1;
+        margin: 0;
       }
 
       .admin-cases-config__toggle {
@@ -388,7 +459,8 @@ type CaseTypeEditor = {
 
       @media (max-width: 900px) {
         .admin-cases-config__layout,
-        .admin-cases-config__status-row {
+        .admin-cases-config__status-row,
+        .admin-cases-config__copy-status {
           grid-template-columns: 1fr;
         }
       }
@@ -408,7 +480,16 @@ export class AdminCasesConfigComponent implements OnInit {
   newTypeName = '';
   newTypeDescription = '';
   newTypeStatusLabel = 'En revisión';
-  newStatusLabel = '';
+  newStatusDraft: CaseStatusEditor = {
+    id: '',
+    label: '',
+    color: '#334155',
+    order: 1,
+    active: true,
+    isDefault: false,
+  };
+  copyStatusTypeId = '';
+  copyStatusId = '';
 
   constructor(private _caseService: CaseService) {}
 
@@ -512,6 +593,9 @@ export class AdminCasesConfigComponent implements OnInit {
     if (!this.editForm.statuses.some((status) => status.isDefault)) {
       this.editForm.statuses[0].isDefault = true;
     }
+    this.resetNewStatusDraft();
+    this.copyStatusTypeId = '';
+    this.copyStatusId = '';
     this.formError = '';
     this.successMessage = '';
   }
@@ -562,26 +646,62 @@ export class AdminCasesConfigComponent implements OnInit {
     if (!this.editForm) {
       return;
     }
-    const label = this.newStatusLabel.trim();
+    const label = this.newStatusDraft.label.trim();
     if (!label) {
       this.formError = 'Captura la etiqueta del nuevo estado.';
       return;
     }
-    const nextOrder =
-      Math.max(0, ...this.editForm.statuses.map((status) => Number(status.order) || 0)) + 1;
+    const statusToAdd: CaseStatusEditor = {
+      ...this.newStatusDraft,
+      id: this.newStatusId(label),
+      label,
+      color: this.newStatusDraft.color || '#334155',
+      order: Number(this.newStatusDraft.order) || this.nextStatusOrder(),
+      active: this.newStatusDraft.active !== false,
+      isDefault: this.newStatusDraft.isDefault === true,
+    };
+    if (statusToAdd.isDefault) {
+      this.editForm.statuses = this.editForm.statuses.map((status) => ({
+        ...status,
+        isDefault: false,
+      }));
+    }
+    this.editForm.statuses = [
+      ...this.editForm.statuses,
+      statusToAdd,
+    ];
+    this.resetNewStatusDraft();
+    this.formError = '';
+    this.saveSelectedCaseType();
+  }
+
+  copyStatusFromSource(): void {
+    if (!this.editForm || !this.copyStatusTypeId || !this.copyStatusId) {
+      return;
+    }
+    const sourceStatus = this.statusesForCopySource().find(
+      (status) => status.id === this.copyStatusId
+    );
+    if (!sourceStatus) {
+      this.formError = 'Selecciona un estado válido para copiar.';
+      return;
+    }
+
+    const label = caseStatusLabel(sourceStatus);
     this.editForm.statuses = [
       ...this.editForm.statuses,
       {
         id: this.newStatusId(label),
         label,
-        color: '#334155',
-        order: nextOrder,
-        active: true,
+        color: sourceStatus.color || '#334155',
+        order: this.nextStatusOrder(),
+        active: sourceStatus.active !== false,
         isDefault: false,
       },
     ];
-    this.newStatusLabel = '';
+    this.copyStatusId = '';
     this.formError = '';
+    this.saveSelectedCaseType();
   }
 
   markDefaultStatus(status: CaseStatusEditor): void {
@@ -598,6 +718,22 @@ export class AdminCasesConfigComponent implements OnInit {
     return [...(this.editForm?.statuses || [])].sort(
       (left, right) => (Number(left.order) || 0) - (Number(right.order) || 0)
     );
+  }
+
+  copyableCaseTypes(): CaseType[] {
+    return this.caseTypes.filter(
+      (caseType) => caseType.id !== this.editForm?.id && (caseType.statuses || []).length > 0
+    );
+  }
+
+  statusesForCopySource(): CaseStatusDefinition[] {
+    return (
+      this.caseTypes.find((caseType) => caseType.id === this.copyStatusTypeId)?.statuses || []
+    );
+  }
+
+  statusLabel(status: CaseStatusDefinition): string {
+    return caseStatusLabel(status);
   }
 
   activeStatusCount(caseType: CaseType): number {
@@ -643,5 +779,20 @@ export class AdminCasesConfigComponent implements OnInit {
       .slice(0, 48);
     const suffix = this.editForm ? this.editForm.statuses.length + 1 : 1;
     return `${this.editForm?.id || 'case-type'}:status:${base || 'estado'}-${suffix}`;
+  }
+
+  private nextStatusOrder(): number {
+    return Math.max(0, ...(this.editForm?.statuses || []).map((status) => Number(status.order) || 0)) + 1;
+  }
+
+  private resetNewStatusDraft(): void {
+    this.newStatusDraft = {
+      id: '',
+      label: '',
+      color: '#334155',
+      order: this.nextStatusOrder(),
+      active: true,
+      isDefault: false,
+    };
   }
 }

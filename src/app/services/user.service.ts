@@ -64,7 +64,13 @@ export class UserService {
   }
 
   getUser(id: string): Observable<any> {
-    return this._http.get(this.urlUser + 'user/' + id);
+    const getUserUrl = ApiRuntime.isV2
+      ? apiUrl(`/users/${encodeURIComponent(id)}`)
+      : this.urlUser + 'user/' + id;
+
+    return this._http.get(getUserUrl, {
+      headers: this.authHeaders(),
+    });
   }
 
   login(userToLogin: any, gettoken: any = null): Observable<any> {
@@ -196,8 +202,11 @@ export class UserService {
   updateUser(id: string, user: any): Observable<any> {
     const body = JSON.stringify(user);
     const headers = this.authHeaders();
+    const updateUserUrl = ApiRuntime.isV2
+      ? apiUrl(`/users/${encodeURIComponent(id)}`)
+      : this.urlUser + 'user/' + id;
 
-    return this._http.put(this.urlUser + 'user/' + id, body, {
+    return this._http.put(updateUserUrl, body, {
       headers: headers,
     });
   }
