@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, catchError, of, switchMap, throwError } from 'rxjs';
+import { Observable, catchError, finalize, of, shareReplay, switchMap, throwError } from 'rxjs';
 import {
   ApiRuntime,
   CognitoRuntime,
@@ -20,6 +20,7 @@ export class UserService {
   public urlUser: string;
   public identity: any;
   public token: any;
+  private refreshSessionRequest$?: Observable<any>;
 
   constructor(private _http: HttpClient) {
     this.urlUser = GlobalUser.url;
@@ -100,14 +101,25 @@ export class UserService {
       return of(null);
     }
 
-    return this._http.post(
+    if (this.refreshSessionRequest$) {
+      return this.refreshSessionRequest$;
+    }
+
+    this.refreshSessionRequest$ = this._http.post(
       apiUrl('/auth/refresh'),
       {},
       {
         headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
         withCredentials: true,
       }
+    ).pipe(
+      finalize(() => {
+        this.refreshSessionRequest$ = undefined;
+      }),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
+
+    return this.refreshSessionRequest$;
   }
 
   logoutSession(): Observable<any> {
