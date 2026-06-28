@@ -307,8 +307,17 @@ describe('CaseDetailComponent', () => {
     fixture.detectChanges();
   }
 
+  function expandEntry(entryId = 'entry-1', expandComments = true): void {
+    fixture.componentInstance.toggleEntry(entryId);
+    if (expandComments) {
+      fixture.componentInstance.toggleComments(entryId);
+    }
+    fixture.detectChanges();
+  }
+
   it('renders visible timeline, comments, and documents without public SEO routes', () => {
     render();
+    expandEntry();
 
     const compiled = fixture.nativeElement as HTMLElement;
     const text = compiled.textContent || '';
@@ -336,6 +345,7 @@ describe('CaseDetailComponent', () => {
 
   it('labels comment inputs and keeps long entry titles as wrapping text links', () => {
     render();
+    expandEntry();
 
     const compiled = fixture.nativeElement as HTMLElement;
     const commentEditor = compiled.querySelector('app-rich-text-editor') as HTMLElement | null;
@@ -356,6 +366,7 @@ describe('CaseDetailComponent', () => {
 
   it('submits a client comment and appends the successful API response', () => {
     render();
+    expandEntry();
 
     expect(fixture.componentInstance.canComment(fixture.componentInstance.entries[0])).toBeTrue();
     fixture.componentInstance.commentDrafts['entry-1'] = 'Comentario enviado';
@@ -391,6 +402,7 @@ describe('CaseDetailComponent', () => {
 
   it('lets a permitted member add a OneDrive document link', () => {
     render();
+    expandEntry('entry-1', false);
 
     fixture.componentInstance.oneDriveDrafts['entry-1'] = {
       fileName: 'Contrato firmado',
@@ -403,6 +415,7 @@ describe('CaseDetailComponent', () => {
     expect(createOneDriveLinkSpy).toHaveBeenCalledWith('case-1', {
       fileName: 'Contrato firmado',
       entryId: 'entry-1',
+      entryIds: ['entry-1'],
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
       visibility: { mode: 'case_members' },
     });
@@ -412,6 +425,7 @@ describe('CaseDetailComponent', () => {
 
   it('explains invalid document links instead of silently blocking submit', () => {
     render();
+    expandEntry('entry-1', false);
 
     fixture.componentInstance.oneDriveDrafts['entry-1'] = {
       fileName: 'Video externo',

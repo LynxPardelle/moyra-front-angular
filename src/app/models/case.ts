@@ -140,6 +140,7 @@ export type CaseFile = {
   id: string;
   caseId: string;
   entryId?: string;
+  entryIds?: string[];
   fileName: string;
   originalName?: string;
   title?: string;
@@ -378,10 +379,21 @@ export type CompleteCaseFileRequest = {
 };
 
 export type CreateCaseOneDriveLinkRequest = {
-  entryId: string;
+  entryId?: string;
+  entryIds?: string[];
   fileName: string;
   linkUrl: string;
   visibility?: CaseVisibility;
+};
+
+export type UpdateCaseFileRequest = {
+  entryId?: string;
+  entryIds?: string[];
+  fileName?: string;
+  title?: string;
+  linkUrl?: string;
+  visibility?: CaseVisibility;
+  externalVisibilityStatus?: CaseExternalVisibilityStatus;
 };
 
 export type CaseFileVisibilityRequest = {

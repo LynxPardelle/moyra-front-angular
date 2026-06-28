@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { UserService } from '../services/user.service';
 
@@ -16,13 +18,13 @@ type NewUserForm = {
 
 @Component({
   selector: 'admin-usuarios',
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './usuarios.component.html',
   styleUrls: ['./usuarios.component.scss'],
 })
-export class UsuariosComponent {
+export class UsuariosComponent implements OnInit {
   public readonly customRelationshipValue = '__custom__';
-  public readonly relationshipOptions = [
+  private readonly fallbackRelationshipOptions = [
     'Equipo Moyra',
     'Cliente o invitado externo',
     'Cliente',
@@ -35,7 +37,7 @@ export class UsuariosComponent {
   public readonly caseRoleOptions = [
     {
       name: 'Cliente',
-      description: 'Ve sus casos asignados, comenta y abre documentos aprobados.',
+      description: 'Ve sus casos asignados y abre documentos aprobados cuando tenga permiso.',
     },
     {
       name: 'Abogado',
@@ -53,8 +55,13 @@ export class UsuariosComponent {
   public saving = false;
   public user: NewUserForm = this.emptyUser();
   public relationshipPreset = '';
+  public relationshipOptions: string[] = [];
 
   constructor(private _userService: UserService) {}
+
+  ngOnInit(): void {
+    this.loadRelationshipOptions();
+  }
 
   passwordMeetsPolicy(): boolean {
     const password = this.user.temporaryPassword || '';
@@ -145,5 +152,21 @@ export class UsuariosComponent {
 
   private isValidEmail(value: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  }
+
+  private loadRelationshipOptions(): void {
+    this._userService.getRelationships().subscribe({
+      next: (response) => {
+        const options = (response.items || [])
+          .filter((item) => item.active !== false)
+          .sort((left, right) => (left.order || 0) - (right.order || 0))
+          .map((item) => item.label)
+          .filter(Boolean);
+        this.relationshipOptions = options.length ? options : [...this.fallbackRelationshipOptions];
+      },
+      error: () => {
+        this.relationshipOptions = [...this.fallbackRelationshipOptions];
+      },
+    });
   }
 }

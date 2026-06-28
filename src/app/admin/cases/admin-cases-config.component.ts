@@ -49,6 +49,25 @@ type CaseTypeEditor = {
       <div class="admin-cases-config__layout">
         <section class="admin-cases-config__panel">
           <h2>Tipos</h2>
+          @if (caseTypes.length === 0) {
+          <p class="admin-cases-config__empty">Aún no hay tipos de caso configurados.</p>
+          } @else {
+          <nav class="admin-cases-config__types" aria-label="Tipos de caso">
+            @for (caseType of caseTypes; track caseType.id) {
+            <button
+              type="button"
+              [class.is-selected]="caseType.id === selectedTypeId"
+              (click)="selectCaseType(caseType)"
+            >
+              <span>{{ caseType.name }}</span>
+              <small>{{ activeStatusCount(caseType) }} estados activos</small>
+            </button>
+            }
+          </nav>
+          }
+
+          <hr class="admin-cases-config__divider" />
+          <h3 class="admin-cases-config__create-title">Crear nuevo tipo</h3>
           <form class="admin-cases-config__form" (ngSubmit)="createCaseType()">
             <label>
               Nombre
@@ -81,23 +100,6 @@ type CaseTypeEditor = {
               {{ creating ? 'Creando...' : 'Crear tipo' }}
             </button>
           </form>
-
-          @if (caseTypes.length === 0) {
-          <p class="admin-cases-config__empty">Aún no hay tipos de caso configurados.</p>
-          } @else {
-          <nav class="admin-cases-config__types" aria-label="Tipos de caso">
-            @for (caseType of caseTypes; track caseType.id) {
-            <button
-              type="button"
-              [class.is-selected]="caseType.id === selectedTypeId"
-              (click)="selectCaseType(caseType)"
-            >
-              <span>{{ caseType.name }}</span>
-              <small>{{ activeStatusCount(caseType) }} estados activos</small>
-            </button>
-            }
-          </nav>
-          }
         </section>
 
         <section class="admin-cases-config__panel admin-cases-config__editor">
@@ -399,6 +401,17 @@ type CaseTypeEditor = {
 
       .admin-cases-config__types small {
         color: rgba(41, 48, 59, 0.62);
+      }
+
+      .admin-cases-config__divider {
+        border: 0;
+        border-top: 1px solid rgba(41, 48, 59, 0.18);
+        margin: 18px 0;
+      }
+
+      .admin-cases-config__create-title {
+        font-size: 1rem;
+        margin-bottom: 10px;
       }
 
       .admin-cases-config__editor-head,

@@ -1,11 +1,16 @@
 <section class="admin-users-page">
   <header class="admin-users-page__header">
-    <p>Usuarios</p>
-    <h1>Crear usuario</h1>
-    <span>
-      Alta administrada para cuentas de Moyra. El usuario recibirá una contraseña temporal y deberá
-      cambiarla en su primer inicio de sesión.
-    </span>
+    <div>
+      <p>Usuarios</p>
+      <h1>Crear usuario</h1>
+      <span>
+        Alta administrada para cuentas de Moyra. El usuario recibirá una contraseña temporal y deberá
+        cambiarla en su primer inicio de sesión.
+      </span>
+    </div>
+    <a class="admin-users-page__link" routerLink="/admin/usuarios/relaciones">
+      Administrar relaciones
+    </a>
   </header>
 
   <form class="admin-users-form" (ngSubmit)="createUser()" #userForm="ngForm">

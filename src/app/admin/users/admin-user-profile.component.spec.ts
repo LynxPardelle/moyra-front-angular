@@ -82,6 +82,18 @@ describe('AdminUserProfileComponent', () => {
                   },
                 ],
               }),
+            getRelationships: () =>
+              of({
+                status: 'success',
+                items: [
+                  {
+                    id: 'rel-team',
+                    label: 'Equipo Moyra',
+                    active: true,
+                    sortOrder: 1,
+                  },
+                ],
+              }),
           },
         },
         {

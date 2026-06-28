@@ -55,6 +55,29 @@ describe('AdminCaseEntryEditorComponent', () => {
               }),
             createEntry: createEntrySpy,
             updateEntry: updateEntrySpy,
+            listFiles: () =>
+              of({
+                status: 'success',
+                items: [],
+              }),
+            listMembers: () =>
+              of({
+                status: 'success',
+                items: [],
+              }),
+            createOneDriveLink: () =>
+              of({
+                status: 'success',
+                item: {
+                  id: 'file-1',
+                  caseId: 'case-1',
+                  entryId: entryId || 'entry-1',
+                  fileName: 'Contrato firmado',
+                  linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
+                  storageProvider: 'onedrive',
+                  uploadStatus: 'linked',
+                },
+              }),
           },
         },
         {

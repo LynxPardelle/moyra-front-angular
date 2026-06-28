@@ -13,6 +13,15 @@ import {
 import { readStoredAuthSession } from '../store/auth/auth.storage';
 import { decodeJwtPayload } from '../utils/auth-token';
 
+export type UserRelationshipOption = {
+  id: string;
+  label: string;
+  active?: boolean;
+  order?: number;
+  system?: boolean;
+  usersCount?: number;
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -222,6 +231,56 @@ export class UserService {
       headers: headers,
       withCredentials: ApiRuntime.isV2 ? supportsCredentialedAuthCookies() : false,
     });
+  }
+
+  getRelationships(): Observable<{ status: string; items: UserRelationshipOption[] }> {
+    return this._http.get<{ status: string; items: UserRelationshipOption[] }>(
+      apiUrl('/user-relationships'),
+      {
+        headers: this.authHeaders(),
+      }
+    );
+  }
+
+  createRelationship(body: {
+    label: string;
+    active?: boolean;
+    order?: number;
+  }): Observable<{ status: string; item: UserRelationshipOption }> {
+    return this._http.post<{ status: string; item: UserRelationshipOption }>(
+      apiUrl('/user-relationships'),
+      body,
+      {
+        headers: this.authHeaders(),
+      }
+    );
+  }
+
+  updateRelationship(
+    relationshipId: string,
+    body: { label?: string; active?: boolean; order?: number }
+  ): Observable<{ status: string; item: UserRelationshipOption }> {
+    return this._http.put<{ status: string; item: UserRelationshipOption }>(
+      apiUrl(`/user-relationships/${encodeURIComponent(relationshipId)}`),
+      body,
+      {
+        headers: this.authHeaders(),
+      }
+    );
+  }
+
+  deleteRelationship(
+    relationshipId: string,
+    body: { replacementRelationshipId: string }
+  ): Observable<{ status: string; item: UserRelationshipOption; affectedUsers: any[] }> {
+    return this._http.request<{ status: string; item: UserRelationshipOption; affectedUsers: any[] }>(
+      'delete',
+      apiUrl(`/user-relationships/${encodeURIComponent(relationshipId)}`),
+      {
+        body,
+        headers: this.authHeaders(),
+      }
+    );
   }
 
   deleteUser(id: string): Observable<any> {

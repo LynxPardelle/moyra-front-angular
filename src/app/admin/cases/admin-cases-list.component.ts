@@ -157,6 +157,7 @@ type PlatformUser = {
         <label>
           Tipo de caso
           <select
+            name="caseTypeFilter"
             [(ngModel)]="caseTypeFilter"
             (ngModelChange)="resetPage()"
             aria-label="Filtrar por tipo"
@@ -170,6 +171,7 @@ type PlatformUser = {
         <label>
           Estado
           <select
+            name="statusFilter"
             [(ngModel)]="statusFilter"
             (ngModelChange)="resetPage()"
             aria-label="Filtrar por estado"
@@ -178,6 +180,41 @@ type PlatformUser = {
             @for (status of allStatuses(); track $index) {
             <option [value]="status.id">{{ statusLabel(status) }}</option>
             }
+          </select>
+        </label>
+        <label>
+          Creador
+          <input
+            name="createdByFilter"
+            [(ngModel)]="createdByFilter"
+            (ngModelChange)="resetPage()"
+            placeholder="Nombre o correo"
+          />
+        </label>
+        <label>
+          Creado desde
+          <input
+            name="createdFromFilter"
+            [(ngModel)]="createdFromFilter"
+            (ngModelChange)="resetPage()"
+            type="date"
+          />
+        </label>
+        <label>
+          Creado hasta
+          <input
+            name="createdToFilter"
+            [(ngModel)]="createdToFilter"
+            (ngModelChange)="resetPage()"
+            type="date"
+          />
+        </label>
+        <label>
+          Por página
+          <select name="pageSize" [(ngModel)]="pageSize" (ngModelChange)="resetPage()">
+            <option [ngValue]="10">10</option>
+            <option [ngValue]="25">25</option>
+            <option [ngValue]="50">50</option>
           </select>
         </label>
       </div>
@@ -200,6 +237,8 @@ type PlatformUser = {
               <th>Caso</th>
               <th>Tipo</th>
               <th>Estado</th>
+              <th>Creado</th>
+              <th>Creado por</th>
               <th>Actividad</th>
             </tr>
           </thead>
@@ -212,7 +251,9 @@ type PlatformUser = {
               </td>
               <td>{{ caseTypeName(caseItem.caseTypeId) }}</td>
               <td>{{ statusName(caseItem.statusId) }}</td>
-              <td>{{ caseItem.lastActivityAt || caseItem.updatedAt || 'Sin actividad' }}</td>
+              <td>{{ formatDate(caseItem.createdAt) }}</td>
+              <td>{{ createdByLabel(caseItem) }}</td>
+              <td>{{ formatDate(caseItem.lastActivityAt || caseItem.updatedAt) }}</td>
             </tr>
             }
           </tbody>
@@ -484,10 +525,13 @@ export class AdminCasesListComponent implements OnInit {
   statusFilter = '';
   caseTypeFilter = '';
   searchTerm = '';
+  createdByFilter = '';
+  createdFromFilter = '';
+  createdToFilter = '';
   currentPage = 1;
   createBusy = false;
   createError = '';
-  readonly pageSize = 10;
+  pageSize = 10;
   newCase: NewCaseForm = {
     title: '',
     reference: '',
@@ -545,12 +589,16 @@ export class AdminCasesListComponent implements OnInit {
       if (this.statusFilter && caseItem.statusId !== this.statusFilter) {
         return false;
       }
+      if (!this.matchesCreatedBy(caseItem) || !this.matchesCreatedDate(caseItem)) {
+        return false;
+      }
       if (term) {
         const haystack = [
           caseItem.title,
           caseItem.reference,
           this.caseTypeName(caseItem.caseTypeId),
           this.statusName(caseItem.statusId),
+          this.createdByLabel(caseItem),
         ]
           .join(' ')
           .toLowerCase();
@@ -694,6 +742,30 @@ export class AdminCasesListComponent implements OnInit {
     return caseStatusLabel(status);
   }
 
+  formatDate(value?: string): string {
+    if (!value) {
+      return 'Sin fecha';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return new Intl.DateTimeFormat('es-MX', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'America/Mexico_City',
+    }).format(date);
+  }
+
+  createdByLabel(caseItem: CaseRecord): string {
+    const name = this.humanName(caseItem.createdByDisplayName, caseItem.createdByUserId);
+    const email = String(caseItem.createdByEmail || '').trim();
+    if (name && email && name !== email) {
+      return `${name} (${email})`;
+    }
+    return name || email || 'Sin creador registrado';
+  }
+
   canCreateCase(): boolean {
     return (
       this.newCase.title.trim().length > 0 &&
@@ -755,9 +827,34 @@ export class AdminCasesListComponent implements OnInit {
     );
   }
 
-  private humanName(value?: string): string {
+  private humanName(value?: string, id?: string): string {
     const name = String(value || '').trim();
-    return name && !/^[0-9a-f-]{24,}$/i.test(name) ? name : '';
+    return name && name !== id && !/^[0-9a-f-]{24,}$/i.test(name) ? name : '';
+  }
+
+  private matchesCreatedBy(caseItem: CaseRecord): boolean {
+    const term = this.createdByFilter.trim().toLowerCase();
+    if (!term) {
+      return true;
+    }
+    return this.createdByLabel(caseItem).toLowerCase().includes(term);
+  }
+
+  private matchesCreatedDate(caseItem: CaseRecord): boolean {
+    if (!this.createdFromFilter && !this.createdToFilter) {
+      return true;
+    }
+    const createdAt = Date.parse(caseItem.createdAt || '');
+    if (!createdAt) {
+      return false;
+    }
+    const start = this.createdFromFilter
+      ? Date.parse(`${this.createdFromFilter}T00:00:00`)
+      : Number.NEGATIVE_INFINITY;
+    const end = this.createdToFilter
+      ? Date.parse(`${this.createdToFilter}T23:59:59`)
+      : Number.POSITIVE_INFINITY;
+    return createdAt >= start && createdAt <= end;
   }
 
   private normalizeUsers(response: any): PlatformUser[] {

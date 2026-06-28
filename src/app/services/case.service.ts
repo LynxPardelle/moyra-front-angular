@@ -34,6 +34,7 @@ import {
   UpdateCaseMemberRequest,
   UpdateCaseRequest,
   UpdateCaseTypeRequest,
+  UpdateCaseFileRequest,
   UpdateCasePermissionsRequest,
   UpdateCaseNotificationPreferencesRequest,
 } from '../models/case';
@@ -336,6 +337,18 @@ export class CaseService {
   deleteFile(caseId: string, fileId: string): Observable<CaseItemResponse<CaseFile>> {
     return this._http.delete<CaseItemResponse<CaseFile>>(
       apiUrl(`/cases/${encodeURIComponent(caseId)}/files/${encodeURIComponent(fileId)}`),
+      { headers: this.authHeaders() }
+    );
+  }
+
+  updateFile(
+    caseId: string,
+    fileId: string,
+    body: UpdateCaseFileRequest
+  ): Observable<CaseItemResponse<CaseFile>> {
+    return this._http.put<CaseItemResponse<CaseFile>>(
+      apiUrl(`/cases/${encodeURIComponent(caseId)}/files/${encodeURIComponent(fileId)}`),
+      normalizeVisibilityPayload(body),
       { headers: this.authHeaders() }
     );
   }

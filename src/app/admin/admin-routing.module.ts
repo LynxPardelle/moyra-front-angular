@@ -17,6 +17,7 @@ import { AdminCaseEntryEditorComponent } from './cases/admin-case-entry-editor.c
 import { AdminCasesConfigComponent } from './cases/admin-cases-config.component';
 import { AdminCasesListComponent } from './cases/admin-cases-list.component';
 import { AdminUserProfileComponent } from './users/admin-user-profile.component';
+import { AdminUserRelationshipsComponent } from './users/admin-user-relationships.component';
 import { AdminUsersListComponent } from './users/admin-users-list.component';
 
 /* PublicationComponents */
@@ -52,6 +53,7 @@ const routes: Routes = [
       { path: 'archivos', component: ArchivosComponent },
       { path: 'usuarios', component: AdminUsersListComponent },
       { path: 'usuarios/nuevo', component: UsuariosComponent },
+      { path: 'usuarios/relaciones', component: AdminUserRelationshipsComponent },
       { path: 'usuarios/:userId', component: AdminUserProfileComponent },
 
       // Casos

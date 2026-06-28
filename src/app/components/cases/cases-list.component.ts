@@ -257,11 +257,11 @@ export class CasesListComponent implements OnInit {
   createdAtLabel(caseRecord: CaseRecord): string {
     const value = caseRecord.createdAt;
     if (!value) {
-      return this.text('casesCreatedAtFallbackLabel', 'No disponible');
+      return this.text('casesCreatedAtFallbackLabel', 'Sin fecha registrada');
     }
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
-      return this.text('casesCreatedAtFallbackLabel', 'No disponible');
+      return this.text('casesCreatedAtFallbackLabel', 'Sin fecha registrada');
     }
     return new Intl.DateTimeFormat('es-MX', {
       dateStyle: 'medium',
@@ -276,7 +276,7 @@ export class CasesListComponent implements OnInit {
     if (name && email && name !== email) {
       return `${name} (${email})`;
     }
-    return name || email || this.text('casesCreatedByFallbackLabel', 'No disponible');
+    return name || email || this.text('casesCreatedByFallbackLabel', 'Sin creador registrado');
   }
 
   statusName(statusId: string): string {

@@ -173,7 +173,7 @@ describe('AdminCaseDetailComponent', () => {
                     contentType: 'application/pdf',
                     externalVisibilityStatus: 'pending',
                     uploadStatus: 'uploaded',
-                    visibility: 'internal_only',
+                    visibility: { mode: 'case_members' },
                   },
                 ],
               }),
@@ -215,6 +215,8 @@ describe('AdminCaseDetailComponent', () => {
             removeMember: removeMemberSpy,
             createOneDriveLink: createOneDriveLinkSpy,
             updateFileVisibility: updateFileVisibilitySpy,
+            updateFile: () => of({ status: 'success', item: {} }),
+            deleteFile: () => of({ status: 'success', item: {} }),
           },
         },
         {
@@ -274,7 +276,10 @@ describe('AdminCaseDetailComponent', () => {
     expect(text).toContain('Auditoría');
     expect(text).toContain('Enlace de OneDrive');
     expect(fixture.nativeElement.querySelector('a[href*="amazonaws"]')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.admin-case-file button')?.disabled).toBeFalse();
+    const approveButton = Array.from(
+      fixture.nativeElement.querySelectorAll('.admin-case-file button') as NodeListOf<HTMLButtonElement>
+    ).find((button) => button.textContent?.includes('Aprobar visibilidad'));
+    expect(approveButton?.disabled).toBeFalse();
   });
 
   it('renders audit rows with readable actors, targets and details', () => {
@@ -375,7 +380,7 @@ describe('AdminCaseDetailComponent', () => {
 
   it('adds OneDrive links as case documents', () => {
     fixture.componentInstance.oneDriveLink = {
-      entryId: 'entry-1',
+      entryIds: ['entry-1'],
       fileName: 'Contrato firmado',
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
       visibilityMode: 'case_members',
@@ -386,11 +391,12 @@ describe('AdminCaseDetailComponent', () => {
 
     expect(createOneDriveLinkSpy).toHaveBeenCalledWith('case-1', {
       entryId: 'entry-1',
+      entryIds: ['entry-1'],
       fileName: 'Contrato firmado',
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
       visibility: { mode: 'case_members' },
     });
-    expect(fixture.nativeElement.textContent).toContain('Contrato firmado');
+    expect(fixture.componentInstance.files.some((file) => file.fileName === 'Contrato firmado')).toBeTrue();
   });
 
   it('removes a case membership without deleting the user', async () => {

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 
-import { CaseEntry, CaseMembership, CaseVisibility } from '../../models/case';
+import { CaseEntry, CaseFile, CaseMembership, CaseVisibility } from '../../models/case';
 import { CaseService } from '../../services/case.service';
 import { AuthFacade } from '../../store/auth/auth.facade';
 import { RichTextEditorComponent } from '../../components/web-utility/rich-text-editor/rich-text-editor.component';
@@ -62,6 +62,67 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
           }
         </div>
       </form>
+
+      <section class="admin-case-entry-editor__files">
+        <h2>Archivos</h2>
+        @if (!entryId) {
+        <p class="admin-case-entry-editor__note">
+          Guarda la entrada antes de adjuntar documentos.
+        </p>
+        } @else {
+        <form class="admin-case-entry-editor__file-form" (ngSubmit)="addOneDriveLink()">
+          <label>
+            Nombre del documento
+            <input
+              name="oneDriveFileName"
+              [(ngModel)]="oneDriveLink.fileName"
+              placeholder="Ej. Contrato firmado"
+            />
+          </label>
+          <label>
+            Enlace de OneDrive
+            <input
+              name="oneDriveLinkUrl"
+              [(ngModel)]="oneDriveLink.linkUrl"
+              placeholder="https://...sharepoint.com/..."
+              type="url"
+            />
+          </label>
+          <label>
+            Visibilidad
+            <select name="oneDriveVisibility" [(ngModel)]="oneDriveLink.visibilityMode">
+              <option value="internal_only">Sólo interno</option>
+              <option value="case_members">Visible para cliente</option>
+            </select>
+          </label>
+          <button type="submit" [disabled]="oneDriveBusy || !canCreateOneDriveLink()">
+            {{ oneDriveBusy ? 'Agregando...' : 'Agregar enlace' }}
+          </button>
+        </form>
+        <p class="admin-case-entry-editor__help">
+          Para Casos se guardan enlaces privados de OneDrive o SharePoint; los demás módulos siguen usando S3.
+        </p>
+        @if (oneDriveError) {
+        <p class="admin-case-entry-editor__error">{{ oneDriveError }}</p>
+        }
+        <div class="admin-case-entry-editor__file-list">
+          @if (filesForEntry(entryId).length === 0) {
+          <p>No hay documentos ligados a esta entrada.</p>
+          } @for (file of filesForEntry(entryId); track file.id) {
+          <article class="admin-case-entry-editor__file">
+            <div>
+              <strong>{{ displayFileName(file) }}</strong>
+              <span>{{ fileTypeLabel(file) }}</span>
+              <span>{{ fileReviewLabel(file) }}</span>
+            </div>
+            <a [href]="fileHref(file)" target="_blank" rel="noopener noreferrer">
+              Abrir documento
+            </a>
+          </article>
+          }
+        </div>
+        }
+      </section>
     </section>
   `,
   styles: [
@@ -81,10 +142,15 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
 
       .admin-case-entry-editor__header,
       .admin-case-entry-editor__form,
+      .admin-case-entry-editor__files,
       .admin-case-entry-editor__error {
         border: 1px solid rgba(41, 48, 59, 0.18);
         background: #ffffff;
         padding: 16px;
+      }
+
+      .admin-case-entry-editor__files {
+        margin-top: 16px;
       }
 
       .admin-case-entry-editor__header {
@@ -102,10 +168,23 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
         gap: 16px;
       }
 
-      .admin-case-entry-editor__form label {
+      .admin-case-entry-editor__form label,
+      .admin-case-entry-editor__file-form label {
         display: grid;
         gap: 6px;
         font-weight: 700;
+      }
+
+      .admin-case-entry-editor__file-form {
+        display: grid;
+        grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.4fr) minmax(160px, 220px) auto;
+        align-items: end;
+        gap: 10px;
+      }
+
+      .admin-case-entry-editor__help {
+        color: rgba(41, 48, 59, 0.68);
+        margin: 10px 0;
       }
 
       .admin-case-entry-editor__note {
@@ -145,7 +224,8 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
       }
 
       button,
-      .admin-case-entry-editor__actions a {
+      .admin-case-entry-editor__actions a,
+      .admin-case-entry-editor__file a {
         background: #ffffff;
         border: 1px solid #4b8ff5;
         border-color: #4b8ff5;
@@ -162,7 +242,9 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
       button:not(:disabled):hover,
       button:not(:disabled):focus-visible,
       .admin-case-entry-editor__actions a:hover,
-      .admin-case-entry-editor__actions a:focus-visible {
+      .admin-case-entry-editor__actions a:focus-visible,
+      .admin-case-entry-editor__file a:hover,
+      .admin-case-entry-editor__file a:focus-visible {
         background: #4b8ff5;
         color: #ffffff;
         outline: 0;
@@ -180,6 +262,37 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
         margin-bottom: 16px;
       }
 
+      .admin-case-entry-editor__file-list {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .admin-case-entry-editor__file {
+        align-items: center;
+        border: 1px solid rgba(41, 48, 59, 0.14);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: space-between;
+        padding: 12px;
+      }
+
+      .admin-case-entry-editor__file div {
+        display: grid;
+        gap: 4px;
+      }
+
+      .admin-case-entry-editor__file span {
+        color: rgba(41, 48, 59, 0.68);
+      }
+
+      @media (max-width: 760px) {
+        .admin-case-entry-editor__file-form {
+          grid-template-columns: 1fr;
+        }
+      }
+
     `,
   ],
 })
@@ -188,6 +301,14 @@ export class AdminCaseEntryEditorComponent implements OnInit {
   readonly entryId: string;
   entry: Pick<CaseEntry, 'title' | 'text'> = { title: '', text: '' };
   visibilityMode = 'internal_only';
+  files: CaseFile[] = [];
+  oneDriveLink = {
+    fileName: '',
+    linkUrl: '',
+    visibilityMode: 'internal_only',
+  };
+  oneDriveBusy = false;
+  oneDriveError = '';
   canManageVisibility = false;
   saving = false;
   errorMessage = '';
@@ -208,6 +329,7 @@ export class AdminCaseEntryEditorComponent implements OnInit {
       return;
     }
 
+    this.loadFiles();
     this._caseService.getEntry(this.caseId, this.entryId).subscribe({
       next: (response) => {
         const item = response.item;
@@ -226,6 +348,15 @@ export class AdminCaseEntryEditorComponent implements OnInit {
 
   entryVisibleInPortal(): boolean {
     return this.visibilityMode !== 'internal_only';
+  }
+
+  canCreateOneDriveLink(): boolean {
+    return (
+      this.entryId.length > 0 &&
+      this.oneDriveLink.fileName.trim().length > 0 &&
+      this.oneDriveLink.linkUrl.trim().length > 0 &&
+      this.looksLikeMicrosoftLink(this.oneDriveLink.linkUrl)
+    );
   }
 
   save(): void {
@@ -274,8 +405,96 @@ export class AdminCaseEntryEditorComponent implements OnInit {
     });
   }
 
+  addOneDriveLink(): void {
+    if (!this.canCreateOneDriveLink()) {
+      this.oneDriveError =
+        'Revisa el nombre y usa un enlace válido de OneDrive o SharePoint.';
+      return;
+    }
+
+    this.oneDriveBusy = true;
+    this.oneDriveError = '';
+    this._caseService
+      .createOneDriveLink(this.caseId, {
+        entryId: this.entryId,
+        entryIds: [this.entryId],
+        fileName: this.oneDriveLink.fileName.trim(),
+        linkUrl: this.oneDriveLink.linkUrl.trim(),
+        visibility: { mode: this.oneDriveLink.visibilityMode } as CaseVisibility,
+      })
+      .subscribe({
+        next: (response) => {
+          this.files = [response.item, ...this.files.filter((file) => file.id !== response.item.id)];
+          this.oneDriveLink = {
+            fileName: '',
+            linkUrl: '',
+            visibilityMode: 'internal_only',
+          };
+          this.oneDriveBusy = false;
+          void Swal.fire({
+            title: 'Documento agregado',
+            text: 'El enlace quedó ligado a esta entrada.',
+            icon: 'success',
+          });
+        },
+        error: (error) => {
+          this.oneDriveBusy = false;
+          this.oneDriveError = String(
+            error?.error?.message || error?.message || 'No se pudo agregar el documento.'
+          );
+          void Swal.fire({
+            title: 'No se pudo agregar el documento',
+            text: this.oneDriveError,
+            icon: 'error',
+          });
+        },
+      });
+  }
+
+  filesForEntry(entryId: string): CaseFile[] {
+    return this.files.filter((file) => this.fileEntryIds(file).includes(entryId));
+  }
+
+  displayFileName(file: CaseFile): string {
+    return file.title || file.originalName || file.fileName;
+  }
+
+  fileTypeLabel(file: CaseFile): string {
+    if (this.isOneDriveFile(file)) {
+      return 'Enlace de OneDrive o SharePoint';
+    }
+    return file.contentType || file.type || 'Documento';
+  }
+
+  fileReviewLabel(file: CaseFile): string {
+    return file.externalVisibilityStatus === 'approved'
+      ? 'Visible para el cliente'
+      : 'En revisión interna';
+  }
+
+  fileHref(file: CaseFile): string {
+    const linkUrl = String(file.webUrl || file.linkUrl || '').trim();
+    if (this.isOneDriveFile(file) && linkUrl) {
+      return linkUrl;
+    }
+    return `/api/v2/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
+      file.id
+    )}/download`;
+  }
+
   private visibilityModeFrom(visibility: CaseVisibility): string {
     return typeof visibility === 'object' ? visibility.mode : visibility || 'internal_only';
+  }
+
+  private loadFiles(): void {
+    this._caseService.listFiles(this.caseId).subscribe({
+      next: (response) => {
+        this.files = response.items || [];
+      },
+      error: () => {
+        this.files = [];
+      },
+    });
   }
 
   private loadVisibilityAccess(): void {
@@ -304,5 +523,38 @@ export class AdminCaseEntryEditorComponent implements OnInit {
         (userId && member.userId === userId) ||
         (email && member.email?.toLowerCase() === email)
     );
+  }
+
+  private fileEntryIds(file: CaseFile): string[] {
+    const ids = Array.isArray(file.entryIds) ? file.entryIds : [];
+    return Array.from(
+      new Set(
+        [...ids, file.entryId]
+          .map((entryId) => String(entryId || '').trim())
+          .filter(Boolean)
+      )
+    );
+  }
+
+  private isOneDriveFile(file: CaseFile): boolean {
+    return file.storageProvider === 'onedrive' || file.type === 'onedrive-link';
+  }
+
+  private looksLikeMicrosoftLink(value: string): boolean {
+    try {
+      const url = new URL(value.trim());
+      const hostname = url.hostname.toLowerCase();
+      return (
+        url.protocol === 'https:' &&
+        (hostname === '1drv.ms' ||
+          hostname.endsWith('.1drv.ms') ||
+          hostname === 'onedrive.live.com' ||
+          hostname.endsWith('.onedrive.live.com') ||
+          hostname === 'sharepoint.com' ||
+          hostname.endsWith('.sharepoint.com'))
+      );
+    } catch {
+      return false;
+    }
   }
 }

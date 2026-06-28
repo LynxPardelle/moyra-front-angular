@@ -43,6 +43,13 @@ type ExistingMemberDraft = {
   rolePreset: CaseRolePreset;
 };
 
+type CaseFileDraft = {
+  fileName: string;
+  linkUrl: string;
+  entryIds: string[];
+  visibilityMode: 'case_members' | 'internal_only';
+};
+
 type PlatformUser = {
   id?: string;
   _id?: string;
@@ -313,13 +320,20 @@ type PlatformUser = {
           <h2>Archivos</h2>
           <form class="admin-case-form admin-case-form--stack" (ngSubmit)="addOneDriveLink()">
             <label>
-              Entrada relacionada
-              <select name="oneDriveEntryId" [(ngModel)]="oneDriveLink.entryId">
-                <option value="">Selecciona una entrada</option>
+              Entradas relacionadas
+              <select
+                name="oneDriveEntryIds"
+                multiple
+                [ngModel]="oneDriveLink.entryIds"
+                (ngModelChange)="oneDriveLink.entryIds = normalizeSelection($event)"
+              >
                 @for (entry of entries; track entry.id) {
                 <option [value]="entry.id">{{ entry.title }}</option>
                 }
               </select>
+              <small class="admin-case-help">
+                Puedes seleccionar una o más entradas; el documento aparecerá dentro de ellas.
+              </small>
             </label>
             <label>
               Nombre del documento
@@ -359,25 +373,61 @@ type PlatformUser = {
           <div class="admin-case-files">
             @for (file of files; track file.id) {
             <article class="admin-case-file">
-              <strong>{{ displayFileName(file) }}</strong>
-              <span>Entrada: {{ fileEntryLabel(file) }}</span>
-              <span>{{ fileTypeLabel(file) }}</span>
+              <label>
+                Nombre
+                <input
+                  [attr.name]="'fileName-' + file.id"
+                  [ngModel]="fileDraft(file).fileName"
+                  (ngModelChange)="fileDraft(file).fileName = $event"
+                />
+              </label>
+              <label>
+                Enlace
+                <input
+                  [attr.name]="'fileUrl-' + file.id"
+                  [ngModel]="fileDraft(file).linkUrl"
+                  (ngModelChange)="fileDraft(file).linkUrl = $event"
+                  type="url"
+                />
+              </label>
+              <label>
+                Entradas
+                <select
+                  [attr.name]="'fileEntries-' + file.id"
+                  multiple
+                  [ngModel]="fileDraft(file).entryIds"
+                  (ngModelChange)="fileDraft(file).entryIds = normalizeSelection($event)"
+                >
+                  @for (entry of entries; track entry.id) {
+                  <option [value]="entry.id">{{ entry.title }}</option>
+                  }
+                </select>
+              </label>
               <label>
                 Visibilidad
                 <select
                   [attr.name]="'fileVisibility-' + file.id"
-                  [ngModel]="fileVisibilityMode(file)"
-                  (ngModelChange)="updateFileAccess(file, $event)"
+                  [ngModel]="fileDraft(file).visibilityMode"
+                  (ngModelChange)="fileDraft(file).visibilityMode = $event"
                 >
                   <option value="case_members">Visible para el cliente</option>
                   <option value="internal_only">Sólo interno</option>
                 </select>
               </label>
+              <span>{{ fileTypeLabel(file) }}</span>
+              <span>Entradas: {{ fileEntryLabel(file) }}</span>
               @if (canDownloadFile(file)) {
               <a [href]="fileHref(file)" target="_blank" rel="noopener noreferrer">
                 {{ isOneDriveFile(file) ? 'Abrir documento' : 'Descargar' }}
               </a>
               }
+              <button
+                type="button"
+                [disabled]="fileSavingId === file.id || !canSaveFile(file)"
+                (click)="saveFile(file)"
+              >
+                {{ fileSavingId === file.id ? 'Guardando...' : 'Guardar archivo' }}
+              </button>
               <button type="button" (click)="approveFile(file.id)" [disabled]="!canApproveFile(file)">
                 Aprobar visibilidad
               </button>
@@ -779,9 +829,11 @@ export class AdminCaseDetailComponent implements OnInit {
   };
   entryVisibilityDrafts: Record<string, string> = {};
   entryVisibilitySavingId = '';
+  fileSavingId = '';
+  fileDrafts: Record<string, CaseFileDraft> = {};
   fileRemovingId = '';
   oneDriveLink = {
-    entryId: '',
+    entryIds: [] as string[],
     fileName: '',
     linkUrl: '',
     visibilityMode: 'case_members',
@@ -960,7 +1012,8 @@ export class AdminCaseDetailComponent implements OnInit {
     this.oneDriveBusy = true;
     this.oneDriveError = '';
     this._caseService.createOneDriveLink(this.caseId, {
-      entryId: this.oneDriveLink.entryId,
+      entryId: this.oneDriveLink.entryIds[0],
+      entryIds: this.oneDriveLink.entryIds,
       fileName: this.oneDriveLink.fileName.trim(),
       linkUrl: this.oneDriveLink.linkUrl.trim(),
       visibility: { mode: this.oneDriveLink.visibilityMode },
@@ -968,7 +1021,7 @@ export class AdminCaseDetailComponent implements OnInit {
       next: (response) => {
         this.files = [response.item, ...this.files];
         this.oneDriveLink = {
-          entryId: '',
+          entryIds: [],
           fileName: '',
           linkUrl: '',
           visibilityMode: 'case_members',
@@ -1015,6 +1068,63 @@ export class AdminCaseDetailComponent implements OnInit {
         },
         error: (error) => {
           this.showError('No se pudo actualizar el documento', 'Intenta nuevamente.', error);
+        },
+      });
+  }
+
+  fileDraft(file: CaseFile): CaseFileDraft {
+    if (!this.fileDrafts[file.id]) {
+      this.fileDrafts[file.id] = {
+        fileName: this.displayFileName(file),
+        linkUrl: String(file.webUrl || file.linkUrl || '').trim(),
+        entryIds: this.fileEntryIds(file),
+        visibilityMode: this.fileVisibilityMode(file),
+      };
+    }
+    return this.fileDrafts[file.id];
+  }
+
+  canSaveFile(file: CaseFile): boolean {
+    const draft = this.fileDraft(file);
+    return (
+      draft.fileName.trim().length > 0 &&
+      draft.linkUrl.trim().length > 0 &&
+      draft.entryIds.length > 0 &&
+      this.looksLikeMicrosoftLink(draft.linkUrl)
+    );
+  }
+
+  saveFile(file: CaseFile): void {
+    if (!this.canSaveFile(file)) {
+      this.showWarning(
+        'Archivo incompleto',
+        'Captura nombre, enlace de OneDrive o SharePoint y al menos una entrada.'
+      );
+      return;
+    }
+
+    const draft = this.fileDraft(file);
+    this.fileSavingId = file.id;
+    this._caseService
+      .updateFile(this.caseId, file.id, {
+        fileName: draft.fileName.trim(),
+        title: draft.fileName.trim(),
+        linkUrl: draft.linkUrl.trim(),
+        entryId: draft.entryIds[0],
+        entryIds: draft.entryIds,
+        externalVisibilityStatus: 'approved',
+        visibility: { mode: draft.visibilityMode },
+      })
+      .subscribe({
+        next: (response) => {
+          this.files = this.files.map((item) => (item.id === file.id ? response.item : item));
+          delete this.fileDrafts[file.id];
+          this.fileSavingId = '';
+          this.showSuccess('Archivo guardado', 'Los datos del archivo se actualizaron.');
+        },
+        error: (error) => {
+          this.fileSavingId = '';
+          this.showError('No se pudo guardar el archivo', 'Intenta nuevamente.', error);
         },
       });
   }
@@ -1213,10 +1323,13 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   fileEntryLabel(file: CaseFile): string {
-    if (!file.entryId) {
+    const entryIds = this.fileEntryIds(file);
+    if (entryIds.length === 0) {
       return 'Sin entrada relacionada';
     }
-    return this.entries.find((entry) => entry.id === file.entryId)?.title || file.entryId;
+    return entryIds
+      .map((entryId) => this.entries.find((entry) => entry.id === entryId)?.title || entryId)
+      .join(', ');
   }
 
   roleLabel(role: string): string {
@@ -1307,13 +1420,28 @@ export class AdminCaseDetailComponent implements OnInit {
         'case.status.updated': 'Cambió el estado',
         'case.entry.created': 'Creó una entrada',
         'case.entry.updated': 'Editó una entrada',
+        'case.entry.visibility_updated': 'Cambió visibilidad de entrada',
+        'case.entry.removed': 'Eliminó una entrada',
         'case.member.created': 'Agregó miembro',
         'case.member.invited': 'Invitó miembro',
+        'case.member.invite_resent': 'Reenvió invitación',
+        'case.member.invite_canceled': 'Canceló invitación',
         'case.member.updated': 'Editó miembro',
         'case.member.permissions_updated': 'Cambió permisos',
         'case.member.removed': 'Quitó miembro',
+        'case.comment.created': 'Agregó comentario',
+        'case.comment.updated': 'Editó comentario',
+        'case.comment.removed': 'Eliminó comentario',
+        'case.file.upload_initialized': 'Inició carga de archivo',
+        'case.file.upload_completed': 'Completó carga de archivo',
         'case.file.onedrive_link_added': 'Agregó enlace OneDrive',
+        'case.file.updated': 'Editó archivo',
         'case.file.visibility_updated': 'Cambió visibilidad de archivo',
+        'case.file.downloaded': 'Abrió archivo',
+        'case.file.removed': 'Eliminó archivo',
+        'case.notification.created': 'Creó notificación',
+        'case.notification.read': 'Marcó notificación como leída',
+        'case.notification.unread': 'Marcó notificación como no leída',
       }[action] || action
     );
   }
@@ -1349,9 +1477,12 @@ export class AdminCaseDetailComponent implements OnInit {
       const member = this.members.find((item) => item.id === event.targetId || item.userId === event.targetId);
       return member ? this.memberName(member) : 'Miembro del caso';
     }
-    if (event.targetType === 'file') {
+    if (event.targetType === 'file' || event.targetType === 'case-file') {
       const file = this.files.find((item) => item.id === event.targetId);
       return file ? this.displayFileName(file) : 'Documento del caso';
+    }
+    if (event.targetType === 'case-comment') {
+      return 'Comentario del caso';
     }
     return this.auditTargetTypeLabel(event.targetType);
   }
@@ -1444,9 +1575,16 @@ export class AdminCaseDetailComponent implements OnInit {
 
   hasOneDriveInputs(): boolean {
     return (
-      this.oneDriveLink.entryId.trim().length > 0 &&
+      this.oneDriveLink.entryIds.length > 0 &&
       this.oneDriveLink.fileName.trim().length > 0 &&
       this.oneDriveLink.linkUrl.trim().length > 0
+    );
+  }
+
+  normalizeSelection(value: unknown): string[] {
+    const values = Array.isArray(value) ? value : [value];
+    return Array.from(
+      new Set(values.map((item) => String(item || '').trim()).filter(Boolean))
     );
   }
 
@@ -1469,6 +1607,11 @@ export class AdminCaseDetailComponent implements OnInit {
 
   isOneDriveFile(file: CaseFile): boolean {
     return file.storageProvider === 'onedrive' || file.type === 'onedrive-link';
+  }
+
+  private fileEntryIds(file: CaseFile): string[] {
+    const ids = Array.isArray(file.entryIds) ? file.entryIds : [];
+    return this.normalizeSelection([...ids, file.entryId]);
   }
 
   userKey(user?: PlatformUser): string {
@@ -1654,6 +1797,8 @@ export class AdminCaseDetailComponent implements OnInit {
         member: 'Miembro del caso',
         'case-membership': 'Miembro del caso',
         file: 'Documento del caso',
+        'case-file': 'Documento del caso',
+        'case-comment': 'Comentario del caso',
       }[type] || type
     );
   }

@@ -851,6 +851,7 @@ export class CaseDetailComponent implements OnInit {
     this.oneDriveErrors[entryId] = '';
     this._caseService.createOneDriveLink(this.caseId, {
       entryId,
+      entryIds: [entryId],
       fileName: draft.fileName.trim(),
       linkUrl: draft.linkUrl.trim(),
       visibility: { mode: draft.visibilityMode },
@@ -930,10 +931,7 @@ export class CaseDetailComponent implements OnInit {
   }
 
   filesForEntry(entryId: string): CaseFile[] {
-    const firstEntryId = this.entries[0]?.id;
-    return this.files.filter((file) =>
-      file.entryId ? file.entryId === entryId : firstEntryId === entryId
-    );
+    return this.files.filter((file) => this.fileEntryIds(file).includes(entryId));
   }
 
   entryAuthorLabel(entry: CaseEntry): string {
@@ -1033,9 +1031,16 @@ export class CaseDetailComponent implements OnInit {
     if (this._authFacade.isAdmin()) {
       return true;
     }
-    if (file.entryId) {
-      const entry = entries.find((item) => item.id === file.entryId);
-      if (!entry || !this.canSeeEntry(entry, members)) {
+    const fileEntryIds = this.fileEntryIds(file);
+    if (fileEntryIds.length === 0) {
+      return false;
+    }
+    if (fileEntryIds.length > 0) {
+      const canSeeLinkedEntry = fileEntryIds.some((entryId) => {
+        const entry = entries.find((item) => item.id === entryId);
+        return entry && this.canSeeEntry(entry, members);
+      });
+      if (!canSeeLinkedEntry) {
         return false;
       }
     }
@@ -1049,21 +1054,12 @@ export class CaseDetailComponent implements OnInit {
 
   private syncExpandedState(): void {
     const entryIds = new Set(this.entries.map((entry) => entry.id));
-    if (this.expandedEntryIds.size === 0) {
-      this.expandedEntryIds = new Set(entryIds);
-    } else {
-      this.expandedEntryIds = new Set(
-        Array.from(this.expandedEntryIds).filter((entryId) => entryIds.has(entryId))
-      );
-    }
-
-    if (this.expandedCommentEntryIds.size === 0) {
-      this.expandedCommentEntryIds = new Set(entryIds);
-    } else {
-      this.expandedCommentEntryIds = new Set(
-        Array.from(this.expandedCommentEntryIds).filter((entryId) => entryIds.has(entryId))
-      );
-    }
+    this.expandedEntryIds = new Set(
+      Array.from(this.expandedEntryIds).filter((entryId) => entryIds.has(entryId))
+    );
+    this.expandedCommentEntryIds = new Set(
+      Array.from(this.expandedCommentEntryIds).filter((entryId) => entryIds.has(entryId))
+    );
 
     const targetCommentId = this.queryParam('commentId');
     const targetEntryId = this.queryParam('entryId') || this.entryIdForComment(targetCommentId);
@@ -1071,6 +1067,17 @@ export class CaseDetailComponent implements OnInit {
       this.expandedEntryIds.add(targetEntryId);
       this.expandedCommentEntryIds.add(targetEntryId);
     }
+  }
+
+  private fileEntryIds(file: CaseFile): string[] {
+    const ids = Array.isArray(file.entryIds) ? file.entryIds : [];
+    return Array.from(
+      new Set(
+        [...ids, file.entryId]
+          .map((entryId) => String(entryId || '').trim())
+          .filter(Boolean)
+      )
+    );
   }
 
   private autoMarkCaseNotificationsRead(): void {

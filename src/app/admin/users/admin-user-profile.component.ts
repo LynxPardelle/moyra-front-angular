@@ -305,7 +305,7 @@ export class AdminUserProfileComponent implements OnInit {
     relationship: '',
   };
   readonly customRelationshipValue = '__custom__';
-  readonly relationshipOptions = [
+  private readonly fallbackRelationshipOptions = [
     'Equipo Moyra',
     'Cliente o invitado externo',
     'Cliente',
@@ -315,6 +315,7 @@ export class AdminUserProfileComponent implements OnInit {
     'Perito',
     'Testigo',
   ];
+  relationshipOptions: string[] = [];
   profileRelationshipPreset = '';
 
   constructor(
@@ -327,6 +328,7 @@ export class AdminUserProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.userId = this._route.snapshot.paramMap.get('userId') || '';
+    this.loadRelationshipOptions();
     this._authFacade.hydratedOnce$().subscribe(() => this.load());
   }
 
@@ -641,5 +643,24 @@ export class AdminUserProfileComponent implements OnInit {
     return message && message !== 'Failed to fetch'
       ? message
       : 'No se pudo guardar el perfil por un error de conexión con la API.';
+  }
+
+  private loadRelationshipOptions(): void {
+    this._userService.getRelationships().subscribe({
+      next: (response) => {
+        const options = (response.items || [])
+          .filter((item) => item.active !== false)
+          .sort((left, right) => (left.order || 0) - (right.order || 0))
+          .map((item) => item.label)
+          .filter(Boolean);
+        this.relationshipOptions = options.length ? options : [...this.fallbackRelationshipOptions];
+        if (this.user) {
+          this.resetProfileDraft();
+        }
+      },
+      error: () => {
+        this.relationshipOptions = [...this.fallbackRelationshipOptions];
+      },
+    });
   }
 }

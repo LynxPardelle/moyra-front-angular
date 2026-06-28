@@ -6,6 +6,10 @@
 }
 
 .admin-users-page__header {
+  align-items: start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
   margin-bottom: 1.5rem;
 }
 
@@ -30,6 +34,21 @@
   display: block;
   line-height: 1.58;
   margin-top: 0.75rem;
+}
+
+.admin-users-page__link {
+  border: 1px solid #4b8ff5;
+  color: #4b8ff5;
+  flex: 0 0 auto;
+  padding: 0.65rem 0.8rem;
+  text-decoration: none;
+}
+
+.admin-users-page__link:hover,
+.admin-users-page__link:focus-visible {
+  background: #4b8ff5;
+  color: #ffffff;
+  outline: none;
 }
 
 .admin-users-form {
@@ -151,6 +170,15 @@
 }
 
 @media (max-width: 640px) {
+  .admin-users-page__header {
+    flex-direction: column;
+  }
+
+  .admin-users-page__link {
+    text-align: center;
+    width: 100%;
+  }
+
   .admin-users-case-roles__grid {
     grid-template-columns: 1fr;
   }
