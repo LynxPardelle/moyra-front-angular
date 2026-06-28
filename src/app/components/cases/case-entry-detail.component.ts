@@ -269,8 +269,8 @@ export class CaseEntryDetailComponent implements OnInit {
         })
       )
       .subscribe((comments) => {
-        this.comments = (comments.items || []).filter((comment) =>
-          isVisibleToCaseClient(comment.visibility)
+        this.comments = this.sortedComments(
+          (comments.items || []).filter((comment) => this.canSeeComment(comment))
         );
       });
   }
@@ -297,7 +297,7 @@ export class CaseEntryDetailComponent implements OnInit {
       })
       .subscribe({
         next: (response) => {
-          this.comments = [...this.comments, response.item];
+          this.comments = [response.item, ...this.comments];
           this.commentDraft = '';
           this.commentBusy = false;
         },
@@ -331,7 +331,7 @@ export class CaseEntryDetailComponent implements OnInit {
     if (!member) {
       return comment.authorUserId ? 'Administrador' : 'Usuario';
     }
-    return `${this.roleLabel(member.rolePreset)} / ${this.memberTypeLabel(member.memberType)}`;
+    return this.roleLabel(member.rolePreset);
   }
 
   commentCreatedLabel(comment: CaseComment): string {
@@ -346,7 +346,7 @@ export class CaseEntryDetailComponent implements OnInit {
       member?.email ||
       (entry.authorUserId ? 'Administrador' : 'Usuario');
     const relation = member
-      ? `${this.roleLabel(member.rolePreset)} / ${this.memberTypeLabel(member.memberType)}`
+      ? this.roleLabel(member.rolePreset)
       : entry.authorUserId
         ? 'Administrador'
         : 'Usuario';
@@ -368,7 +368,7 @@ export class CaseEntryDetailComponent implements OnInit {
     if (this.isLegalMembership(membership)) {
       return true;
     }
-    return this.commentPolicyMode(this.entry, 'read') === 'case_members';
+    return membership?.permissions?.includes('case.comment') === true;
   }
 
   displayFileName(file: CaseFile): string {
@@ -389,6 +389,10 @@ export class CaseEntryDetailComponent implements OnInit {
   }
 
   fileHref(file: CaseFile): string {
+    const linkUrl = String(file.webUrl || file.linkUrl || '').trim();
+    if (this.isOneDriveFile(file) && linkUrl) {
+      return linkUrl;
+    }
     return `/api/v2/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
       file.id
     )}/download`;
@@ -456,21 +460,12 @@ export class CaseEntryDetailComponent implements OnInit {
     if (this.isLegalMembership(membership)) {
       return true;
     }
-    return (
-      membership?.permissions?.includes('case.comment') === true &&
-      this.commentPolicyMode(this.entry, 'write') === 'case_members'
-    );
-  }
-
-  private commentPolicyMode(entry: CaseEntry, key: 'read' | 'write'): string {
-    const mode = entry.commentPolicy?.[key];
-    return mode === 'case_members' ? 'case_members' : 'legal_team';
+    return membership?.permissions?.includes('case.comment') === true;
   }
 
   private isLegalMembership(membership?: CaseMembership): boolean {
     return Boolean(
-      membership?.memberType === 'internal' ||
-        membership?.rolePreset === 'attorney' ||
+      membership?.rolePreset === 'attorney' ||
         membership?.rolePreset === 'pasante'
     );
   }
@@ -512,12 +507,30 @@ export class CaseEntryDetailComponent implements OnInit {
     );
   }
 
-  private memberTypeLabel(type?: string): string {
-    return type === 'internal' ? 'Equipo Moyra' : 'Cliente o invitado externo';
-  }
-
   private humanName(value?: string, id?: string): string {
     const name = String(value || '').trim();
     return name && name !== id && !/^[0-9a-f-]{24,}$/i.test(name) ? name : '';
+  }
+
+  private canSeeComment(comment: CaseComment): boolean {
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
+    const membership = this.currentMembership();
+    if (this.isLegalMembership(membership)) {
+      return true;
+    }
+    return (
+      membership?.permissions?.includes('case.comment') === true &&
+      isVisibleToCaseClient(comment.visibility)
+    );
+  }
+
+  private sortedComments(comments: CaseComment[]): CaseComment[] {
+    return [...comments].sort((left, right) => {
+      const leftTime = Date.parse(left.createdAt || left.updatedAt || '') || 0;
+      const rightTime = Date.parse(right.createdAt || right.updatedAt || '') || 0;
+      return rightTime - leftTime;
+    });
   }
 }

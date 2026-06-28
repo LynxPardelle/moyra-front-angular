@@ -246,7 +246,6 @@ describe('CaseDetailComponent', () => {
                     caseId: 'case-1',
                     userId: 'client-1',
                     displayName: 'Cliente',
-                    memberType: 'external',
                     rolePreset: 'client',
                     permissions,
                     status: 'active',
@@ -320,7 +319,7 @@ describe('CaseDetailComponent', () => {
     expect(text).toContain('Actualización visible');
     expect(text).toContain('Texto para cliente');
     expect(text).toContain('Comentario visible');
-    expect(text).toContain('Cliente · Cliente / Cliente o invitado externo');
+    expect(text).toContain('Cliente · Cliente');
     expect(text).toContain('26 jun 2026');
     expect(text).not.toContain('Nota interna');
     expect(text).not.toContain('Comentario interno');

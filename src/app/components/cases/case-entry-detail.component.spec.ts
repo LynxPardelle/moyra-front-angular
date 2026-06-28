@@ -89,7 +89,6 @@ describe('CaseEntryDetailComponent', () => {
                     email: 'cliente@moyra.org',
                     displayName: 'Cliente',
                     rolePreset: 'client',
-                    memberType: 'external',
                     status: 'active',
                     permissions: ['case.read', 'case.comment'],
                   },
@@ -136,7 +135,7 @@ describe('CaseEntryDetailComponent', () => {
     expect(text).toContain('Contenido autorizado');
     expect(text).toContain('Documento de entrada');
     expect(text).toContain('Comentario autorizado');
-    expect(text).toContain('Cliente · Cliente / Cliente o invitado externo');
+    expect(text).toContain('Cliente · Cliente');
     expect(compiled.querySelector('a[href*="/publication"]')).toBeNull();
   });
 

@@ -791,7 +791,6 @@ export class AdminCasesListComponent implements OnInit {
 
   private userFromMember(member: CaseMembership): PlatformUser {
     const isLegalTeam =
-      member.memberType === 'internal' ||
       member.rolePreset === 'attorney' ||
       member.rolePreset === 'pasante';
     return {

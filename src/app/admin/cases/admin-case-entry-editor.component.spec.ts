@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 
 import { AdminCaseEntryEditorComponent } from './admin-case-entry-editor.component';
 import { CaseService } from '../../services/case.service';
+import { AuthFacade } from '../../store/auth/auth.facade';
 
 describe('AdminCaseEntryEditorComponent', () => {
   let fixture: ComponentFixture<AdminCaseEntryEditorComponent>;
@@ -56,6 +57,17 @@ describe('AdminCaseEntryEditorComponent', () => {
             updateEntry: updateEntrySpy,
           },
         },
+        {
+          provide: AuthFacade,
+          useValue: {
+            identity: () => ({
+              id: 'admin-1',
+              email: 'admin@moyra.test',
+              role: 'ROLE_ADMIN',
+            }),
+            isAdmin: () => true,
+          },
+        },
       ],
     }).compileComponents();
 
@@ -74,7 +86,6 @@ describe('AdminCaseEntryEditorComponent', () => {
       title: 'Nueva',
       text: '<p>Privada</p>',
       visibility: { mode: 'internal_only' },
-      commentPolicy: { read: 'legal_team', write: 'legal_team' },
     });
   });
 
@@ -88,7 +99,6 @@ describe('AdminCaseEntryEditorComponent', () => {
       title: 'Editada',
       text: '<p>Texto</p>',
       visibility: { mode: 'case_members' },
-      commentPolicy: { read: 'legal_team', write: 'legal_team' },
     });
   });
 });

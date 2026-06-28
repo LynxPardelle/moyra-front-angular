@@ -66,7 +66,6 @@ describe('AdminUsersListComponent', () => {
                     displayName: 'Cliente del caso',
                     email: 'cliente-caso@moyra.org',
                     rolePreset: 'client',
-                    memberType: 'external',
                     permissions: ['case.read'],
                     status: 'active',
                   },

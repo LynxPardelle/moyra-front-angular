@@ -266,8 +266,12 @@ export class AdminUsersListComponent implements OnInit {
       name: this.humanName(member.displayName) || member.email || 'Usuario',
       displayName: this.humanName(member.displayName),
       email: member.email,
-      role: member.memberType === 'internal' ? 'ROLE_LEGAL_STAFF' : 'ROLE_USER',
+      role: this.legalCaseRole(member.rolePreset) ? 'ROLE_LEGAL_STAFF' : 'ROLE_USER',
     };
+  }
+
+  private legalCaseRole(rolePreset?: string): boolean {
+    return rolePreset === 'attorney' || rolePreset === 'pasante';
   }
 
   private mergeUsers(users: AdminUser[]): AdminUser[] {

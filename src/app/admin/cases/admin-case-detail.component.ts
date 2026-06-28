@@ -9,7 +9,6 @@ import {
   CaseAuditEvent,
   CaseEntry,
   CaseFile,
-  CaseMemberType,
   CaseMembership,
   CasePermission,
   CaseRecord,
@@ -35,14 +34,12 @@ type CaseDraft = {
 
 type MemberDraft = {
   displayName: string;
-  memberType: string;
   rolePreset: string;
   permissions: CasePermission[];
 };
 
 type ExistingMemberDraft = {
   userKey: string;
-  memberType: CaseMemberType;
   rolePreset: CaseRolePreset;
 };
 
@@ -135,6 +132,30 @@ type PlatformUser = {
                     <a [routerLink]="['/admin/casos', caseId, 'entradas', entry.id]">
                       Editar
                     </a>
+                    @if (canManageEntryVisibility()) {
+                    <label class="admin-case-inline-control">
+                      Visibilidad
+                      <select
+                        [attr.name]="'entryVisibility-' + entry.id"
+                        [ngModel]="entryVisibilityDraft(entry)"
+                        (ngModelChange)="entryVisibilityDrafts[entry.id] = $event"
+                      >
+                        <option value="internal_only">Sólo interno</option>
+                        <option value="case_members">Visible para cliente</option>
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      [disabled]="entryVisibilitySavingId === entry.id || !entryVisibilityChanged(entry)"
+                      (click)="updateEntryVisibility(entry)"
+                    >
+                      {{
+                        entryVisibilitySavingId === entry.id
+                          ? 'Guardando...'
+                          : 'Cambiar visibilidad'
+                      }}
+                    </button>
+                    }
                   </td>
                 </tr>
                 }
@@ -152,7 +173,6 @@ type PlatformUser = {
                   <th>Nombre</th>
                   <th>Correo</th>
                   <th>Rol</th>
-                  <th>Tipo de acceso</th>
                   <th>Permisos</th>
                   <th>Acciones</th>
                 </tr>
@@ -169,7 +189,6 @@ type PlatformUser = {
                   </td>
                   <td>{{ member.email || 'Sin correo' }}</td>
                   <td>{{ roleLabel(member.rolePreset) }}</td>
-                  <td>{{ memberTypeLabel(member.memberType) }}</td>
                   <td>{{ permissionsSummary(member.permissions) }}</td>
                   <td>
                     <div class="admin-case-actions">
@@ -187,7 +206,7 @@ type PlatformUser = {
                 </tr>
                 @if (editingMemberId === member.id) {
                 <tr>
-                  <td colspan="6">
+                  <td colspan="5">
                     <form class="admin-case-member-editor" (ngSubmit)="saveMember(member)">
                       <label>
                         Nombre
@@ -200,13 +219,6 @@ type PlatformUser = {
                           <option value="attorney">Abogado</option>
                           <option value="pasante">Pasante</option>
                           <option value="external_observer">Observador</option>
-                        </select>
-                      </label>
-                      <label>
-                        Tipo de acceso
-                        <select name="memberType" [(ngModel)]="memberDraft.memberType">
-                          <option value="external">Cliente o invitado externo</option>
-                          <option value="internal">Equipo Moyra</option>
                         </select>
                       </label>
                       <fieldset>
@@ -258,13 +270,6 @@ type PlatformUser = {
                     <option value="external_observer">Observador</option>
                   </select>
                 </label>
-                <label>
-                  Tipo de acceso en este caso
-                  <select name="existingMemberType" [(ngModel)]="existingMember.memberType">
-                    <option value="external">Cliente o invitado externo</option>
-                    <option value="internal">Equipo Moyra</option>
-                  </select>
-                </label>
                 <button type="submit" [disabled]="memberAdding || !canAddExistingMember()">
                   {{ memberAdding ? 'Agregando...' : 'Agregar miembro' }}
                 </button>
@@ -291,22 +296,15 @@ type PlatformUser = {
                     <option value="external_observer">Observador</option>
                   </select>
                 </label>
-                <label>
-                  Tipo de acceso en este caso
-                  <select name="inviteMemberType" [(ngModel)]="inviteMemberType">
-                    <option value="external">Cliente o invitado externo</option>
-                    <option value="internal">Equipo Moyra</option>
-                  </select>
-                </label>
                 <button type="submit" [disabled]="inviteBusy || !invite.email">
                   {{ inviteBusy ? 'Invitando...' : 'Invitar' }}
                 </button>
               </form>
             </article>
             <small class="admin-case-help">
-              Los permisos se asignan por rol del caso: clientes comentan y abren documentos,
-              pasantes colaboran internamente y observadores sólo consultan. La relación indica si
-              pertenece al equipo de Moyra o es cliente/invitado del caso.
+              Los permisos se asignan por rol del caso: clientes suben y abren documentos,
+              pasantes colaboran internamente y observadores sólo consultan. Los comentarios se
+              habilitan desde permisos del miembro.
             </small>
           </div>
         </section>
@@ -382,6 +380,14 @@ type PlatformUser = {
               }
               <button type="button" (click)="approveFile(file.id)" [disabled]="!canApproveFile(file)">
                 Aprobar visibilidad
+              </button>
+              <button
+                type="button"
+                class="admin-case-button-danger"
+                [disabled]="fileRemovingId === file.id"
+                (click)="removeFile(file)"
+              >
+                {{ fileRemovingId === file.id ? 'Eliminando...' : 'Eliminar' }}
               </button>
             </article>
             }
@@ -530,6 +536,17 @@ type PlatformUser = {
         color: rgba(41, 48, 59, 0.72);
         font-size: 0.82rem;
         font-weight: 700;
+      }
+
+      .admin-case-inline-control {
+        display: inline-grid;
+        gap: 4px;
+        min-width: 150px;
+      }
+
+      .admin-case-inline-control select {
+        min-height: 36px;
+        padding: 0.45rem 0.65rem 0.45rem 0.85rem;
       }
 
       .admin-case-rich-field {
@@ -732,16 +749,15 @@ export class AdminCaseDetailComponent implements OnInit {
     displayName: '',
     rolePreset: 'client',
   };
-  inviteMemberType: CaseMemberType = 'external';
   inviteBusy = false;
   existingMember: ExistingMemberDraft = {
     userKey: '',
-    memberType: 'internal',
     rolePreset: 'attorney',
   };
   readonly permissionOptions: Array<{ value: CasePermission; label: string }> = [
     { value: 'case.read', label: 'Ver caso' },
     { value: 'case.write_entry', label: 'Publicar entradas' },
+    { value: 'case.manage_entry_visibility', label: 'Cambiar visibilidad de entradas' },
     { value: 'case.comment', label: 'Comentar' },
     { value: 'case.upload_file', label: 'Agregar documentos' },
     { value: 'case.download_file', label: 'Abrir documentos' },
@@ -758,10 +774,12 @@ export class AdminCaseDetailComponent implements OnInit {
   memberAdding = false;
   memberDraft: MemberDraft = {
     displayName: '',
-    memberType: 'external',
     rolePreset: 'client',
     permissions: [],
   };
+  entryVisibilityDrafts: Record<string, string> = {};
+  entryVisibilitySavingId = '';
+  fileRemovingId = '';
   oneDriveLink = {
     entryId: '',
     fileName: '',
@@ -872,14 +890,12 @@ export class AdminCaseDetailComponent implements OnInit {
       next: (response) => {
         this.finishAddedMember(
           response.item,
-          this.inviteMemberType,
           () => {
             this.invite = {
               email: '',
               displayName: '',
               rolePreset: 'client',
             };
-            this.inviteMemberType = 'external';
             this.inviteBusy = false;
           },
           'Invitación enviada'
@@ -913,11 +929,9 @@ export class AdminCaseDetailComponent implements OnInit {
         next: (response) => {
           this.finishAddedMember(
             response.item,
-            this.existingMember.memberType,
             () => {
               this.existingMember = {
                 userKey: '',
-                memberType: 'internal',
                 rolePreset: 'attorney',
               };
               this.memberAdding = false;
@@ -1009,7 +1023,6 @@ export class AdminCaseDetailComponent implements OnInit {
     this.editingMemberId = member.id;
     this.memberDraft = {
       displayName: member.displayName || '',
-      memberType: member.memberType || 'external',
       rolePreset: member.rolePreset || 'client',
       permissions: [...(member.permissions || [])],
     };
@@ -1036,7 +1049,6 @@ export class AdminCaseDetailComponent implements OnInit {
     this._caseService
       .updateMember(this.caseId, member.id, {
         displayName: this.memberDraft.displayName.trim(),
-        memberType: this.memberDraft.memberType,
         rolePreset: this.memberDraft.rolePreset,
       })
       .subscribe({
@@ -1155,6 +1167,44 @@ export class AdminCaseDetailComponent implements OnInit {
     return this.entryVisibleInPortal(entry) ? 'Visible para cliente' : 'Sólo interno';
   }
 
+  entryVisibilityDraft(entry: CaseEntry): 'case_members' | 'internal_only' {
+    const draft = this.entryVisibilityDrafts[entry.id];
+    if (draft === 'case_members' || draft === 'internal_only') {
+      return draft;
+    }
+    return this.entryVisibleInPortal(entry) ? 'case_members' : 'internal_only';
+  }
+
+  entryVisibilityChanged(entry: CaseEntry): boolean {
+    const current = this.entryVisibleInPortal(entry) ? 'case_members' : 'internal_only';
+    return this.entryVisibilityDraft(entry) !== current;
+  }
+
+  canManageEntryVisibility(): boolean {
+    return this.hasCasePermission('case.manage_entry_visibility');
+  }
+
+  updateEntryVisibility(entry: CaseEntry): void {
+    if (!this.canManageEntryVisibility() || !this.entryVisibilityChanged(entry)) {
+      return;
+    }
+
+    const mode = this.entryVisibilityDraft(entry);
+    this.entryVisibilitySavingId = entry.id;
+    this._caseService.updateEntry(this.caseId, entry.id, { visibility: { mode } }).subscribe({
+      next: (response) => {
+        this.entries = this.entries.map((item) => (item.id === entry.id ? response.item : item));
+        delete this.entryVisibilityDrafts[entry.id];
+        this.entryVisibilitySavingId = '';
+        this.showSuccess('Visibilidad actualizada', 'La visibilidad de la entrada se guardó.');
+      },
+      error: (error) => {
+        this.entryVisibilitySavingId = '';
+        this.showError('No se pudo cambiar la visibilidad', 'Intenta nuevamente.', error);
+      },
+    });
+  }
+
   entryViewLink(entry: CaseEntry): string[] {
     if (this.entryVisibleInPortal(entry)) {
       return ['/casos', this.caseId, 'entrada', entry.id];
@@ -1179,10 +1229,6 @@ export class AdminCaseDetailComponent implements OnInit {
         observer: 'Observador',
       }[role] || role
     );
-  }
-
-  memberTypeLabel(type: string): string {
-    return type === 'internal' ? 'Equipo Moyra' : 'Cliente o invitado externo';
   }
 
   memberName(member: CaseMembership): string {
@@ -1278,7 +1324,7 @@ export class AdminCaseDetailComponent implements OnInit {
       return 'Sin detalle';
     }
     const details = Object.entries(source)
-      .filter(([, value]) => value !== undefined && value !== null && value !== '')
+      .filter(([key, value]) => key !== 'memberType' && value !== undefined && value !== null && value !== '')
       .map(([key, value]) => `${this.auditFieldLabel(key)}: ${this.auditValueLabel(key, value)}`);
     return details.length ? details.join('; ') : 'Sin detalle';
   }
@@ -1347,6 +1393,34 @@ export class AdminCaseDetailComponent implements OnInit {
     return file.uploadStatus !== 'pending_upload';
   }
 
+  async removeFile(file: CaseFile): Promise<void> {
+    const confirmation = await Swal.fire({
+      title: 'Eliminar documento',
+      text: `¿Eliminar ${this.displayFileName(file)} del caso?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar',
+    });
+
+    if (!confirmation.isConfirmed) {
+      return;
+    }
+
+    this.fileRemovingId = file.id;
+    this._caseService.deleteFile(this.caseId, file.id).subscribe({
+      next: () => {
+        this.files = this.files.filter((item) => item.id !== file.id);
+        this.fileRemovingId = '';
+        this.showSuccess('Documento eliminado', 'El documento se quitó del caso.');
+      },
+      error: (error) => {
+        this.fileRemovingId = '';
+        this.showError('No se pudo eliminar el documento', 'Intenta nuevamente.', error);
+      },
+    });
+  }
+
   downloadUrl(fileId: string): string {
     return `/api/v2/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
       fileId
@@ -1409,33 +1483,12 @@ export class AdminCaseDetailComponent implements OnInit {
 
   private finishAddedMember(
     member: CaseMembership,
-    memberType: CaseMemberType,
     resetForm: () => void,
     successTitle: string
   ): void {
-    if (!member.id) {
-      this.upsertMember(member);
-      resetForm();
-      this.showSuccess(successTitle, 'La membresía quedó registrada.');
-      return;
-    }
-
-    this._caseService.updateMember(this.caseId, member.id, { memberType }).subscribe({
-      next: (response) => {
-        this.upsertMember(response.item);
-        resetForm();
-        this.showSuccess(successTitle, 'La membresía quedó registrada.');
-      },
-      error: (error) => {
-        this.upsertMember(member);
-        resetForm();
-        this.showWarning(
-          successTitle,
-          'El miembro se agregó, pero no se pudo actualizar su relación. Edita el miembro para corregirlo.',
-          error
-        );
-      },
-    });
+    this.upsertMember(member);
+    resetForm();
+    this.showSuccess(successTitle, 'La membresía quedó registrada.');
   }
 
   private upsertMember(member: CaseMembership): void {
@@ -1469,7 +1522,6 @@ export class AdminCaseDetailComponent implements OnInit {
 
   private userFromMember(member: CaseMembership): PlatformUser {
     const isLegalTeam =
-      member.memberType === 'internal' ||
       member.rolePreset === 'attorney' ||
       member.rolePreset === 'pasante';
     return {
@@ -1505,6 +1557,21 @@ export class AdminCaseDetailComponent implements OnInit {
     void Swal.fire({ title, text: this.errorMessageFrom(error, fallback), icon: 'error' });
   }
 
+  private hasCasePermission(permission: CasePermission): boolean {
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
+    const identity = this._authFacade.identity?.();
+    const userId = identity?.id || identity?.sub || identity?.userId;
+    const email = String(identity?.email || '').toLowerCase();
+    const membership = this.members.find(
+      (member) =>
+        (userId && member.userId === userId) ||
+        (email && member.email?.toLowerCase() === email)
+    );
+    return membership?.permissions?.includes(permission) === true;
+  }
+
   private errorMessageFrom(error: any, fallback: string): string {
     return String(error?.error?.message || error?.message || fallback);
   }
@@ -1530,7 +1597,6 @@ export class AdminCaseDetailComponent implements OnInit {
         caseTypeId: 'Tipo de caso',
         visibility: 'Visibilidad',
         rolePreset: 'Rol en el caso',
-      memberType: 'Tipo de acceso',
         permissions: 'Permisos',
         displayName: 'Nombre',
         email: 'Correo',
@@ -1557,9 +1623,6 @@ export class AdminCaseDetailComponent implements OnInit {
     }
     if (key === 'rolePreset') {
       return this.roleLabel(String(value));
-    }
-    if (key === 'memberType') {
-      return this.memberTypeLabel(String(value));
     }
     if (key === 'permissions' && Array.isArray(value)) {
       return this.permissionsSummary(value as CasePermission[]);

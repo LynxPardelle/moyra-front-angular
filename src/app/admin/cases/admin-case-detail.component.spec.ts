@@ -38,7 +38,6 @@ describe('AdminCaseDetailComponent', () => {
         caseId: 'case-1',
         displayName: 'Cliente editado',
         rolePreset: 'client',
-        memberType: 'external',
         permissions: ['case.read'],
       },
     }));
@@ -49,7 +48,6 @@ describe('AdminCaseDetailComponent', () => {
         caseId: 'case-1',
         displayName: 'Cliente editado',
         rolePreset: 'client',
-        memberType: 'external',
         permissions: ['case.read', 'case.comment'],
       },
     }));
@@ -61,7 +59,6 @@ describe('AdminCaseDetailComponent', () => {
           caseId: 'case-1',
           displayName: 'Cliente',
           rolePreset: 'client',
-          memberType: 'external',
           permissions: ['case.read'],
           status: 'removed',
         },
@@ -161,7 +158,6 @@ describe('AdminCaseDetailComponent', () => {
                   displayName: 'Cliente',
                   email: 'cliente@moyra.org',
                   rolePreset: 'client',
-                  memberType: 'external',
                   permissions: ['case.read', 'case.comment'],
                 }],
               }),
@@ -258,6 +254,7 @@ describe('AdminCaseDetailComponent', () => {
               email: 'admin@moyra.org',
               role: 'ROLE_ADMIN',
             }),
+            isAdmin: () => true,
           },
         },
       ],
@@ -329,7 +326,7 @@ describe('AdminCaseDetailComponent', () => {
     });
   });
 
-  it('adds existing users as case members with role and relation', () => {
+  it('adds existing users as case members with case role', () => {
     inviteMemberSpy.and.returnValue(
       of({
         status: 'success',
@@ -340,7 +337,6 @@ describe('AdminCaseDetailComponent', () => {
           displayName: 'Pasante Moyra',
           email: 'pasante@moyra.org',
           rolePreset: 'pasante',
-          memberType: 'external',
           permissions: ['case.read'],
           status: 'active',
         },
@@ -356,7 +352,6 @@ describe('AdminCaseDetailComponent', () => {
           displayName: 'Pasante Moyra',
           email: 'pasante@moyra.org',
           rolePreset: 'pasante',
-          memberType: 'internal',
           permissions: ['case.read'],
           status: 'active',
         },
@@ -366,7 +361,6 @@ describe('AdminCaseDetailComponent', () => {
     fixture.componentInstance.existingMember = {
       userKey: 'legal-2',
       rolePreset: 'pasante',
-      memberType: 'internal',
     };
     fixture.componentInstance.addExistingMember();
 
@@ -375,9 +369,7 @@ describe('AdminCaseDetailComponent', () => {
       displayName: 'Pasante Moyra',
       rolePreset: 'pasante',
     });
-    expect(updateMemberSpy).toHaveBeenCalledWith('case-1', 'member-2', {
-      memberType: 'internal',
-    });
+    expect(updateMemberSpy).not.toHaveBeenCalled();
     expect(fixture.componentInstance.members.some((member) => member.id === 'member-2')).toBeTrue();
   });
 

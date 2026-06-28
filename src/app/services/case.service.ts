@@ -333,6 +333,13 @@ export class CaseService {
     );
   }
 
+  deleteFile(caseId: string, fileId: string): Observable<CaseItemResponse<CaseFile>> {
+    return this._http.delete<CaseItemResponse<CaseFile>>(
+      apiUrl(`/cases/${encodeURIComponent(caseId)}/files/${encodeURIComponent(fileId)}`),
+      { headers: this.authHeaders() }
+    );
+  }
+
   listAuditEvents(caseId: string): Observable<CaseListResponse<CaseAuditEvent>> {
     return this._http.get<CaseListResponse<CaseAuditEvent>>(
       apiUrl(`/cases/${encodeURIComponent(caseId)}/audit-events`),

@@ -62,7 +62,17 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
       <section class="case-detail-page__grid">
         <div class="case-detail-page__main">
           <section class="case-detail-page__panel">
-            <h2>{{ text('casesUpdatesTitle', 'Actualizaciones') }}</h2>
+            <div class="case-detail-page__section-head">
+              <h2>{{ text('casesUpdatesTitle', 'Actualizaciones') }}</h2>
+              @if (canCreateEntry()) {
+              <a
+                class="case-detail-page__action"
+                [routerLink]="['/admin/casos', caseId, 'entradas', 'nueva']"
+              >
+                {{ text('casesNewEntryButtonLabel', 'Nueva entrada') }}
+              </a>
+              }
+            </div>
             @if (entries.length === 0) {
             <p>
               {{
@@ -78,18 +88,28 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
                 <a class="case-entry__title" [routerLink]="['/casos', caseId, 'entrada', entry.id]">
                   {{ entry.title }}
                 </a>
-                <button
-                  type="button"
-                  class="case-entry__toggle"
-                  (click)="toggleEntry(entry.id)"
-                  [attr.aria-expanded]="isEntryExpanded(entry.id)"
-                >
-                  {{
-                    isEntryExpanded(entry.id)
-                      ? text('casesCollapseEntryLabel', 'Ocultar entrada')
-                      : text('casesExpandEntryLabel', 'Ver entrada')
-                  }}
-                </button>
+                <div class="case-entry__actions">
+                  @if (canEditEntry(entry)) {
+                  <a
+                    class="case-entry__edit"
+                    [routerLink]="['/admin/casos', caseId, 'entradas', entry.id]"
+                  >
+                    {{ text('casesEditEntryButtonLabel', 'Editar entrada') }}
+                  </a>
+                  }
+                  <button
+                    type="button"
+                    class="case-entry__toggle"
+                    (click)="toggleEntry(entry.id)"
+                    [attr.aria-expanded]="isEntryExpanded(entry.id)"
+                  >
+                    {{
+                      isEntryExpanded(entry.id)
+                        ? text('casesCollapseEntryLabel', 'Ocultar entrada')
+                        : text('casesExpandEntryLabel', 'Ver entrada')
+                    }}
+                  </button>
+                </div>
               </header>
 
               @if (isEntryExpanded(entry.id)) {
@@ -363,8 +383,22 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         justify-content: space-between;
       }
 
+      .case-detail-page__section-head {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .case-detail-page__section-head h2 {
+        margin: 0;
+      }
+
       .case-detail-page__notifications,
+      .case-detail-page__action,
       .case-file a,
+      .case-entry__edit,
       button {
         border: 1px solid #4b8ff5;
         color: #4b8ff5;
@@ -375,8 +409,12 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
 
       .case-detail-page__notifications:hover,
       .case-detail-page__notifications:focus-visible,
+      .case-detail-page__action:hover,
+      .case-detail-page__action:focus-visible,
       .case-file a:hover,
       .case-file a:focus-visible,
+      .case-entry__edit:hover,
+      .case-entry__edit:focus-visible,
       button:not(:disabled):hover,
       button:not(:disabled):focus-visible {
         background: #4b8ff5;
@@ -422,6 +460,15 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
       .case-entry__title:hover,
       .case-entry__title:focus-visible {
         text-decoration: underline;
+      }
+
+      .case-entry__actions {
+        align-items: center;
+        display: flex;
+        flex: 0 0 auto;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
       }
 
       .case-entry__body :where(em, i),
@@ -576,7 +623,8 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         }
 
         .case-entry__header,
-        .case-comments__header {
+        .case-comments__header,
+        .case-detail-page__section-head {
           flex-direction: column;
         }
 
@@ -585,7 +633,13 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         }
 
         .case-entry__toggle,
-        .case-comments__toggle {
+        .case-comments__toggle,
+        .case-detail-page__action,
+        .case-entry__edit {
+          width: 100%;
+        }
+
+        .case-entry__actions {
           width: 100%;
         }
       }
@@ -688,7 +742,7 @@ export class CaseDetailComponent implements OnInit {
           this.unreadNotificationsCount =
             unreadCount === null ? null : Math.max(0, Number(unreadCount) || 0);
           this.commentsByEntry = comments.reduce((current, item) => {
-            current[item.entryId] = item.comments;
+            current[item.entryId] = this.sortedComments(item.comments);
             return current;
           }, {} as Record<string, CaseComment[]>);
           this.syncExpandedState();
@@ -705,6 +759,14 @@ export class CaseDetailComponent implements OnInit {
 
   canComment(entry?: CaseEntry): boolean {
     return this.canWriteComments(entry);
+  }
+
+  canCreateEntry(): boolean {
+    return this.hasPermission('case.write_entry');
+  }
+
+  canEditEntry(entry?: CaseEntry): boolean {
+    return Boolean(entry) && this.hasPermission('case.write_entry');
   }
 
   canUpload(): boolean {
@@ -762,8 +824,8 @@ export class CaseDetailComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.commentsByEntry[entryId] = [
-            ...(this.commentsByEntry[entryId] || []),
             response.item,
+            ...(this.commentsByEntry[entryId] || []),
           ];
           this.commentDrafts[entryId] = '';
           this.commentBusyEntryId = '';
@@ -860,6 +922,10 @@ export class CaseDetailComponent implements OnInit {
   }
 
   fileHref(file: CaseFile): string {
+    const linkUrl = String(file.webUrl || file.linkUrl || '').trim();
+    if (this.isOneDriveFile(file) && linkUrl) {
+      return linkUrl;
+    }
     return this.downloadUrl(file.id);
   }
 
@@ -878,7 +944,7 @@ export class CaseDetailComponent implements OnInit {
       member?.email ||
       (entry.authorUserId ? 'Administrador' : 'Usuario');
     const relation = member
-      ? `${this.roleLabel(member.rolePreset)} / ${this.memberTypeLabel(member.memberType)}`
+      ? this.roleLabel(member.rolePreset)
       : entry.authorUserId
         ? 'Administrador'
         : 'Usuario';
@@ -900,7 +966,7 @@ export class CaseDetailComponent implements OnInit {
     if (this.isLegalMembership(membership)) {
       return true;
     }
-    return this.commentPolicyMode(entry, 'read') === 'case_members';
+    return membership?.permissions?.includes('case.comment') === true;
   }
 
   caseDescription(): string {
@@ -938,7 +1004,7 @@ export class CaseDetailComponent implements OnInit {
     if (!member) {
       return comment.authorUserId ? 'Administrador' : 'Usuario';
     }
-    return `${this.roleLabel(member.rolePreset)} / ${this.memberTypeLabel(member.memberType)}`;
+    return this.roleLabel(member.rolePreset);
   }
 
   commentCreatedLabel(comment: CaseComment): string {
@@ -1137,20 +1203,13 @@ export class CaseDetailComponent implements OnInit {
       return true;
     }
     return (
-      membership?.permissions?.includes('case.comment') === true &&
-      this.commentPolicyMode(entry, 'write') === 'case_members'
+      membership?.permissions?.includes('case.comment') === true
     );
-  }
-
-  private commentPolicyMode(entry: CaseEntry, key: 'read' | 'write'): string {
-    const mode = entry.commentPolicy?.[key];
-    return mode === 'case_members' ? 'case_members' : 'legal_team';
   }
 
   private isLegalMembership(membership?: CaseMembership): boolean {
     return Boolean(
-      membership?.memberType === 'internal' ||
-        membership?.rolePreset === 'attorney' ||
+      membership?.rolePreset === 'attorney' ||
         membership?.rolePreset === 'pasante'
     );
   }
@@ -1216,10 +1275,6 @@ export class CaseDetailComponent implements OnInit {
     );
   }
 
-  private memberTypeLabel(type?: string): string {
-    return type === 'internal' ? 'Equipo Moyra' : 'Cliente o invitado externo';
-  }
-
   private humanName(value?: string, id?: string): string {
     const name = String(value || '').trim();
     return name && name !== id && !/^[0-9a-f-]{24,}$/i.test(name) ? name : '';
@@ -1241,5 +1296,13 @@ export class CaseDetailComponent implements OnInit {
     } catch {
       return false;
     }
+  }
+
+  private sortedComments(comments: CaseComment[]): CaseComment[] {
+    return [...comments].sort((left, right) => {
+      const leftTime = Date.parse(left.createdAt || left.updatedAt || '') || 0;
+      const rightTime = Date.parse(right.createdAt || right.updatedAt || '') || 0;
+      return rightTime - leftTime;
+    });
   }
 }

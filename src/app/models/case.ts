@@ -1,6 +1,7 @@
 export type CasePermission =
   | 'case.read'
   | 'case.write_entry'
+  | 'case.manage_entry_visibility'
   | 'case.comment'
   | 'case.upload_file'
   | 'case.download_file'
@@ -35,8 +36,6 @@ export type CaseRolePreset =
   | 'external_observer'
   | 'observer'
   | string;
-
-export type CaseMemberType = 'internal' | 'external' | string;
 
 export type CaseMemberStatus = 'active' | 'removed' | 'invited' | string;
 
@@ -100,7 +99,6 @@ export type CaseMembership = {
   userId?: string;
   email?: string;
   displayName?: string;
-  memberType: CaseMemberType;
   rolePreset: CaseRolePreset;
   permissions: CasePermission[];
   status: CaseMemberStatus;
@@ -349,7 +347,6 @@ export type UpdateCaseMemberRequest = {
   displayName?: string;
   partyId?: string;
   partyLabel?: string;
-  memberType?: CaseMemberType;
   rolePreset?: CaseRolePreset;
 };
 
