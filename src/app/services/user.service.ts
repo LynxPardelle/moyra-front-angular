@@ -220,6 +220,7 @@ export class UserService {
 
     return this._http.put(updateUserUrl, body, {
       headers: headers,
+      withCredentials: ApiRuntime.isV2 ? supportsCredentialedAuthCookies() : false,
     });
   }
 

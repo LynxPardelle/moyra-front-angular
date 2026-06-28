@@ -64,6 +64,7 @@ describe('UserService auth transport', () => {
 
     const request = http.expectOne(apiUrl('/users/user-1'));
     expect(request.request.method).toBe('PUT');
+    expect(request.request.withCredentials).toBeFalse();
     expect(request.request.headers.get('Authorization')).toBe(token);
     expect(request.request.body).toBe(JSON.stringify({ displayName: 'Usuario editado' }));
 
