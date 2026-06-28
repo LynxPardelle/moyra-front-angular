@@ -190,6 +190,7 @@ describe('CaseService', () => {
       visibility: 'case_members',
     }).subscribe();
     service.markNotificationRead('notification-1').subscribe();
+    service.markNotificationUnread('notification-1').subscribe();
     service.getUnreadNotificationCount().subscribe();
     service.markAllNotificationsRead().subscribe();
 
@@ -247,6 +248,10 @@ describe('CaseService', () => {
     const notificationReq = http.expectOne(apiUrl('/case-notifications/notification-1/read'));
     expect(notificationReq.request.method).toBe('POST');
     notificationReq.flush({ status: 'success', item: {} });
+
+    const unreadNotificationReq = http.expectOne(apiUrl('/case-notifications/notification-1/unread'));
+    expect(unreadNotificationReq.request.method).toBe('POST');
+    unreadNotificationReq.flush({ status: 'success', item: {} });
 
     const unreadReq = http.expectOne(apiUrl('/case-notifications/unread-count'));
     expect(unreadReq.request.method).toBe('GET');

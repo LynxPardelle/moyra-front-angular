@@ -46,9 +46,7 @@
     } @if (article.title) {
     <h1 class="article-detail__title">{{ article.title }}</h1>
     } @if (article.intro) {
-    <p class="article-detail__intro">
-      {{ article.intro }}
-    </p>
+    <div class="article-detail__intro" [innerHTML]="richContent(article.intro) | safeRichHtml"></div>
     }
   </header>
   @if (article.mainImg && fileUrl(article.mainImg) && isImage(article.mainImg)) {

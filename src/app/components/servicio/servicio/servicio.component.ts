@@ -14,7 +14,7 @@ import { SharedService } from '../../../services/shared.service';
 import { Servicio } from '../../../models/servicio';
 import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { renderTemplateExpressions } from '../../../utils/template-value';
-import { hasHtmlMarkup } from '../../../utils/rich-content';
+import { hasHtmlMarkup, normalizeRichContentHtml } from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
 import { AiAssistantPanelComponent } from '../../web-utility/ai-assistant-panel/ai-assistant-panel.component';
 import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
@@ -506,7 +506,7 @@ export class ServicioComponent implements OnInit {
   }
 
   richContent(text: string): string {
-    const content = this.valuefy(text);
+    const content = normalizeRichContentHtml(this.valuefy(text));
     return hasHtmlMarkup(content) ? content : this.Linkify(content, '#000', '#4b8ff5');
   }
 

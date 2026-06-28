@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { CaseMembership, CaseRecord } from '../../models/case';
@@ -32,7 +32,9 @@ type UserCaseMembership = {
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <section class="admin-user-profile">
-      <a routerLink="/admin/usuarios" class="admin-user-profile__back">Usuarios</a>
+      <a [routerLink]="profileBackLink()" class="admin-user-profile__back">
+        {{ profileBackLabel() }}
+      </a>
 
       <header class="admin-user-profile__header">
         <div>
@@ -130,7 +132,7 @@ type UserCaseMembership = {
               @for (membership of memberships; track membership.member.id) {
               <tr>
                 <td>
-                  <a [routerLink]="['/admin/casos', membership.caseItem.id]">
+                  <a [routerLink]="caseProfileLink(membership.caseItem)">
                     {{ membership.caseItem.title }}
                   </a>
                 </td>
@@ -317,6 +319,7 @@ export class AdminUserProfileComponent implements OnInit {
 
   constructor(
     private _route: ActivatedRoute,
+    private _router: Router,
     private _userService: UserService,
     private _caseService: CaseService,
     private _authFacade: AuthFacade
@@ -457,6 +460,20 @@ export class AdminUserProfileComponent implements OnInit {
     );
   }
 
+  profileBackLink(): string {
+    return this.isStandaloneProfileRoute() ? '/' : '/admin/usuarios';
+  }
+
+  profileBackLabel(): string {
+    return this.isStandaloneProfileRoute() ? 'Inicio' : 'Usuarios';
+  }
+
+  caseProfileLink(caseItem: CaseRecord): string[] {
+    return this.isStandaloneProfileRoute()
+      ? ['/casos', caseItem.id]
+      : ['/admin/casos', caseItem.id];
+  }
+
   permissionsSummary(permissions?: string[]): string {
     if (!permissions?.length) {
       return 'Sin permisos';
@@ -547,11 +564,15 @@ export class AdminUserProfileComponent implements OnInit {
   }
 
   private resolvedUserId(): string {
-    if (this.userId !== 'me') {
+    if (this.userId && this.userId !== 'me') {
       return this.userId;
     }
     const current = this.currentIdentity();
     return current ? this.userKey(current) || current.email || 'me' : 'me';
+  }
+
+  private isStandaloneProfileRoute(): boolean {
+    return this._router.url.startsWith('/mi-perfil');
   }
 
   private resetProfileDraft(): void {

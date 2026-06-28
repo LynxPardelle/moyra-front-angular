@@ -73,16 +73,48 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
               }}
             </p>
             } @for (entry of entries; track entry.id) {
-            <article class="case-entry">
-              <a class="case-entry__title" [routerLink]="['/casos', caseId, 'entrada', entry.id]">
-                {{ entry.title }}
-              </a>
+            <article class="case-entry" [attr.data-entry-id]="entry.id">
+              <header class="case-entry__header">
+                <a class="case-entry__title" [routerLink]="['/casos', caseId, 'entrada', entry.id]">
+                  {{ entry.title }}
+                </a>
+                <button
+                  type="button"
+                  class="case-entry__toggle"
+                  (click)="toggleEntry(entry.id)"
+                  [attr.aria-expanded]="isEntryExpanded(entry.id)"
+                >
+                  {{
+                    isEntryExpanded(entry.id)
+                      ? text('casesCollapseEntryLabel', 'Ocultar entrada')
+                      : text('casesExpandEntryLabel', 'Ver entrada')
+                  }}
+                </button>
+              </header>
+
+              @if (isEntryExpanded(entry.id)) {
               <div class="case-entry__body" [innerHTML]="entry.text | safeRichHtml"></div>
 
               <section class="case-comments">
-                <h3>{{ text('casesCommentsTitle', 'Comentarios') }}</h3>
+                <header class="case-comments__header">
+                  <h3>{{ text('casesCommentsTitle', 'Comentarios') }}</h3>
+                  <button
+                    type="button"
+                    class="case-comments__toggle"
+                    (click)="toggleComments(entry.id)"
+                    [attr.aria-expanded]="areCommentsExpanded(entry.id)"
+                  >
+                    {{
+                      areCommentsExpanded(entry.id)
+                        ? text('casesCollapseCommentsLabel', 'Ocultar comentarios')
+                        : text('casesExpandCommentsLabel', 'Ver comentarios')
+                    }}
+                  </button>
+                </header>
+
+                @if (areCommentsExpanded(entry.id)) {
                 @for (comment of commentsByEntry[entry.id] || []; track comment.id) {
-                <div class="case-comment">
+                <div class="case-comment" [attr.data-comment-id]="comment.id">
                   <p class="case-comment__meta">
                     {{ commentAuthorLabel(comment) }} · {{ commentRelationLabel(comment) }}
                     @if (commentCreatedLabel(comment)) {
@@ -97,10 +129,10 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
                     [label]="text('casesCommentLabel', 'Escribe un comentario')"
                     [placeholder]="text('casesCommentPlaceholder', 'Escribe un comentario')"
                     [(value)]="commentDrafts[entry.id]"
-                    [disabled]="!canComment() || commentBusyEntryId === entry.id"
+                    [disabled]="!canComment(entry) || commentBusyEntryId === entry.id"
                     minHeight="150px"
                   />
-                  @if (!canComment()) {
+                  @if (!canComment(entry)) {
                   <p>
                     {{
                       text(
@@ -115,12 +147,14 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
                   <button
                     type="submit"
                     data-testid="case-comment-submit"
-                    [disabled]="!canComment() || commentBusyEntryId === entry.id"
+                    [disabled]="!canComment(entry) || commentBusyEntryId === entry.id"
                   >
                     {{ text('casesCommentSubmitLabel', 'Comentar') }}
                   </button>
                 </form>
+                }
               </section>
+              }
             </article>
             }
           </section>
@@ -301,6 +335,14 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         margin-top: 12px;
       }
 
+      .case-entry__header,
+      .case-comments__header {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+      }
+
       .case-detail-page__notifications,
       .case-file a,
       button {
@@ -353,7 +395,7 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         display: block;
         color: #4b8ff5;
         line-height: 1.45;
-        margin-bottom: 10px;
+        min-width: 0;
         text-decoration: none;
       }
 
@@ -365,6 +407,22 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
       .case-entry__body :where(em, i),
       .case-comment :where(em, i) {
         font-style: italic;
+      }
+
+      .case-entry__body {
+        margin-top: 10px;
+      }
+
+      .case-entry__toggle,
+      .case-comments__toggle {
+        flex: 0 0 auto;
+        font-size: 0.85rem;
+        min-height: 36px;
+        padding: 7px 10px;
+      }
+
+      .case-comments__header h3 {
+        margin: 0;
       }
 
       .case-comment__meta {
@@ -454,6 +512,22 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         .case-detail-page__header {
           flex-direction: column;
         }
+
+        .case-detail-page__header,
+        .case-entry__header,
+        .case-comments__header {
+          align-items: stretch;
+        }
+
+        .case-entry__header,
+        .case-comments__header {
+          flex-direction: column;
+        }
+
+        .case-entry__toggle,
+        .case-comments__toggle {
+          width: 100%;
+        }
       }
     `,
   ],
@@ -477,6 +551,8 @@ export class CaseDetailComponent implements OnInit {
   oneDriveBusy = false;
   oneDriveError = '';
   unreadNotificationsCount: number | null = null;
+  expandedEntryIds = new Set<string>();
+  expandedCommentEntryIds = new Set<string>();
   loading = false;
   errorMessage = '';
 
@@ -554,7 +630,10 @@ export class CaseDetailComponent implements OnInit {
             current[item.entryId] = item.comments;
             return current;
           }, {} as Record<string, CaseComment[]>);
+          this.syncExpandedState();
           this.loading = false;
+          this.autoMarkCaseNotificationsRead();
+          this.scrollToNotificationTarget();
         },
         error: () => {
           this.loading = false;
@@ -563,8 +642,22 @@ export class CaseDetailComponent implements OnInit {
       });
   }
 
-  canComment(): boolean {
-    return this.hasPermission('case.comment');
+  canComment(entry?: CaseEntry): boolean {
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
+    const membership = this.currentMembership();
+    if (!membership) {
+      return false;
+    }
+    if (membership.permissions?.includes('case.comment') === true) {
+      return true;
+    }
+    return Boolean(
+      entry &&
+        membership.permissions?.includes('case.read') === true &&
+        isVisibleToCaseClient(entry.visibility)
+    );
   }
 
   canUpload(): boolean {
@@ -590,7 +683,8 @@ export class CaseDetailComponent implements OnInit {
   }
 
   submitComment(entryId: string): void {
-    if (!this.canComment()) {
+    const entry = this.entries.find((item) => item.id === entryId);
+    if (!this.canComment(entry)) {
       return;
     }
     const text = (this.commentDrafts[entryId] || '').trim();
@@ -654,6 +748,30 @@ export class CaseDetailComponent implements OnInit {
         );
       },
     });
+  }
+
+  isEntryExpanded(entryId: string): boolean {
+    return this.expandedEntryIds.has(entryId);
+  }
+
+  toggleEntry(entryId: string): void {
+    if (this.expandedEntryIds.has(entryId)) {
+      this.expandedEntryIds.delete(entryId);
+      return;
+    }
+    this.expandedEntryIds.add(entryId);
+  }
+
+  areCommentsExpanded(entryId: string): boolean {
+    return this.expandedCommentEntryIds.has(entryId);
+  }
+
+  toggleComments(entryId: string): void {
+    if (this.expandedCommentEntryIds.has(entryId)) {
+      this.expandedCommentEntryIds.delete(entryId);
+      return;
+    }
+    this.expandedCommentEntryIds.add(entryId);
   }
 
   fileReviewLabel(file: CaseFile): string {
@@ -753,6 +871,96 @@ export class CaseDetailComponent implements OnInit {
     return (
       file.externalVisibilityStatus === 'approved' && isVisibleToCaseClient(file.visibility)
     );
+  }
+
+  private syncExpandedState(): void {
+    const entryIds = new Set(this.entries.map((entry) => entry.id));
+    if (this.expandedEntryIds.size === 0) {
+      this.expandedEntryIds = new Set(entryIds);
+    } else {
+      this.expandedEntryIds = new Set(
+        Array.from(this.expandedEntryIds).filter((entryId) => entryIds.has(entryId))
+      );
+    }
+
+    if (this.expandedCommentEntryIds.size === 0) {
+      this.expandedCommentEntryIds = new Set(entryIds);
+    } else {
+      this.expandedCommentEntryIds = new Set(
+        Array.from(this.expandedCommentEntryIds).filter((entryId) => entryIds.has(entryId))
+      );
+    }
+
+    const targetCommentId = this.queryParam('commentId');
+    const targetEntryId = this.queryParam('entryId') || this.entryIdForComment(targetCommentId);
+    if (targetEntryId && entryIds.has(targetEntryId)) {
+      this.expandedEntryIds.add(targetEntryId);
+      this.expandedCommentEntryIds.add(targetEntryId);
+    }
+  }
+
+  private autoMarkCaseNotificationsRead(): void {
+    this._caseService
+      .listNotifications()
+      .pipe(
+        switchMap((response) => {
+          const unreadForCase = (response.items || []).filter(
+            (notification) =>
+              notification.caseId === this.caseId &&
+              !notification.readAt &&
+              !notification.manualUnreadAt
+          );
+          if (unreadForCase.length === 0) {
+            return of([]);
+          }
+          return forkJoin(
+            unreadForCase.map((notification) =>
+              this._caseService
+                .markNotificationRead(notification.id)
+                .pipe(catchError(() => of(null)))
+            )
+          );
+        }),
+        catchError(() => of([]))
+      )
+      .subscribe((results) => {
+        const marked = results.filter(Boolean).length;
+        if (marked > 0 && this.unreadNotificationsCount !== null) {
+          this.unreadNotificationsCount = Math.max(0, this.unreadNotificationsCount - marked);
+        }
+      });
+  }
+
+  private scrollToNotificationTarget(): void {
+    const targetCommentId = this.queryParam('commentId');
+    const targetEntryId = this.queryParam('entryId') || this.entryIdForComment(targetCommentId);
+    const targetName = targetCommentId ? 'data-comment-id' : targetEntryId ? 'data-entry-id' : '';
+    const targetValue = targetCommentId || targetEntryId;
+    if (!targetName || !targetValue || typeof document === 'undefined') {
+      return;
+    }
+
+    setTimeout(() => {
+      const target = Array.from(document.querySelectorAll<HTMLElement>(`[${targetName}]`)).find(
+        (element) => element.getAttribute(targetName) === targetValue
+      );
+      target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+  }
+
+  private entryIdForComment(commentId: string): string {
+    if (!commentId) {
+      return '';
+    }
+    return (
+      Object.entries(this.commentsByEntry).find(([, comments]) =>
+        comments.some((comment) => comment.id === commentId)
+      )?.[0] || ''
+    );
+  }
+
+  private queryParam(name: string): string {
+    return (this._route.snapshot as any).queryParamMap?.get(name) || '';
   }
 
   private hasPermission(permission: string): boolean {

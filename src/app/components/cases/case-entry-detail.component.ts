@@ -30,7 +30,15 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
       <section class="case-entry-page__panel">
         <h2>{{ text('casesCommentsTitle', 'Comentarios') }}</h2>
         @for (comment of comments; track comment.id) {
-        <div class="case-entry-comment" [innerHTML]="comment.text | safeRichHtml"></div>
+        <div class="case-entry-comment">
+          <p class="case-entry-comment__meta">
+            {{ commentAuthorLabel(comment) }} · {{ commentRelationLabel(comment) }}
+            @if (commentCreatedLabel(comment)) {
+            · {{ commentCreatedLabel(comment) }}
+            }
+          </p>
+          <div [innerHTML]="comment.text | safeRichHtml"></div>
+        </div>
         }
         <form class="case-entry-comments__form" (ngSubmit)="submitComment()">
           <app-rich-text-editor
@@ -113,6 +121,13 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
       .case-entry-comment {
         border-top: 1px solid rgba(41, 48, 59, 0.12);
         padding: 10px 0;
+      }
+
+      .case-entry-comment__meta {
+        color: rgba(41, 48, 59, 0.66);
+        font-size: 0.86rem;
+        font-weight: 700;
+        margin: 0 0 6px;
       }
 
       button,
@@ -207,7 +222,21 @@ export class CaseEntryDetailComponent implements OnInit {
   }
 
   canComment(): boolean {
-    return this.hasPermission('case.comment');
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
+    const membership = this.currentMembership();
+    if (!membership) {
+      return false;
+    }
+    if (membership.permissions?.includes('case.comment') === true) {
+      return true;
+    }
+    return Boolean(
+      this.entry &&
+        membership.permissions?.includes('case.read') === true &&
+        isVisibleToCaseClient(this.entry.visibility)
+    );
   }
 
   submitComment(): void {
@@ -247,6 +276,28 @@ export class CaseEntryDetailComponent implements OnInit {
     return typeof value === 'string' && value.trim() ? value : fallback;
   }
 
+  commentAuthorLabel(comment: CaseComment): string {
+    const member = this.memberForComment(comment);
+    return (
+      this.humanName(comment.authorDisplayName, comment.authorUserId) ||
+      this.humanName(member?.displayName, member?.userId) ||
+      member?.email ||
+      (comment.authorUserId ? 'Administrador' : 'Usuario')
+    );
+  }
+
+  commentRelationLabel(comment: CaseComment): string {
+    const member = this.memberForComment(comment);
+    if (!member) {
+      return comment.authorUserId ? 'Administrador' : 'Usuario';
+    }
+    return `${this.roleLabel(member.rolePreset)} / ${this.memberTypeLabel(member.memberType)}`;
+  }
+
+  commentCreatedLabel(comment: CaseComment): string {
+    return this.formatDate(comment.createdAt);
+  }
+
   private hasPermission(permission: string): boolean {
     if (this._authFacade.isAdmin()) {
       return true;
@@ -266,5 +317,45 @@ export class CaseEntryDetailComponent implements OnInit {
       (member) =>
         (userId && member.userId === userId) || (email && member.email === email)
     );
+  }
+
+  private memberForComment(comment: CaseComment): CaseMembership | undefined {
+    return this.members.find((member) => member.userId && member.userId === comment.authorUserId);
+  }
+
+  private formatDate(value?: string): string {
+    if (!value) {
+      return '';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    return new Intl.DateTimeFormat('es-MX', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'America/Mexico_City',
+    }).format(date);
+  }
+
+  private roleLabel(role?: string): string {
+    return (
+      {
+        attorney: 'Abogado',
+        pasante: 'Pasante',
+        client: 'Cliente',
+        external_observer: 'Observador',
+        observer: 'Observador',
+      }[String(role || '')] || role || 'Miembro'
+    );
+  }
+
+  private memberTypeLabel(type?: string): string {
+    return type === 'internal' ? 'Equipo Moyra' : 'Cliente o invitado externo';
+  }
+
+  private humanName(value?: string, id?: string): string {
+    const name = String(value || '').trim();
+    return name && name !== id && !/^[0-9a-f-]{24,}$/i.test(name) ? name : '';
   }
 }

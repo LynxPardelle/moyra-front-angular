@@ -50,6 +50,9 @@ describe('CaseEntryDetailComponent', () => {
                     caseId: 'case-1',
                     entryId: 'entry-1',
                     text: 'Comentario autorizado',
+                    authorUserId: 'user-1',
+                    authorDisplayName: 'Cliente',
+                    createdAt: '2026-06-26T20:00:00.000Z',
                     visibility: { mode: 'case_members' },
                   },
                 ],
@@ -67,7 +70,7 @@ describe('CaseEntryDetailComponent', () => {
                     rolePreset: 'client',
                     memberType: 'external',
                     status: 'active',
-                    permissions: ['case.read', 'case.comment'],
+                    permissions: ['case.read'],
                   },
                 ],
               }),
@@ -111,6 +114,20 @@ describe('CaseEntryDetailComponent', () => {
     expect(text).toContain('Entrada privada');
     expect(text).toContain('Contenido autorizado');
     expect(text).toContain('Comentario autorizado');
+    expect(text).toContain('Cliente · Cliente / Cliente o invitado externo');
     expect(compiled.querySelector('a[href*="/publication"]')).toBeNull();
+  });
+
+  it('allows a client with read access to comment on a visible entry', () => {
+    fixture = TestBed.createComponent(CaseEntryDetailComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.canComment()).toBeTrue();
+
+    fixture.componentInstance.commentDraft = 'Nuevo comentario';
+    fixture.componentInstance.submitComment();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Nuevo comentario');
   });
 });

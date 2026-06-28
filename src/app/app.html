@@ -182,12 +182,12 @@
             Cambiar contraseña
           </a>
         </li>
-        } @if (canOpenAdminProfile()) {
+        } @if (isAuthenticatedUser()) {
         <li class="text-center my-4 h3">
           <a
             class="d-block mx-auto ank ank-text-linkM text-decoration-none"
-            href="/admin/usuarios/me"
-            [routerLink]="['/admin/usuarios/me']"
+            href="/mi-perfil"
+            [routerLink]="['/mi-perfil']"
             data-bs-dismiss="offcanvas"
           >
             Mi perfil

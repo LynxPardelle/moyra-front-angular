@@ -11,13 +11,14 @@ describe('CaseDetailComponent', () => {
   let fixture: ComponentFixture<CaseDetailComponent>;
   let createCommentSpy: jasmine.Spy;
   let createOneDriveLinkSpy: jasmine.Spy;
+  let markNotificationReadSpy: jasmine.Spy;
   let permissions: string[];
   let linkFails: boolean;
   let identity: { id: string; email: string };
   let isAdmin: boolean;
 
   beforeEach(async () => {
-    permissions = ['case.read', 'case.comment', 'case.upload_file', 'case.download_file'];
+    permissions = ['case.read', 'case.upload_file', 'case.download_file'];
     linkFails = false;
     identity = { id: 'client-1', email: 'cliente@moyra.org' };
     isAdmin = false;
@@ -51,6 +52,28 @@ describe('CaseDetailComponent', () => {
               visibility: { mode: 'case_members' },
             },
           })
+    );
+    markNotificationReadSpy = jasmine.createSpy('markNotificationRead').and.callFake((id: string) =>
+      of({
+        status: 'success',
+        item: {
+          id,
+          recipientUserId: 'client-1',
+          caseId: 'case-1',
+          eventType: 'case.entry.created',
+          targetType: 'case-entry',
+          targetId: 'entry-1',
+          title: 'Nueva actualización',
+          body: 'Hay una actualización nueva.',
+          link: { path: '/casos/case-1?entryId=entry-1' },
+          readAt: '2026-06-26T20:10:00.000Z',
+          delivery: {
+            inApp: { status: 'created' },
+            email: { status: 'skipped' },
+            webPush: { status: 'skipped' },
+          },
+        },
+      })
     );
 
     await TestBed.configureTestingModule({
@@ -223,6 +246,47 @@ describe('CaseDetailComponent', () => {
             createComment: createCommentSpy,
             createOneDriveLink: createOneDriveLinkSpy,
             getUnreadNotificationCount: () => of({ status: 'success', count: 3 }),
+            listNotifications: () =>
+              of({
+                status: 'success',
+                items: [
+                  {
+                    id: 'notification-auto',
+                    recipientUserId: 'client-1',
+                    caseId: 'case-1',
+                    eventType: 'case.entry.created',
+                    targetType: 'case-entry',
+                    targetId: 'entry-1',
+                    title: 'Nueva actualización',
+                    body: 'Hay una actualización nueva.',
+                    link: { path: '/casos/case-1?entryId=entry-1' },
+                    delivery: {
+                      inApp: { status: 'created' },
+                      email: { status: 'skipped' },
+                      webPush: { status: 'skipped' },
+                    },
+                  },
+                  {
+                    id: 'notification-manual',
+                    recipientUserId: 'client-1',
+                    caseId: 'case-1',
+                    eventType: 'case.comment.created',
+                    targetType: 'case-comment',
+                    targetId: 'comment-1',
+                    title: 'Comentario',
+                    body: 'Hay un comentario nuevo.',
+                    link: { path: '/casos/case-1?commentId=comment-1' },
+                    manualUnreadAt: '2026-06-26T20:05:00.000Z',
+                    delivery: {
+                      inApp: { status: 'created' },
+                      email: { status: 'skipped' },
+                      webPush: { status: 'skipped' },
+                    },
+                  },
+                ],
+                nextToken: null,
+              }),
+            markNotificationRead: markNotificationReadSpy,
           },
         },
       ],
@@ -275,9 +339,16 @@ describe('CaseDetailComponent', () => {
     expect(entryTitle?.textContent).toContain('Actualización visible');
   });
 
+  it('marks unread case notifications automatically but respects manual unread flags', () => {
+    render();
+
+    expect(markNotificationReadSpy).toHaveBeenCalledOnceWith('notification-auto');
+  });
+
   it('submits a client comment and appends the successful API response', () => {
     render();
 
+    expect(fixture.componentInstance.canComment(fixture.componentInstance.entries[0])).toBeTrue();
     fixture.componentInstance.commentDrafts['entry-1'] = 'Comentario enviado';
     fixture.componentInstance.submitComment('entry-1');
     fixture.detectChanges();
@@ -289,8 +360,8 @@ describe('CaseDetailComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Comentario enviado');
   });
 
-  it('shows disabled comment and upload controls when membership lacks permissions', () => {
-    permissions = ['case.read'];
+  it('shows disabled comment and upload controls when membership lacks read permissions', () => {
+    permissions = [];
 
     render();
 

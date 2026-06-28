@@ -50,7 +50,7 @@
 </h2>
 } @if (servicio && servicio.mainImg && servicio.mainImg.location) {
 <img
-  class="ank ank-wmx-65per ank-hmx-500px mx-auto d-block obj-fit-cover"
+  class="solution-detail__image ank ank-wmx-65per ank-hmx-500px mx-auto d-block obj-fit-cover"
   [src]="servicio.mainImg.publicUrl || urlServicio + 'get-file/' + servicio.mainImg.location"
   alt="{{ servicio.mainImg.title }}"
 />
@@ -59,7 +59,7 @@
 <!-- Description -->
 @if (servicio.desc && servicio.desc !== '') {
 <div
-  class="ank ank-w-65per mx-auto my-5 text-center"
+  class="solution-detail__description ank ank-w-65per mx-auto my-5 text-center"
   [innerHTML]="richContent(servicio.desc) | safeRichHtml"
 ></div>
 }

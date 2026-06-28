@@ -349,6 +349,14 @@ export class CaseService {
     );
   }
 
+  markNotificationUnread(notificationId: string): Observable<CaseItemResponse<CaseNotification>> {
+    return this._http.post<CaseItemResponse<CaseNotification>>(
+      apiUrl(`/case-notifications/${encodeURIComponent(notificationId)}/unread`),
+      {},
+      { headers: this.authHeaders() }
+    );
+  }
+
   getUnreadNotificationCount(): Observable<CaseUnreadCountResponse> {
     return this._http.get<CaseUnreadCountResponse>(apiUrl('/case-notifications/unread-count'), {
       headers: this.authHeaders(),

@@ -26,6 +26,7 @@ import { CasesGuard } from './components/cases/cases.guard';
 
 /* User */
 import { ChangePasswordComponent } from './components/user/change-password/change-password.component';
+import { AuthGuard } from './components/user/auth.guard';
 import { LoginComponent } from './components/user/login/login.component';
 
 export const routes: Routes = [
@@ -126,6 +127,14 @@ export const routes: Routes = [
   // User
   { path: 'login', component: LoginComponent },
   { path: 'cambiar-contrasena', component: ChangePasswordComponent },
+  {
+    path: 'mi-perfil',
+    loadComponent: () =>
+      import('./admin/users/admin-user-profile.component').then(
+        (module) => module.AdminUserProfileComponent
+      ),
+    canActivate: [AuthGuard],
+  },
 
   // Error
   { path: '**', component: ErrorComponent },

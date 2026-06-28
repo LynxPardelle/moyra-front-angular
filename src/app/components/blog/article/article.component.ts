@@ -26,6 +26,7 @@ import {
 } from '../../../utils/file-kind';
 import {
   hasHtmlMarkup,
+  normalizeRichContentHtml,
   richContentPlainText,
   richTextWordCount,
 } from '../../../utils/rich-content';
@@ -520,7 +521,7 @@ export class ArticleComponent implements OnInit {
   }
 
   richContent(text: string, section?: ArticleSection): string {
-    const content = this.valuefy(text, section);
+    const content = normalizeRichContentHtml(this.valuefy(text, section));
     return hasHtmlMarkup(content) ? content : this.Linkify(content, '#29303b', '#4b8ff5');
   }
 

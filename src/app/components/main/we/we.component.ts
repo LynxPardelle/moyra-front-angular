@@ -15,7 +15,7 @@ import { SharedService } from '../../../services/shared.service';
 import { Main, Equip } from '../../../models/main';
 import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { renderTemplateExpressions } from '../../../utils/template-value';
-import { hasHtmlMarkup } from '../../../utils/rich-content';
+import { hasHtmlMarkup, normalizeRichContentHtml } from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
 import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
 
@@ -566,7 +566,7 @@ export class WeComponent implements OnInit, OnDestroy {
   }
 
   richContent(text: string): string {
-    const content = this.valuefy(text || '');
+    const content = normalizeRichContentHtml(this.valuefy(text || ''));
     return hasHtmlMarkup(content) ? content : this.Linkify(content, '#000', '#4b8ff5');
   }
 

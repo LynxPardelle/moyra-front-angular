@@ -231,6 +231,7 @@ export type CaseNotification = {
     };
   };
   dedupeKey?: string;
+  manualUnreadAt?: string;
   createdAt?: string;
   updatedAt?: string;
 };

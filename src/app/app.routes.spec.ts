@@ -1,5 +1,6 @@
 import { routes } from './app.routes';
 import { CasesGuard } from './components/cases/cases.guard';
+import { AuthGuard } from './components/user/auth.guard';
 import { PublicationComponent } from './components/publication/publication/publication.component';
 import { PublicationsComponent } from './components/publication/publications/publications.component';
 
@@ -35,5 +36,9 @@ describe('app routes privacy boundaries', () => {
     for (const path of privatePaths) {
       expect(route(path)?.canActivate).toEqual([CasesGuard]);
     }
+  });
+
+  it('allows any authenticated user to access the profile route without admin guard', () => {
+    expect(route('mi-perfil')?.canActivate).toEqual([AuthGuard]);
   });
 });
