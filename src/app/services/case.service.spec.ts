@@ -176,11 +176,13 @@ describe('CaseService', () => {
     }).subscribe();
     service.removeMember('case-1', 'membership-1').subscribe();
     service.presignCaseFile('case-1', {
+      entryId: 'entry-1',
       fileName: 'evidencia.pdf',
       contentType: 'application/pdf',
       size: 2048,
     }).subscribe();
     service.createOneDriveLink('case-1', {
+      entryId: 'entry-1',
       fileName: 'Contrato firmado',
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
       visibility: 'case_members',
@@ -227,12 +229,14 @@ describe('CaseService', () => {
 
     const presignReq = http.expectOne(apiUrl('/cases/case-1/files/presign'));
     expect(presignReq.request.method).toBe('POST');
+    expect(presignReq.request.body.entryId).toBe('entry-1');
     expect(presignReq.request.body.fileName).toBe('evidencia.pdf');
     presignReq.flush({ status: 'success', file: {}, upload: { method: 'PUT', url: 'signed' } });
 
     const oneDriveReq = http.expectOne(apiUrl('/cases/case-1/files/onedrive-link'));
     expect(oneDriveReq.request.method).toBe('POST');
     expect(oneDriveReq.request.body).toEqual({
+      entryId: 'entry-1',
       fileName: 'Contrato firmado',
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
       visibility: { mode: 'case_members' },
@@ -265,7 +269,7 @@ describe('CaseService', () => {
   it('uploads a case file through presigned PUT and completes metadata without exposing raw S3 links', () => {
     const file = new File(['contenido'], 'evidencia.pdf', { type: 'application/pdf' });
 
-    service.uploadCaseFile('case-1', file).subscribe((response) => {
+    service.uploadCaseFile('case-1', 'entry-1', file).subscribe((response) => {
       expect(response.item.id).toBe('file-1');
       expect(response.item.uploadStatus).toBe('uploaded');
     });
@@ -273,6 +277,7 @@ describe('CaseService', () => {
     const presignReq = http.expectOne(apiUrl('/cases/case-1/files/presign'));
     expect(presignReq.request.method).toBe('POST');
     expect(presignReq.request.body).toEqual({
+      entryId: 'entry-1',
       fileName: 'evidencia.pdf',
       contentType: 'application/pdf',
       size: file.size,

@@ -315,6 +315,15 @@ type PlatformUser = {
           <h2>Archivos</h2>
           <form class="admin-case-form admin-case-form--stack" (ngSubmit)="addOneDriveLink()">
             <label>
+              Entrada relacionada
+              <select name="oneDriveEntryId" [(ngModel)]="oneDriveLink.entryId">
+                <option value="">Selecciona una entrada</option>
+                @for (entry of entries; track entry.id) {
+                <option [value]="entry.id">{{ entry.title }}</option>
+                }
+              </select>
+            </label>
+            <label>
               Nombre del documento
               <input
                 name="oneDriveFileName"
@@ -353,6 +362,7 @@ type PlatformUser = {
             @for (file of files; track file.id) {
             <article class="admin-case-file">
               <strong>{{ displayFileName(file) }}</strong>
+              <span>Entrada: {{ fileEntryLabel(file) }}</span>
               <span>{{ fileTypeLabel(file) }}</span>
               <label>
                 Visibilidad
@@ -753,6 +763,7 @@ export class AdminCaseDetailComponent implements OnInit {
     permissions: [],
   };
   oneDriveLink = {
+    entryId: '',
     fileName: '',
     linkUrl: '',
     visibilityMode: 'case_members',
@@ -927,13 +938,15 @@ export class AdminCaseDetailComponent implements OnInit {
 
   addOneDriveLink(): void {
     if (!this.canCreateOneDriveLink()) {
-      this.oneDriveError = 'Revisa el nombre y usa un enlace de OneDrive o SharePoint válido.';
+      this.oneDriveError =
+        'Selecciona una entrada, captura el nombre y usa un enlace de OneDrive o SharePoint válido.';
       return;
     }
 
     this.oneDriveBusy = true;
     this.oneDriveError = '';
     this._caseService.createOneDriveLink(this.caseId, {
+      entryId: this.oneDriveLink.entryId,
       fileName: this.oneDriveLink.fileName.trim(),
       linkUrl: this.oneDriveLink.linkUrl.trim(),
       visibility: { mode: this.oneDriveLink.visibilityMode },
@@ -941,6 +954,7 @@ export class AdminCaseDetailComponent implements OnInit {
       next: (response) => {
         this.files = [response.item, ...this.files];
         this.oneDriveLink = {
+          entryId: '',
           fileName: '',
           linkUrl: '',
           visibilityMode: 'case_members',
@@ -977,7 +991,7 @@ export class AdminCaseDetailComponent implements OnInit {
     const mode = visibilityMode === 'internal_only' ? 'internal_only' : 'case_members';
     this._caseService
       .updateFileVisibility(this.caseId, file.id, {
-        externalVisibilityStatus: mode === 'case_members' ? 'approved' : 'restricted',
+        externalVisibilityStatus: 'approved',
         visibility: { mode },
       })
       .subscribe({
@@ -1146,6 +1160,13 @@ export class AdminCaseDetailComponent implements OnInit {
       return ['/casos', this.caseId, 'entrada', entry.id];
     }
     return ['/admin/casos', this.caseId, 'entradas', entry.id];
+  }
+
+  fileEntryLabel(file: CaseFile): string {
+    if (!file.entryId) {
+      return 'Sin entrada relacionada';
+    }
+    return this.entries.find((entry) => entry.id === file.entryId)?.title || file.entryId;
   }
 
   roleLabel(role: string): string {
@@ -1349,6 +1370,7 @@ export class AdminCaseDetailComponent implements OnInit {
 
   hasOneDriveInputs(): boolean {
     return (
+      this.oneDriveLink.entryId.trim().length > 0 &&
       this.oneDriveLink.fileName.trim().length > 0 &&
       this.oneDriveLink.linkUrl.trim().length > 0
     );

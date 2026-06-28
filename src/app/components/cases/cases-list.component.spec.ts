@@ -22,6 +22,9 @@ describe('CasesListComponent', () => {
         reference: 'MRA-001',
         caseTypeId: 'corporate',
         statusId: 'review',
+        createdAt: '2026-06-16T18:00:00.000Z',
+        createdByDisplayName: 'Pamela Betancourt',
+        createdByEmail: 'betan.pamela@gmail.com',
         lastActivityAt: '2026-06-18T20:00:00.000Z',
       },
       {
@@ -30,6 +33,8 @@ describe('CasesListComponent', () => {
         reference: 'MRA-002',
         caseTypeId: 'immigration',
         statusId: 'draft',
+        createdAt: '2026-06-15T18:00:00.000Z',
+        createdByEmail: 'hugo@moyra.org',
         updatedAt: '2026-06-17T20:00:00.000Z',
       },
     ];
@@ -104,6 +109,8 @@ describe('CasesListComponent', () => {
     expect(text).toContain('Contrato corporativo');
     expect(text).toContain('Expedientes');
     expect(text).toContain('En revisión');
+    expect(text).toContain('Creado');
+    expect(text).toContain('Pamela Betancourt');
     expect(text).toContain('2 sin leer');
     expect(text).toContain('Revisar novedades');
     expect(text).toContain('Consulta migratoria');

@@ -18,7 +18,7 @@ describe('CaseDetailComponent', () => {
   let isAdmin: boolean;
 
   beforeEach(async () => {
-    permissions = ['case.read', 'case.upload_file', 'case.download_file'];
+    permissions = ['case.read', 'case.comment', 'case.upload_file', 'case.download_file'];
     linkFails = false;
     identity = { id: 'client-1', email: 'cliente@moyra.org' };
     isAdmin = false;
@@ -42,6 +42,7 @@ describe('CaseDetailComponent', () => {
             item: {
               id: 'file-link-new',
               caseId: 'case-1',
+              entryId: 'entry-1',
               fileName: 'Contrato firmado',
               contentType: 'text/uri-list',
               storageProvider: 'onedrive',
@@ -136,6 +137,10 @@ describe('CaseDetailComponent', () => {
                     title: 'Actualización visible',
                     text: '<p>Texto para cliente</p>',
                     visibility: { mode: 'case_members' },
+                    commentPolicy: { read: 'case_members', write: 'case_members' },
+                    authorUserId: 'admin-1',
+                    authorDisplayName: 'Administrador',
+                    createdAt: '2026-06-26T19:00:00.000Z',
                   },
                   {
                     id: 'entry-internal',
@@ -180,6 +185,7 @@ describe('CaseDetailComponent', () => {
                     id: 'file-approved',
                     caseId: 'case-1',
                     fileName: 'aprobado.pdf',
+                    entryId: 'entry-1',
                     contentType: 'application/pdf',
                     externalVisibilityStatus: 'approved',
                     uploadStatus: 'uploaded',
@@ -189,6 +195,7 @@ describe('CaseDetailComponent', () => {
                     id: 'file-own-pending',
                     caseId: 'case-1',
                     fileName: 'mi-envio.pdf',
+                    entryId: 'entry-1',
                     contentType: 'application/pdf',
                     externalVisibilityStatus: 'pending',
                     uploadStatus: 'uploaded',
@@ -199,6 +206,7 @@ describe('CaseDetailComponent', () => {
                     id: 'file-own-zip',
                     caseId: 'case-1',
                     fileName: 'mi-envio.zip',
+                    entryId: 'entry-1',
                     contentType: 'application/zip',
                     externalVisibilityStatus: 'pending',
                     uploadStatus: 'uploaded',
@@ -209,6 +217,7 @@ describe('CaseDetailComponent', () => {
                     id: 'file-onedrive',
                     caseId: 'case-1',
                     fileName: 'Poder firmado',
+                    entryId: 'entry-1',
                     contentType: 'text/uri-list',
                     storageProvider: 'onedrive',
                     externalVisibilityStatus: 'approved',
@@ -219,6 +228,7 @@ describe('CaseDetailComponent', () => {
                     id: 'file-other-pending',
                     caseId: 'case-1',
                     fileName: 'pendiente-otro.pdf',
+                    entryId: 'entry-1',
                     contentType: 'application/pdf',
                     externalVisibilityStatus: 'pending',
                     uploadStatus: 'uploaded',
@@ -365,9 +375,9 @@ describe('CaseDetailComponent', () => {
 
     render();
 
-    expect(fixture.nativeElement.textContent).toContain('Los comentarios no están habilitados');
-    expect(fixture.nativeElement.textContent).toContain('La carga de documentos no está habilitada');
-    expect(fixture.nativeElement.querySelector('[data-testid="case-comment-submit"]')?.disabled).toBeTrue();
+    expect(fixture.componentInstance.entries.length).toBe(0);
+    expect(fixture.nativeElement.textContent).toContain('Aún no hay actualizaciones visibles');
+    expect(fixture.nativeElement.querySelector('[data-testid="case-comment-submit"]')).toBeNull();
   });
 
   it('fails closed when the authenticated user has no loaded case membership', () => {
@@ -375,25 +385,25 @@ describe('CaseDetailComponent', () => {
 
     render();
 
-    expect(fixture.componentInstance.canComment()).toBeFalse();
+    expect(fixture.componentInstance.entries.length).toBe(0);
     expect(fixture.componentInstance.canUpload()).toBeFalse();
-    expect(fixture.nativeElement.textContent).toContain('Los comentarios no están habilitados');
-    expect(fixture.nativeElement.textContent).toContain('La carga de documentos no está habilitada');
+    expect(fixture.nativeElement.textContent).toContain('Aún no hay actualizaciones visibles');
   });
 
   it('lets a permitted member add a OneDrive document link', () => {
     render();
 
-    fixture.componentInstance.oneDriveLink = {
+    fixture.componentInstance.oneDriveDrafts['entry-1'] = {
       fileName: 'Contrato firmado',
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
       visibilityMode: 'case_members',
     };
-    fixture.componentInstance.addOneDriveLink();
+    fixture.componentInstance.addOneDriveLink('entry-1');
     fixture.detectChanges();
 
     expect(createOneDriveLinkSpy).toHaveBeenCalledWith('case-1', {
       fileName: 'Contrato firmado',
+      entryId: 'entry-1',
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
       visibility: { mode: 'case_members' },
     });
@@ -404,12 +414,12 @@ describe('CaseDetailComponent', () => {
   it('explains invalid document links instead of silently blocking submit', () => {
     render();
 
-    fixture.componentInstance.oneDriveLink = {
+    fixture.componentInstance.oneDriveDrafts['entry-1'] = {
       fileName: 'Video externo',
       linkUrl: 'https://youtu.be/no-es-onedrive',
       visibilityMode: 'case_members',
     };
-    fixture.componentInstance.addOneDriveLink();
+    fixture.componentInstance.addOneDriveLink('entry-1');
     fixture.detectChanges();
 
     expect(createOneDriveLinkSpy).not.toHaveBeenCalled();
@@ -423,7 +433,7 @@ describe('CaseDetailComponent', () => {
 
     render();
 
-    expect(fixture.componentInstance.canComment()).toBeTrue();
+    expect(fixture.componentInstance.canComment(fixture.componentInstance.entries[0])).toBeTrue();
     expect(fixture.componentInstance.canUpload()).toBeTrue();
     expect(fixture.nativeElement.textContent).not.toContain('Los comentarios no están habilitados');
   });

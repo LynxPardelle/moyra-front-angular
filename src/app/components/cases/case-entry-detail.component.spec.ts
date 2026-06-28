@@ -38,6 +38,27 @@ describe('CaseEntryDetailComponent', () => {
                     title: 'Entrada privada',
                     text: '<p>Contenido autorizado</p>',
                     visibility: { mode: 'case_members' },
+                    commentPolicy: { read: 'case_members', write: 'case_members' },
+                    authorUserId: 'user-1',
+                    authorDisplayName: 'Cliente',
+                    createdAt: '2026-06-26T20:00:00.000Z',
+                  },
+                ],
+              }),
+            listFiles: () =>
+              of({
+                status: 'success',
+                items: [
+                  {
+                    id: 'file-1',
+                    caseId: 'case-1',
+                    entryId: 'entry-1',
+                    fileName: 'Documento de entrada',
+                    contentType: 'text/uri-list',
+                    storageProvider: 'onedrive',
+                    externalVisibilityStatus: 'approved',
+                    uploadStatus: 'linked',
+                    visibility: { mode: 'case_members' },
                   },
                 ],
               }),
@@ -70,7 +91,7 @@ describe('CaseEntryDetailComponent', () => {
                     rolePreset: 'client',
                     memberType: 'external',
                     status: 'active',
-                    permissions: ['case.read'],
+                    permissions: ['case.read', 'case.comment'],
                   },
                 ],
               }),
@@ -113,12 +134,13 @@ describe('CaseEntryDetailComponent', () => {
 
     expect(text).toContain('Entrada privada');
     expect(text).toContain('Contenido autorizado');
+    expect(text).toContain('Documento de entrada');
     expect(text).toContain('Comentario autorizado');
     expect(text).toContain('Cliente · Cliente / Cliente o invitado externo');
     expect(compiled.querySelector('a[href*="/publication"]')).toBeNull();
   });
 
-  it('allows a client with read access to comment on a visible entry', () => {
+  it('allows a client with comment access to comment on a visible entry', () => {
     fixture = TestBed.createComponent(CaseEntryDetailComponent);
     fixture.detectChanges();
 

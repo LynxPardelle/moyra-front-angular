@@ -5,7 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { SafeRichHtmlPipe } from '../../pipes/safe-rich-html';
-import { CaseComment, CaseEntry, CaseMembership } from '../../models/case';
+import { CaseComment, CaseEntry, CaseFile, CaseMembership } from '../../models/case';
 import { CaseService } from '../../services/case.service';
 import { MainService } from '../../services/main.service';
 import { AuthFacade } from '../../store/auth/auth.facade';
@@ -25,8 +25,31 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
       } @else if (entry) {
       <article class="case-entry-page__panel">
         <h1>{{ entry.title }}</h1>
+        <p class="case-entry-page__meta">
+          {{ entryAuthorLabel(entry) }}
+          @if (entryCreatedLabel(entry)) {
+          · {{ entryCreatedLabel(entry) }}
+          }
+        </p>
         <div class="case-entry-page__body" [innerHTML]="entry.text | safeRichHtml"></div>
       </article>
+      <section class="case-entry-page__panel">
+        <h2>{{ text('casesDocumentsTitle', 'Documentos') }}</h2>
+        @if (files.length === 0) {
+        <p>{{ text('casesDocumentsEmptyMessage', 'No hay documentos para esta entrada.') }}</p>
+        } @for (file of files; track file.id) {
+        <article class="case-entry-file">
+          <strong>{{ displayFileName(file) }}</strong>
+          <span>{{ fileTypeLabel(file) }}</span>
+          @if (canDownloadFile(file)) {
+          <a [href]="fileHref(file)" target="_blank" rel="noopener noreferrer">
+            {{ fileActionLabel(file) }}
+          </a>
+          }
+        </article>
+        }
+      </section>
+      @if (canReadComments()) {
       <section class="case-entry-page__panel">
         <h2>{{ text('casesCommentsTitle', 'Comentarios') }}</h2>
         @for (comment of comments; track comment.id) {
@@ -65,6 +88,18 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
           </button>
         </form>
       </section>
+      } @else {
+      <section class="case-entry-page__panel">
+        <p>
+          {{
+            text(
+              'casesCommentsRestrictedMessage',
+              'Los comentarios de esta entrada están restringidos al equipo legal.'
+            )
+          }}
+        </p>
+      </section>
+      }
       } @else {
       <p class="case-entry-page__reference">
         {{ text('casesEntryLoadingLabel', 'Cargando entrada...') }}
@@ -123,6 +158,7 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         padding: 10px 0;
       }
 
+      .case-entry-page__meta,
       .case-entry-comment__meta {
         color: rgba(41, 48, 59, 0.66);
         font-size: 0.86rem;
@@ -130,8 +166,16 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         margin: 0 0 6px;
       }
 
+      .case-entry-file {
+        border-top: 1px solid rgba(41, 48, 59, 0.12);
+        display: grid;
+        gap: 6px;
+        padding: 10px 0;
+      }
+
       button,
-      .case-entry-page__back {
+      .case-entry-page__back,
+      .case-entry-file a {
         border: 1px solid #4b8ff5;
         background: #ffffff;
         color: #4b8ff5;
@@ -146,7 +190,9 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
       button:not(:disabled):hover,
       button:not(:disabled):focus-visible,
       .case-entry-page__back:hover,
-      .case-entry-page__back:focus-visible {
+      .case-entry-page__back:focus-visible,
+      .case-entry-file a:hover,
+      .case-entry-file a:focus-visible {
         background: #4b8ff5;
         color: #ffffff;
         outline: 0;
@@ -170,6 +216,7 @@ export class CaseEntryDetailComponent implements OnInit {
   main: any = null;
   entry: CaseEntry | null = null;
   comments: CaseComment[] = [];
+  files: CaseFile[] = [];
   members: CaseMembership[] = [];
   commentDraft = '';
   commentError = '';
@@ -192,24 +239,31 @@ export class CaseEntryDetailComponent implements OnInit {
         .getMain()
         .pipe(catchError(() => of({ main: null }))),
       entries: this._caseService.listEntries(this.caseId),
+      files: this._caseService.listFiles(this.caseId),
       members: this._caseService
         .listMembers(this.caseId)
         .pipe(catchError(() => of({ status: 'success', items: [], nextToken: null }))),
     })
       .pipe(
-        switchMap(({ main, entries, members }) => {
+        switchMap(({ main, entries, files, members }) => {
           this.main = main?.main || null;
           this.members = members.items || [];
           const entry =
             (entries.items || []).find(
-              (item) => item.id === this.entryId && isVisibleToCaseClient(item.visibility)
+              (item) => item.id === this.entryId && this.canSeeEntry(item)
             ) || null;
           this.entry = entry;
+          this.files = (files.items || []).filter((file) =>
+            file.entryId ? file.entryId === this.entryId : false
+          );
           if (!entry) {
             this.errorMessage = this.text(
               'casesEntryNotFoundMessage',
               'No se encontró la entrada solicitada.'
             );
+          }
+          if (!entry || !this.canReadComments()) {
+            return of({ status: 'success', items: [], nextToken: null });
           }
           return this._caseService.listComments(this.caseId, this.entryId);
         })
@@ -222,21 +276,7 @@ export class CaseEntryDetailComponent implements OnInit {
   }
 
   canComment(): boolean {
-    if (this._authFacade.isAdmin()) {
-      return true;
-    }
-    const membership = this.currentMembership();
-    if (!membership) {
-      return false;
-    }
-    if (membership.permissions?.includes('case.comment') === true) {
-      return true;
-    }
-    return Boolean(
-      this.entry &&
-        membership.permissions?.includes('case.read') === true &&
-        isVisibleToCaseClient(this.entry.visibility)
-    );
+    return this.canWriteComments();
   }
 
   submitComment(): void {
@@ -298,6 +338,70 @@ export class CaseEntryDetailComponent implements OnInit {
     return this.formatDate(comment.createdAt);
   }
 
+  entryAuthorLabel(entry: CaseEntry): string {
+    const member = this.memberForUserId(entry.authorUserId);
+    const name =
+      this.humanName(entry.authorDisplayName, entry.authorUserId) ||
+      this.humanName(member?.displayName, member?.userId) ||
+      member?.email ||
+      (entry.authorUserId ? 'Administrador' : 'Usuario');
+    const relation = member
+      ? `${this.roleLabel(member.rolePreset)} / ${this.memberTypeLabel(member.memberType)}`
+      : entry.authorUserId
+        ? 'Administrador'
+        : 'Usuario';
+    return `${name} · ${relation}`;
+  }
+
+  entryCreatedLabel(entry: CaseEntry): string {
+    return this.formatDate(entry.createdAt || entry.updatedAt);
+  }
+
+  canReadComments(): boolean {
+    if (!this.entry || !this.canSeeEntry(this.entry)) {
+      return false;
+    }
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
+    const membership = this.currentMembership();
+    if (this.isLegalMembership(membership)) {
+      return true;
+    }
+    return this.commentPolicyMode(this.entry, 'read') === 'case_members';
+  }
+
+  displayFileName(file: CaseFile): string {
+    return file.title || file.originalName || file.fileName;
+  }
+
+  fileTypeLabel(file: CaseFile): string {
+    if (this.isOneDriveFile(file)) {
+      return this.text('casesOneDriveFileTypeLabel', 'Enlace de OneDrive o SharePoint');
+    }
+    return file.contentType || file.type || this.text('casesFileTypeFallbackLabel', 'Documento');
+  }
+
+  fileActionLabel(file: CaseFile): string {
+    return this.isOneDriveFile(file)
+      ? this.text('casesOpenDocumentLabel', 'Abrir documento')
+      : this.text('casesDownloadDocumentLabel', 'Descargar');
+  }
+
+  fileHref(file: CaseFile): string {
+    return `/api/v2/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
+      file.id
+    )}/download`;
+  }
+
+  canDownloadFile(file: CaseFile): boolean {
+    return (
+      this._authFacade.isAdmin() ||
+      file.externalVisibilityStatus === 'approved' ||
+      this.isOwnFile(file)
+    );
+  }
+
   private hasPermission(permission: string): boolean {
     if (this._authFacade.isAdmin()) {
       return true;
@@ -320,7 +424,65 @@ export class CaseEntryDetailComponent implements OnInit {
   }
 
   private memberForComment(comment: CaseComment): CaseMembership | undefined {
-    return this.members.find((member) => member.userId && member.userId === comment.authorUserId);
+    return this.memberForUserId(comment.authorUserId);
+  }
+
+  private memberForUserId(userId?: string): CaseMembership | undefined {
+    return this.members.find((member) => userId && member.userId === userId);
+  }
+
+  private canSeeEntry(entry: CaseEntry): boolean {
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
+    const membership = this.currentMembership();
+    if (!membership || membership.permissions?.includes('case.read') !== true) {
+      return false;
+    }
+    if (this.isLegalMembership(membership)) {
+      return true;
+    }
+    return isVisibleToCaseClient(entry.visibility);
+  }
+
+  private canWriteComments(): boolean {
+    if (!this.entry || !this.canSeeEntry(this.entry)) {
+      return false;
+    }
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
+    const membership = this.currentMembership();
+    if (this.isLegalMembership(membership)) {
+      return true;
+    }
+    return (
+      membership?.permissions?.includes('case.comment') === true &&
+      this.commentPolicyMode(this.entry, 'write') === 'case_members'
+    );
+  }
+
+  private commentPolicyMode(entry: CaseEntry, key: 'read' | 'write'): string {
+    const mode = entry.commentPolicy?.[key];
+    return mode === 'case_members' ? 'case_members' : 'legal_team';
+  }
+
+  private isLegalMembership(membership?: CaseMembership): boolean {
+    return Boolean(
+      membership?.memberType === 'internal' ||
+        membership?.rolePreset === 'attorney' ||
+        membership?.rolePreset === 'pasante'
+    );
+  }
+
+  private isOwnFile(file: CaseFile): boolean {
+    const identity = this._authFacade.identity?.();
+    const userId = identity?.id || identity?.sub || identity?.userId;
+    return Boolean(userId && (file.uploadedByUserId === userId || file.uploaderUserId === userId));
+  }
+
+  private isOneDriveFile(file: CaseFile): boolean {
+    return file.storageProvider === 'onedrive' || file.type === 'onedrive-link';
   }
 
   private formatDate(value?: string): string {

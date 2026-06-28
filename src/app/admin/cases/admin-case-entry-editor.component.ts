@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 
-import { CaseEntry, CaseVisibility } from '../../models/case';
+import { CaseCommentPolicy, CaseEntry, CaseVisibility } from '../../models/case';
 import { CaseService } from '../../services/case.service';
 import { RichTextEditorComponent } from '../../components/web-utility/rich-text-editor/rich-text-editor.component';
 
@@ -45,6 +45,27 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
           [(value)]="entry.text"
           minHeight="320px"
         />
+
+        <fieldset class="admin-case-entry-editor__comments">
+          <legend>Comentarios</legend>
+          <p>
+            Por defecto sólo administradores, abogados y pasantes pueden ver y escribir comentarios.
+          </p>
+          <label>
+            Quién puede ver comentarios
+            <select name="commentReadPolicy" [(ngModel)]="commentPolicy.read">
+              <option value="legal_team">Sólo equipo legal</option>
+              <option value="case_members">Miembros del caso</option>
+            </select>
+          </label>
+          <label>
+            Quién puede escribir comentarios
+            <select name="commentWritePolicy" [(ngModel)]="commentPolicy.write">
+              <option value="legal_team">Sólo equipo legal</option>
+              <option value="case_members">Miembros del caso</option>
+            </select>
+          </label>
+        </fieldset>
 
         <div class="admin-case-entry-editor__actions">
           <button type="submit" [disabled]="saving || !canSave()">
@@ -99,6 +120,25 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
         display: grid;
         gap: 6px;
         font-weight: 700;
+      }
+
+      .admin-case-entry-editor__comments {
+        border: 1px solid rgba(41, 48, 59, 0.18);
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+        padding: 14px;
+      }
+
+      .admin-case-entry-editor__comments legend {
+        font-weight: 800;
+        padding: 0 6px;
+      }
+
+      .admin-case-entry-editor__comments p {
+        color: rgba(41, 48, 59, 0.68);
+        grid-column: 1 / -1;
+        margin: 0;
       }
 
       input:not([type='checkbox']):not([type='radio']):not([type='color']),
@@ -165,6 +205,12 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
         color: #b42318;
         margin-bottom: 16px;
       }
+
+      @media (max-width: 720px) {
+        .admin-case-entry-editor__comments {
+          grid-template-columns: 1fr;
+        }
+      }
     `,
   ],
 })
@@ -173,6 +219,10 @@ export class AdminCaseEntryEditorComponent implements OnInit {
   readonly entryId: string;
   entry: Pick<CaseEntry, 'title' | 'text'> = { title: '', text: '' };
   visibilityMode = 'internal_only';
+  commentPolicy: CaseCommentPolicy = {
+    read: 'legal_team',
+    write: 'legal_team',
+  };
   saving = false;
   errorMessage = '';
 
@@ -195,6 +245,7 @@ export class AdminCaseEntryEditorComponent implements OnInit {
         const item = response.item;
         this.entry = { title: item.title || '', text: item.text || '' };
         this.visibilityMode = this.visibilityModeFrom(item.visibility);
+        this.commentPolicy = this.commentPolicyFrom(item.commentPolicy);
       },
       error: () => {
         this.errorMessage = 'No se pudo cargar la entrada.';
@@ -219,6 +270,7 @@ export class AdminCaseEntryEditorComponent implements OnInit {
       title: this.entry.title.trim(),
       text: this.entry.text.trim(),
       visibility: { mode: this.visibilityMode } as CaseVisibility,
+      commentPolicy: this.normalizedCommentPolicy(),
     };
     const request = this.entryId
       ? this._caseService.updateEntry(this.caseId, this.entryId, payload)
@@ -250,5 +302,16 @@ export class AdminCaseEntryEditorComponent implements OnInit {
 
   private visibilityModeFrom(visibility: CaseVisibility): string {
     return typeof visibility === 'object' ? visibility.mode : visibility || 'internal_only';
+  }
+
+  private commentPolicyFrom(policy?: CaseCommentPolicy): CaseCommentPolicy {
+    return {
+      read: policy?.read === 'case_members' ? 'case_members' : 'legal_team',
+      write: policy?.write === 'case_members' ? 'case_members' : 'legal_team',
+    };
+  }
+
+  private normalizedCommentPolicy(): CaseCommentPolicy {
+    return this.commentPolicyFrom(this.commentPolicy);
   }
 }

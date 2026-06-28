@@ -77,11 +77,21 @@ export type CaseRecord = {
   caseTypeId: string;
   statusId: string;
   leadUserId?: string;
+  createdByUserId?: string;
+  createdByDisplayName?: string;
+  createdByEmail?: string;
   active?: boolean;
   unreadCount?: number;
   createdAt?: string;
   updatedAt?: string;
   lastActivityAt?: string;
+};
+
+export type CaseCommentAccessMode = 'legal_team' | 'case_members' | string;
+
+export type CaseCommentPolicy = {
+  read: CaseCommentAccessMode;
+  write: CaseCommentAccessMode;
 };
 
 export type CaseMembership = {
@@ -107,6 +117,7 @@ export type CaseEntry = {
   authorUserId?: string;
   authorDisplayName?: string;
   visibility: CaseVisibility;
+  commentPolicy?: CaseCommentPolicy;
   fileIds?: string[];
   status?: string;
   createdAt?: string;
@@ -130,6 +141,7 @@ export type CaseComment = {
 export type CaseFile = {
   id: string;
   caseId: string;
+  entryId?: string;
   fileName: string;
   originalName?: string;
   title?: string;
@@ -305,6 +317,7 @@ export type CreateCaseEntryRequest = {
   title: string;
   text: string;
   visibility?: CaseVisibility;
+  commentPolicy?: CaseCommentPolicy;
   insertions?: unknown[];
   fileIds?: string[];
 };
@@ -345,6 +358,7 @@ export type UpdateCasePermissionsRequest = {
 };
 
 export type PresignCaseFileRequest = {
+  entryId: string;
   fileName: string;
   contentType: string;
   size?: number;
@@ -367,6 +381,7 @@ export type CompleteCaseFileRequest = {
 };
 
 export type CreateCaseOneDriveLinkRequest = {
+  entryId: string;
   fileName: string;
   linkUrl: string;
   visibility?: CaseVisibility;

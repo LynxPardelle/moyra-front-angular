@@ -291,8 +291,13 @@ export class CaseService {
     );
   }
 
-  uploadCaseFile(caseId: string, file: File): Observable<CaseItemResponse<CaseFile>> {
+  uploadCaseFile(
+    caseId: string,
+    entryId: string,
+    file: File
+  ): Observable<CaseItemResponse<CaseFile>> {
     return this.presignCaseFile(caseId, {
+      entryId,
       fileName: file.name,
       contentType: file.type || 'application/octet-stream',
       size: file.size,

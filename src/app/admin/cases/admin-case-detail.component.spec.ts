@@ -77,6 +77,7 @@ describe('AdminCaseDetailComponent', () => {
         item: {
           id: 'file-link-1',
           caseId: 'case-1',
+          entryId: 'entry-1',
           fileName: 'Contrato firmado',
           contentType: 'text/uri-list',
           storageProvider: 'onedrive',
@@ -171,6 +172,7 @@ describe('AdminCaseDetailComponent', () => {
                   {
                     id: 'file-1',
                     caseId: 'case-1',
+                    entryId: 'entry-1',
                     fileName: 'evidencia.pdf',
                     contentType: 'application/pdf',
                     externalVisibilityStatus: 'pending',
@@ -381,6 +383,7 @@ describe('AdminCaseDetailComponent', () => {
 
   it('adds OneDrive links as case documents', () => {
     fixture.componentInstance.oneDriveLink = {
+      entryId: 'entry-1',
       fileName: 'Contrato firmado',
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
       visibilityMode: 'case_members',
@@ -390,6 +393,7 @@ describe('AdminCaseDetailComponent', () => {
     fixture.detectChanges();
 
     expect(createOneDriveLinkSpy).toHaveBeenCalledWith('case-1', {
+      entryId: 'entry-1',
       fileName: 'Contrato firmado',
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
       visibility: { mode: 'case_members' },

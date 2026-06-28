@@ -60,6 +60,14 @@ import { MainService } from '../../services/main.service';
                 <dd>{{ lastActivity(caseRecord) | date : 'dd/MM/yyyy HH:mm' }}</dd>
               </div>
               <div>
+                <dt>{{ text('casesCreatedAtLabel', 'Creado') }}</dt>
+                <dd>{{ createdAtLabel(caseRecord) }}</dd>
+              </div>
+              <div>
+                <dt>{{ text('casesCreatedByLabel', 'Creado por') }}</dt>
+                <dd>{{ createdByLabel(caseRecord) }}</dd>
+              </div>
+              <div>
                 <dt>{{ text('casesUnreadLabel', 'Novedades') }}</dt>
                 <dd>
                   {{ unreadCount(caseRecord.id) }}
@@ -246,6 +254,31 @@ export class CasesListComponent implements OnInit {
     return caseRecord.lastActivityAt || caseRecord.updatedAt || caseRecord.createdAt || '';
   }
 
+  createdAtLabel(caseRecord: CaseRecord): string {
+    const value = caseRecord.createdAt;
+    if (!value) {
+      return this.text('casesCreatedAtFallbackLabel', 'No disponible');
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return this.text('casesCreatedAtFallbackLabel', 'No disponible');
+    }
+    return new Intl.DateTimeFormat('es-MX', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'America/Mexico_City',
+    }).format(date);
+  }
+
+  createdByLabel(caseRecord: CaseRecord): string {
+    const name = this.humanName(caseRecord.createdByDisplayName, caseRecord.createdByUserId);
+    const email = String(caseRecord.createdByEmail || '').trim();
+    if (name && email && name !== email) {
+      return `${name} (${email})`;
+    }
+    return name || email || this.text('casesCreatedByFallbackLabel', 'No disponible');
+  }
+
   statusName(statusId: string): string {
     const status = this.caseTypes
       .flatMap((caseType) => caseType.statuses || [])
@@ -256,5 +289,10 @@ export class CasesListComponent implements OnInit {
   text(key: string, fallback: string): string {
     const value = this.main?.pageTexts?.[key];
     return typeof value === 'string' && value.trim() ? value : fallback;
+  }
+
+  private humanName(value?: string, id?: string): string {
+    const name = String(value || '').trim();
+    return name && name !== id && !/^[0-9a-f-]{24,}$/i.test(name) ? name : '';
   }
 }

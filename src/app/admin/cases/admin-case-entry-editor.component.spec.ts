@@ -74,6 +74,7 @@ describe('AdminCaseEntryEditorComponent', () => {
       title: 'Nueva',
       text: '<p>Privada</p>',
       visibility: { mode: 'internal_only' },
+      commentPolicy: { read: 'legal_team', write: 'legal_team' },
     });
   });
 
@@ -87,6 +88,7 @@ describe('AdminCaseEntryEditorComponent', () => {
       title: 'Editada',
       text: '<p>Texto</p>',
       visibility: { mode: 'case_members' },
+      commentPolicy: { read: 'legal_team', write: 'legal_team' },
     });
   });
 });
