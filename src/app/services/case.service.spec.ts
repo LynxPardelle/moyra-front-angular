@@ -25,9 +25,13 @@ describe('CaseService', () => {
   let service: CaseService;
   let http: HttpTestingController;
   let storeToken: string | null;
+  let isAdmin: boolean;
+  let identity: any;
 
   beforeEach(() => {
     storeToken = validToken();
+    isAdmin = true;
+    identity = { id: 'admin-1', email: 'admin@moyra.org' };
     localStorage.clear();
     sessionStorage.clear();
 
@@ -38,6 +42,8 @@ describe('CaseService', () => {
           provide: AuthFacade,
           useValue: {
             token: () => storeToken,
+            isAdmin: () => isAdmin,
+            identity: () => identity,
           },
         },
         provideHttpClient(),
@@ -257,13 +263,88 @@ describe('CaseService', () => {
     expect(unreadNotificationReq.request.method).toBe('POST');
     unreadNotificationReq.flush({ status: 'success', item: {} });
 
-    const unreadReq = http.expectOne(apiUrl('/case-notifications/unread-count'));
+    const unreadReq = http.expectOne(apiUrl('/case-notifications'));
     expect(unreadReq.request.method).toBe('GET');
-    unreadReq.flush({ status: 'success', count: 2 });
+    unreadReq.flush({
+      status: 'success',
+      items: [
+        caseNotification('notification-2', 'case-1', 'case.entry.created', 'case-entry', undefined),
+        caseNotification(
+          'notification-3',
+          'case-1',
+          'case.entry.created',
+          'case-entry',
+          '2026-06-18T21:00:00.000Z'
+        ),
+      ],
+    });
 
     const readAllReq = http.expectOne(apiUrl('/case-notifications/read-all'));
     expect(readAllReq.request.method).toBe('POST');
     readAllReq.flush({ status: 'success', updatedCount: 2 });
+  });
+
+  it('hides comment notifications from clients without comment permission', () => {
+    isAdmin = false;
+    identity = { id: 'client-1', email: 'cliente@moyra.org' };
+
+    service.listNotifications().subscribe((response) => {
+      expect(response.items.map((item) => item.id)).toEqual(['entry-notification']);
+    });
+
+    const listReq = http.expectOne(apiUrl('/case-notifications'));
+    listReq.flush({
+      status: 'success',
+      items: [
+        caseNotification('entry-notification', 'case-1', 'case.entry.created', 'case-entry'),
+        caseNotification('comment-notification', 'case-1', 'case.comment.created', 'case-comment'),
+      ],
+    });
+
+    const firstMembersReq = http.expectOne(apiUrl('/cases/case-1/members'));
+    firstMembersReq.flush({
+      status: 'success',
+      items: [
+        {
+          id: 'member-1',
+          caseId: 'case-1',
+          userId: 'client-1',
+          email: 'cliente@moyra.org',
+          rolePreset: 'client',
+          permissions: ['case.read'],
+          status: 'active',
+        },
+      ],
+    });
+
+    service.getUnreadNotificationCount().subscribe((response) => {
+      expect(response.count).toBe(1);
+    });
+
+    const countReq = http.expectOne(apiUrl('/case-notifications'));
+    countReq.flush({
+      status: 'success',
+      items: [
+        caseNotification('entry-notification', 'case-1', 'case.entry.created', 'case-entry'),
+        caseNotification('comment-notification', 'case-1', 'case.comment.created', 'case-comment'),
+      ],
+    });
+
+    const secondMembersReq = http.expectOne(apiUrl('/cases/case-1/members'));
+    secondMembersReq.flush({
+      status: 'success',
+      items: [
+        {
+          id: 'member-1',
+          caseId: 'case-1',
+          userId: 'client-1',
+          email: 'cliente@moyra.org',
+          rolePreset: 'client',
+          permissions: ['case.read'],
+          status: 'active',
+        },
+      ],
+    });
   });
 
   it('uploads a case file through presigned PUT and completes metadata without exposing raw S3 links', () => {
@@ -402,3 +483,29 @@ describe('CaseService', () => {
     });
   });
 });
+
+function caseNotification(
+  id: string,
+  caseId: string,
+  eventType: string,
+  targetType: string,
+  readAt?: string
+): any {
+  return {
+    id,
+    recipientUserId: 'client-1',
+    caseId,
+    eventType,
+    targetType,
+    targetId: `${targetType}-1`,
+    title: 'Notificación',
+    body: 'Mensaje',
+    link: { path: `/casos/${caseId}` },
+    readAt,
+    delivery: {
+      inApp: { status: 'created' },
+      email: { status: 'skipped' },
+      webPush: { status: 'skipped' },
+    },
+  };
+}

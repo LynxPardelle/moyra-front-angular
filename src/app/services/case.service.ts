@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { catchError, forkJoin, map, Observable, of, switchMap } from 'rxjs';
 
 import { apiUrl, jsonAuthHeaders, storedToken } from './global';
 import {
@@ -363,7 +362,7 @@ export class CaseService {
   listNotifications(): Observable<CaseListResponse<CaseNotification>> {
     return this._http.get<CaseListResponse<CaseNotification>>(apiUrl('/case-notifications'), {
       headers: this.authHeaders(),
-    });
+    }).pipe(switchMap((response) => this.filterVisibleNotifications(response)));
   }
 
   markNotificationRead(notificationId: string): Observable<CaseItemResponse<CaseNotification>> {
@@ -383,9 +382,12 @@ export class CaseService {
   }
 
   getUnreadNotificationCount(): Observable<CaseUnreadCountResponse> {
-    return this._http.get<CaseUnreadCountResponse>(apiUrl('/case-notifications/unread-count'), {
-      headers: this.authHeaders(),
-    });
+    return this.listNotifications().pipe(
+      map((response) => ({
+        status: response.status,
+        count: (response.items || []).filter((notification) => !notification.readAt).length,
+      }))
+    );
   }
 
   markAllNotificationsRead(): Observable<CaseReadAllNotificationsResponse> {
@@ -440,6 +442,72 @@ export class CaseService {
   private authHeaders(): HttpHeaders {
     const token = this._authFacade?.token() || storedToken();
     return new HttpHeaders(jsonAuthHeaders(token));
+  }
+
+  private filterVisibleNotifications(
+    response: CaseListResponse<CaseNotification>
+  ): Observable<CaseListResponse<CaseNotification>> {
+    const notifications = response.items || [];
+    if (
+      this._authFacade?.isAdmin?.() ||
+      notifications.every((item) => !this.isCommentNotification(item))
+    ) {
+      return of(response);
+    }
+
+    const caseIds = Array.from(
+      new Set(
+        notifications
+          .filter((item) => this.isCommentNotification(item))
+          .map((item) => item.caseId)
+          .filter(Boolean)
+      )
+    );
+
+    return forkJoin(
+      caseIds.map((caseId) =>
+        this.listMembers(caseId).pipe(
+          map((members) => [caseId, members.items || []] as const),
+          catchError(() => of([caseId, [] as CaseMembership[]] as const))
+        )
+      )
+    ).pipe(
+      map((membersByCaseEntries) => {
+        const membersByCase = new Map(membersByCaseEntries);
+        return {
+          ...response,
+          items: notifications.filter(
+            (notification) =>
+              !this.isCommentNotification(notification) ||
+              this.canSeeCommentNotifications(membersByCase.get(notification.caseId) || [])
+          ),
+        };
+      })
+    );
+  }
+
+  private isCommentNotification(notification: CaseNotification): boolean {
+    return notification.targetType === 'case-comment' || notification.eventType.includes('comment');
+  }
+
+  private canSeeCommentNotifications(members: CaseMembership[]): boolean {
+    const membership = this.currentMembership(members);
+    return Boolean(
+      membership &&
+        (membership.permissions?.includes('case.comment') ||
+          membership.rolePreset === 'attorney' ||
+          membership.rolePreset === 'pasante')
+    );
+  }
+
+  private currentMembership(members: CaseMembership[]): CaseMembership | undefined {
+    const identity = this._authFacade?.identity?.();
+    const userId = identity?.id || identity?.sub || identity?.userId;
+    const email = identity?.email;
+    return members.find(
+      (member) =>
+        (userId && member.userId === userId) || (email && member.email === email)
+    );
   }
 }
 

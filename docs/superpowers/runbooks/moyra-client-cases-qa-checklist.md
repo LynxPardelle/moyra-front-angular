@@ -399,3 +399,62 @@ Decision:
 - [ ] Run authenticated admin QA in `test` for case entry creation/edit/visibility, member permissions, file approval/edit/delete, profile update, and notifications.
 - [ ] Run authenticated client QA in `test` for assigned case access, visible-entry rendering, restricted comments, document visibility, and notification read/unread behavior.
 - [ ] Decide production go-live settings: `environment.prod.ts` still disables Cases globally and only allows `test.moyra.org`.
+
+## Latest Review - 2026-06-29 13:10 CT
+
+- [x] Full local frontend suite passed: `npm test -- --watch=false --browsers=ChromeHeadless --no-progress` returned `175 SUCCESS`.
+- [x] Local production build succeeded with existing warning budgets: initial bundle 17.74 kB over, `admin-case-detail.component.ts` SCSS 791 bytes over, `admin-cases-list.component.ts` SCSS 75 bytes over, and `case-detail.component.ts` SCSS 1.21 kB over.
+- [x] Runtime dependency audit passed: `npm audit --omit=dev --audit-level=moderate` returned `found 0 vulnerabilities`.
+- [ ] Full dependency audit still reports 7 dev-toolchain vulnerabilities in Angular/Vite build dependencies; the suggested forced fix upgrades to Angular 22 and is not approved for this release.
+- [x] In-app browser audit covered `https://test.moyra.org` desktop 1440px and mobile 390px for `/`, `/publications`, `/blog`, `/publication/Publicacion-de-prueba`, `/articulo/Articulo-Test`, `/solucion/DerechoCivilyMercantil`, `/solucion/administracion-en-linea`, `/casos`, `/notificaciones`, `/admin/casos`, `/admin/configuraciones`, and `/admin/usuarios`.
+- [x] Checked routes had no horizontal overflow, no escaped rich HTML markers, no `No disponible`, no raw case audit action codes, and no public UUID leakage in public pages.
+- [x] Restored `test` public content remains present: publications API returned `Publicación de prueba`; articles API returned `Artículo Test`.
+- [x] Production public content is still empty by current API/table evidence; do not copy `test` content to production without explicit owner approval.
+- [x] GuardDuty/malware scanning remains absent from the frontend release and AWS `us-east-1` returned no GuardDuty detectors.
+- [ ] Production is not ready: `environment.prod.ts` keeps `casesFeatureEnabled=false`, only allows `test.moyra.org`, and keeps service worker/Web Push disabled.
+- [ ] SES email remains not production-ready: SES production access is still denied for case `178199358800446`; keep `CASE_EMAIL_NOTIFICATIONS_ENABLED=false`.
+- [ ] Authenticated manual QA remains required for admin/client role behavior, profile save, notifications, member permissions, document edit/delete/linkage, and final case visibility rules.
+
+## Authenticated Browser QA Blocker - 2026-06-29 13:19 CT
+
+- [x] No test data was created or modified during this authenticated browser attempt.
+- [x] The in-app browser public/admin route sweep above remains valid for the routes that completed.
+- [ ] Authenticated admin read-only QA is currently blocked in the integrated browser: `/admin/casos` read-only collection timed out twice and reset the browser automation session.
+- [ ] 2026-06-29 13:27 CT recovery attempt also failed: a fresh integrated-browser session could read browser documentation, but reading the selected tab/list of tabs timed out after 45 seconds and reset the automation session.
+- [ ] 2026-06-29 13:35 CT final recovery attempt failed: the integrated browser listed the authenticated `/admin/casos` tab once, but DOM inspection and screenshot capture each timed out after 45 seconds and reset the automation session.
+- [ ] Complete authenticated admin/client QA after the browser session is refreshed, or after using an approved external visible browser path.
+- [ ] Do not promote to production until the authenticated QA pass covers profile save, notification read/unread behavior, member permissions, document edit/delete/linkage, client access, and case visibility rules.
+
+## Authenticated Client QA - 2026-06-29 14:17 CT
+
+- [x] User logged in as the case client in the integrated browser.
+- [x] `/casos` showed only the assigned `Test` case for the client, without admin panel access and without horizontal overflow at desktop width.
+- [x] `/casos/cd855a63-92e5-4b08-b794-8deddfc74be2` showed the case header, collapsed entries, and no comment form or comment content for the client.
+- [x] `/casos/cd855a63-92e5-4b08-b794-8deddfc74be2/entrada/9c96b15f-2b9f-4115-a31e-e563a1c8512e` showed the visible entry detail, author metadata, entry documents section, no comment form, and the restricted-comments message.
+- [x] `/mi-perfil` was accessible to the non-admin client, showed role `Usuario`, showed the assigned case, and did not expose the admin panel.
+- [x] `/admin/casos` redirected the client to `/login?returnUrl=%2Fadmin%2Fcasos` with the permissions message `Esta zona requiere una cuenta con permisos de administración.`
+- [x] `/notificaciones` showed `0` unread notifications and `7` read notifications with `Marcar no leída` actions available.
+- [x] Mobile checks for `/casos` and the case detail route at 375px showed no horizontal overflow and kept entries collapsed.
+- [ ] Mobile entry-detail route was not completed because the integrated browser timed out and reset the automation session; viewport reset completed after reconnect.
+
+Findings:
+
+| ID | Screen | Severity | Finding | Expected | Actual | Evidence | Owner | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CASE-QA-2026-06-29-02 | Notifications | High | The client can still see notifications titled `Nuevo comentario en tu caso`. | Clients and observers should not receive or see comment notifications when comments are restricted to the legal team. | `/notificaciones` showed 3 comment notifications among 7 read notifications for the client account. | Integrated browser authenticated client QA, 2026-06-29 14:17 CT | Frontend/API | Fixed locally; test deploy/recheck pending |
+| CASE-QA-2026-06-29-03 | Cases list | Low | Legacy case creator metadata is missing. | Case cards should show who created the case when available. | `Test` showed `Creado por: Sin creador registrado`. | Integrated browser authenticated client QA, 2026-06-29 14:17 CT | API/Data | Open |
+
+## Notification Privacy Fix - 2026-06-29 14:36 CT
+
+- [x] `CaseService.listNotifications()` now filters comment notifications before they are rendered by `/notificaciones`.
+- [x] `CaseService.getUnreadNotificationCount()` now counts the filtered notification list, so badges and unread counters do not include hidden comment notifications.
+- [x] Admin users still see all notifications.
+- [x] Non-admin users see comment notifications only when their current case membership has `case.comment` permission or role preset `attorney` / `pasante`.
+- [x] Member lookup failures during comment-notification filtering fail closed, hiding comment notifications instead of leaking them.
+- [x] Reviewed the non-owned `admin-case-entry-editor.component.spec.ts` change and kept it because it validates the desired pasante rule: pasantes can create entries but cannot change visibility.
+- [x] Kept `Output/` untracked as local QA evidence; it is not runtime code.
+- [x] Targeted validation passed: `npm test -- --watch=false --browsers=ChromeHeadless --no-progress --include=src/app/services/case.service.spec.ts` returned `8 SUCCESS`.
+- [x] Full local validation passed: `npm test -- --watch=false --browsers=ChromeHeadless --no-progress` returned `176 SUCCESS`.
+- [x] Production build passed: `npm run build` exited 0 with existing non-blocking Angular budget warnings: initial bundle 18.73 kB over, `admin-cases-list.component.ts` SCSS 75 bytes over, `case-detail.component.ts` SCSS 1.21 kB over, and `admin-case-detail.component.ts` SCSS 791 bytes over.
+- [ ] Deploy to `test` and re-run authenticated client notification QA to confirm `/notificaciones`, header badge, and notification click/read behavior.
+- [ ] Backend hardening follow-up: avoid emitting disallowed comment notifications to clients/observers instead of relying only on frontend filtering.

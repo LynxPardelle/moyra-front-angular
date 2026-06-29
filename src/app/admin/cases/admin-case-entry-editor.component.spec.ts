@@ -11,8 +11,13 @@ describe('AdminCaseEntryEditorComponent', () => {
   let fixture: ComponentFixture<AdminCaseEntryEditorComponent>;
   let createEntrySpy: jasmine.Spy;
   let updateEntrySpy: jasmine.Spy;
+  let listMembersSpy: jasmine.Spy;
+  let isAdmin = true;
+  let caseMembers: any[] = [];
 
   beforeEach(() => {
+    isAdmin = true;
+    caseMembers = [];
     spyOn(Swal, 'fire').and.resolveTo({ isConfirmed: true } as any);
   });
 
@@ -23,6 +28,12 @@ describe('AdminCaseEntryEditorComponent', () => {
     updateEntrySpy = jasmine
       .createSpy('updateEntry')
       .and.returnValue(of({ status: 'success', item: { id: entryId || 'entry-1' } }));
+    listMembersSpy = jasmine.createSpy('listMembers').and.returnValue(
+      of({
+        status: 'success',
+        items: caseMembers,
+      })
+    );
 
     await TestBed.configureTestingModule({
       imports: [AdminCaseEntryEditorComponent],
@@ -60,11 +71,7 @@ describe('AdminCaseEntryEditorComponent', () => {
                 status: 'success',
                 items: [],
               }),
-            listMembers: () =>
-              of({
-                status: 'success',
-                items: [],
-              }),
+            listMembers: listMembersSpy,
             createOneDriveLink: () =>
               of({
                 status: 'success',
@@ -88,7 +95,7 @@ describe('AdminCaseEntryEditorComponent', () => {
               email: 'admin@moyra.test',
               role: 'ROLE_ADMIN',
             }),
-            isAdmin: () => true,
+            isAdmin: () => isAdmin,
           },
         },
       ],
@@ -122,6 +129,31 @@ describe('AdminCaseEntryEditorComponent', () => {
       title: 'Editada',
       text: '<p>Texto</p>',
       visibility: { mode: 'case_members' },
+    });
+  });
+
+  it('lets pasantes create entries without changing visibility', async () => {
+    isAdmin = false;
+    caseMembers = [
+      {
+        id: 'member-1',
+        userId: 'admin-1',
+        role: 'pasante',
+        permissions: ['case.read', 'case.write_entry'],
+      },
+    ];
+
+    await render();
+    fixture.componentInstance.entry = { title: 'Borrador pasante', text: '<p>Interno</p>' };
+    fixture.componentInstance.visibilityMode = 'case_members';
+
+    fixture.componentInstance.save();
+
+    expect(fixture.componentInstance.canManageVisibility).toBeFalse();
+    expect(createEntrySpy).toHaveBeenCalledWith('case-1', {
+      title: 'Borrador pasante',
+      text: '<p>Interno</p>',
+      visibility: { mode: 'internal_only' },
     });
   });
 });
