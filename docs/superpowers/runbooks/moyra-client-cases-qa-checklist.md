@@ -362,7 +362,8 @@ For each critical workflow:
 - [x] Local responsive smoke covered public content, solution, publication/article detail, and cases routes at mobile and desktop widths with no horizontal overflow.
 - [x] Full local frontend suite passed again at 2026-06-29 05:30 CT: `174 SUCCESS`.
 - [x] Local production build succeeded again at 2026-06-29 05:31 CT, with existing non-blocking budget warnings.
-- [ ] Deploy these frontend changes to `test`.
+- [x] 2026-06-29 05:58 CT: frontend commit `18b416f` is deployed to `test` branch and served on `https://test.moyra.org`.
+- [x] 2026-06-29 05:58 CT: in-app browser audit verified restored public content, public rich HTML rendering, cases list, admin cases list, and admin case detail data at the active browser viewport.
 - [ ] Run authenticated admin QA in `test` for case entry creation/edit/visibility, member permissions, file approval/edit/delete, profile update, and notifications.
 - [ ] Run authenticated client QA in `test` for assigned case access, visible-entry rendering, restricted comments, document visibility, and notification read/unread behavior.
 - [ ] Review Angular budget warnings before production if the bundle/style growth continues.
@@ -377,7 +378,7 @@ Findings:
 
 | ID | Screen | Severity | Finding | Expected | Actual | Evidence | Owner | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| CASE-QA-2026-06-29-01 | Cases/Auth | High | Current hardening is validated locally but not deployed and authenticated in test yet. | Production promotion only after test deploy plus admin/client browser pass. | Local tests/build/smoke passed, but authenticated test QA remains pending. | `Codex.md` Latest Verified State 2026-06-29 05:18 CT | Frontend | Open |
+| CASE-QA-2026-06-29-01 | Cases/Auth | Medium | Test deployment and targeted authenticated admin audit passed, but full manual admin/client QA is still pending. | Production promotion only after profile save, notification, and client-role behavior are reviewed in test. | Public content and admin case detail passed browser checks; full role matrix remains pending. | `Codex.md` 2026-06-29 05:58 CT | Frontend | Open |
 
 Decision:
 
