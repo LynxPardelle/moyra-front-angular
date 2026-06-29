@@ -2,7 +2,12 @@
 @if ( canChange === true && isAdmin === true ) {
 <div class="position-fixed ank ank-top-15per top-md-10per end-0">
   @if (editSwitch == false) {
-  <button class="btn ank ank-btn-linkM ank-text-bg1M mr-2" (click)="switchEdit()">
+  <button
+    class="btn ank ank-btn-linkM ank-text-bg1M mr-2"
+    (click)="switchEdit()"
+    aria-label="Editar solución"
+    title="Editar solución"
+  >
     <svg
       width="1em"
       height="1em"
@@ -24,11 +29,18 @@
   <button
     class="btn ank ank-btn-linkM ank-text-bg1M mr-2 font-weight-normal float-right"
     (click)="switchEdit()"
+    aria-label="Cerrar edición"
+    title="Cerrar edición"
   >
     X
   </button>
   }
-  <button class="btn btn-warning mr-2" (click)="deleteServicio(servicio._id)">
+  <button
+    class="btn btn-warning mr-2"
+    (click)="deleteServicio(servicio._id)"
+    aria-label="Eliminar solución"
+    title="Eliminar solución"
+  >
     <svg
       width="1em"
       height="1em"

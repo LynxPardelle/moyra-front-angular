@@ -385,3 +385,17 @@ Decision:
 - [ ] Keep in test.
 - [x] Request fixes before more QA.
 - [ ] Prepare production promotion checklist separately.
+
+## Latest Review - 2026-06-29 06:44 CT
+
+- [x] Full local frontend suite passed again: `npm test -- --watch=false --browsers=ChromeHeadless --no-progress` returned `174 SUCCESS`.
+- [x] Local production build succeeded again with the same non-blocking Angular budget warnings: initial bundle 17.74 kB over the warning budget, `admin-case-detail.component.ts` SCSS 791 bytes over, `admin-cases-list.component.ts` SCSS 75 bytes over, and `case-detail.component.ts` SCSS 1.21 kB over.
+- [x] In-app browser desktop audit verified restored public content, public rich HTML rendering, cases list, admin cases list, admin case detail, and admin configurations at `https://test.moyra.org`.
+- [x] Desktop audit found no horizontal overflow, no escaped rich HTML markers, no `No disponible`, and no raw `case.comment.created` / `case.entry.created` style audit codes in the checked routes.
+- [x] Local Chrome mobile audit at 390px verified `/`, `/blog`, `/publications`, `/publication/Publicacion-de-prueba`, `/articulo/Articulo-Test`, `/solucion/administracion-en-linea`, and `/solucion/DerechoCivilyMercantil` with no horizontal overflow and no escaped rich HTML markers.
+- [x] Local Chrome mobile audit for `/casos` redirected to `/login?returnUrl=%2Fcasos`, which is expected for the isolated unauthenticated browser profile.
+- [x] Blog article outro and `Nosotros` hero rich text now use the shared responsive rich-text classes.
+- [x] Servicio admin icon-only controls now expose accessible labels and titles.
+- [ ] Run authenticated admin QA in `test` for case entry creation/edit/visibility, member permissions, file approval/edit/delete, profile update, and notifications.
+- [ ] Run authenticated client QA in `test` for assigned case access, visible-entry rendering, restricted comments, document visibility, and notification read/unread behavior.
+- [ ] Decide production go-live settings: `environment.prod.ts` still disables Cases globally and only allows `test.moyra.org`.

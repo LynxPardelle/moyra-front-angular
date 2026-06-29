@@ -122,7 +122,7 @@
   </section>
   } @if (article.outro) {
   <div
-    class="article-detail__outro mx-auto my-4"
+    class="article-detail__outro article-rich-content mx-auto my-4"
     [innerHTML]="richContent(article.outro) | safeRichHtml"
   ></div>
   } } @if (!loading && editSwitch === true) {

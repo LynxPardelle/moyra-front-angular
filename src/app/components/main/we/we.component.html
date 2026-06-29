@@ -32,7 +32,7 @@
       <p class="we-eyebrow">Nosotros</p>
       <h1>Experiencia legal con criterio práctico</h1>
       @if (main && main.desc && main.desc !== '') {
-      <div class="we-hero__copy" [innerHTML]="richContent(main.desc) | safeRichHtml"></div>
+      <div class="we-hero__copy moyra-rich-text" [innerHTML]="richContent(main.desc) | safeRichHtml"></div>
       }
     </div>
 
