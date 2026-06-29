@@ -49,9 +49,11 @@ type PlatformUser = {
           <p class="admin-cases-page__eyebrow">Operación legal</p>
           <h1>Casos</h1>
         </div>
+        @if (canManageCasesConfiguration()) {
         <a routerLink="/admin/casos/configuracion" class="admin-cases-page__action">
           Configuración
         </a>
+        }
       </header>
 
       @if (operationsSummary) {
@@ -245,15 +247,15 @@ type PlatformUser = {
           <tbody>
             @for (caseItem of pagedCases(); track caseItem.id) {
             <tr>
-              <td>{{ caseItem.reference || 'Sin referencia' }}</td>
-              <td>
+              <td data-label="Referencia">{{ caseItem.reference || 'Sin referencia' }}</td>
+              <td data-label="Caso">
                 <a [routerLink]="['/admin/casos', caseItem.id]">{{ caseItem.title }}</a>
               </td>
-              <td>{{ caseTypeName(caseItem.caseTypeId) }}</td>
-              <td>{{ statusName(caseItem.statusId) }}</td>
-              <td>{{ formatDate(caseItem.createdAt) }}</td>
-              <td>{{ createdByLabel(caseItem) }}</td>
-              <td>{{ formatDate(caseItem.lastActivityAt || caseItem.updatedAt) }}</td>
+              <td data-label="Tipo">{{ caseTypeName(caseItem.caseTypeId) }}</td>
+              <td data-label="Estado">{{ statusName(caseItem.statusId) }}</td>
+              <td data-label="Creado">{{ formatDate(caseItem.createdAt) }}</td>
+              <td data-label="Creado por">{{ createdByLabel(caseItem) }}</td>
+              <td data-label="Actividad">{{ formatDate(caseItem.lastActivityAt || caseItem.updatedAt) }}</td>
             </tr>
             }
           </tbody>
@@ -468,7 +470,7 @@ type PlatformUser = {
         border: 1px solid #4b8ff5;
         border-color: #4b8ff5;
         color: #4b8ff5;
-        min-height: 36px;
+        min-height: 44px;
         padding: 6px 10px;
         text-decoration: none;
       }
@@ -507,12 +509,48 @@ type PlatformUser = {
         padding: 10px;
         text-align: left;
         vertical-align: top;
+        overflow-wrap: anywhere;
       }
 
       @media (max-width: 720px) {
         .admin-cases-create,
         .admin-cases-invite-attorney {
           grid-template-columns: 1fr;
+        }
+
+        .admin-cases-table {
+          min-width: 0;
+        }
+
+        .admin-cases-table thead {
+          display: none;
+        }
+
+        .admin-cases-table,
+        .admin-cases-table tbody,
+        .admin-cases-table tr,
+        .admin-cases-table td {
+          display: block;
+          width: 100%;
+        }
+
+        .admin-cases-table tr {
+          border: 1px solid rgba(41, 48, 59, 0.18);
+          margin-bottom: 12px;
+        }
+
+        .admin-cases-table td {
+          border: 0;
+          display: grid;
+          gap: 8px;
+          grid-template-columns: minmax(112px, 36%) 1fr;
+        }
+
+        .admin-cases-table td::before {
+          color: rgba(41, 48, 59, 0.68);
+          content: attr(data-label);
+          font-size: 0.78rem;
+          font-weight: 800;
         }
       }
     `,
@@ -776,6 +814,10 @@ export class AdminCasesListComponent implements OnInit {
       Boolean(this.newCase.statusId) &&
       this.hasAttorneySelection()
     );
+  }
+
+  canManageCasesConfiguration(): boolean {
+    return this._authFacade.isAdmin?.() === true;
   }
 
   createCaseHint(): string {

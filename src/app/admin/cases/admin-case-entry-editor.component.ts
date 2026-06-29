@@ -91,11 +91,20 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
           </label>
           <label>
             Visibilidad
-            <select name="oneDriveVisibility" [(ngModel)]="oneDriveLink.visibilityMode">
+            <select
+              name="oneDriveVisibility"
+              [(ngModel)]="oneDriveLink.visibilityMode"
+              [disabled]="!canApproveFileVisibility"
+            >
               <option value="internal_only">Sólo interno</option>
               <option value="case_members">Visible para cliente</option>
             </select>
           </label>
+          @if (!canApproveFileVisibility) {
+          <p class="admin-case-entry-editor__note">
+            El documento se guardará como interno hasta que un abogado apruebe su visibilidad.
+          </p>
+          }
           <button type="submit" [disabled]="oneDriveBusy || !canCreateOneDriveLink()">
             {{ oneDriveBusy ? 'Agregando...' : 'Agregar enlace' }}
           </button>
@@ -314,7 +323,10 @@ export class AdminCaseEntryEditorComponent implements OnInit {
   };
   oneDriveBusy = false;
   oneDriveError = '';
+  canWriteEntries = false;
+  canUploadFiles = false;
   canManageVisibility = false;
+  canApproveFileVisibility = false;
   canDownloadFiles = false;
   saving = false;
   errorMessage = '';
@@ -349,7 +361,11 @@ export class AdminCaseEntryEditorComponent implements OnInit {
   }
 
   canSave(): boolean {
-    return this.entry.title.trim().length > 0 && this.entry.text.trim().length > 0;
+    return (
+      this.canWriteEntries &&
+      this.entry.title.trim().length > 0 &&
+      this.entry.text.trim().length > 0
+    );
   }
 
   entryVisibleInPortal(): boolean {
@@ -359,6 +375,7 @@ export class AdminCaseEntryEditorComponent implements OnInit {
   canCreateOneDriveLink(): boolean {
     return (
       this.entryId.length > 0 &&
+      this.canUploadFiles &&
       this.oneDriveLink.fileName.trim().length > 0 &&
       this.oneDriveLink.linkUrl.trim().length > 0 &&
       this.looksLikeMicrosoftLink(this.oneDriveLink.linkUrl)
@@ -367,6 +384,9 @@ export class AdminCaseEntryEditorComponent implements OnInit {
 
   save(): void {
     if (!this.canSave()) {
+      if (!this.canWriteEntries) {
+        this.errorMessage = 'Tu usuario no tiene permisos para crear o editar entradas.';
+      }
       return;
     }
 
@@ -413,8 +433,9 @@ export class AdminCaseEntryEditorComponent implements OnInit {
 
   addOneDriveLink(): void {
     if (!this.canCreateOneDriveLink()) {
-      this.oneDriveError =
-        'Revisa el nombre y usa un enlace válido de OneDrive o SharePoint.';
+      this.oneDriveError = !this.canUploadFiles
+        ? 'Tu usuario no tiene permisos para agregar documentos a esta entrada.'
+        : 'Revisa el nombre y usa un enlace válido de OneDrive o SharePoint.';
       return;
     }
 
@@ -426,7 +447,11 @@ export class AdminCaseEntryEditorComponent implements OnInit {
         entryIds: [this.entryId],
         fileName: this.oneDriveLink.fileName.trim(),
         linkUrl: this.oneDriveLink.linkUrl.trim(),
-        visibility: { mode: this.oneDriveLink.visibilityMode } as CaseVisibility,
+        visibility: {
+          mode: this.canApproveFileVisibility
+            ? this.oneDriveLink.visibilityMode
+            : 'internal_only',
+        } as CaseVisibility,
       })
       .subscribe({
         next: (response) => {
@@ -509,19 +534,29 @@ export class AdminCaseEntryEditorComponent implements OnInit {
 
   private loadVisibilityAccess(): void {
     if (this._authFacade.isAdmin()) {
+      this.canWriteEntries = true;
+      this.canUploadFiles = true;
       this.canManageVisibility = true;
+      this.canApproveFileVisibility = true;
       this.canDownloadFiles = true;
       return;
     }
     this._caseService.listMembers(this.caseId).subscribe({
       next: (response) => {
         const membership = this.currentMembership(response.items || []);
+        this.canWriteEntries = membership?.permissions?.includes('case.write_entry') === true;
+        this.canUploadFiles = membership?.permissions?.includes('case.upload_file') === true;
         this.canManageVisibility =
           membership?.permissions?.includes('case.manage_entry_visibility') === true;
+        this.canApproveFileVisibility =
+          membership?.permissions?.includes('case.approve_file_visibility') === true;
         this.canDownloadFiles = membership?.permissions?.includes('case.download_file') === true;
       },
       error: () => {
+        this.canWriteEntries = false;
+        this.canUploadFiles = false;
         this.canManageVisibility = false;
+        this.canApproveFileVisibility = false;
         this.canDownloadFiles = false;
       },
     });

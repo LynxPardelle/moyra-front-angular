@@ -446,7 +446,7 @@ export class CaseEntryDetailComponent implements OnInit {
     if (this.isLegalMembership(membership)) {
       return true;
     }
-    return isVisibleToCaseClient(entry.visibility);
+    return isVisibleToCaseClient(entry.visibility, membership);
   }
 
   private canWriteComments(): boolean {
@@ -487,7 +487,11 @@ export class CaseEntryDetailComponent implements OnInit {
     if (this.isOwnFile(file)) {
       return true;
     }
-    return file.externalVisibilityStatus === 'approved' && isVisibleToCaseClient(file.visibility);
+    const membership = this.currentMembership();
+    return (
+      file.externalVisibilityStatus === 'approved' &&
+      isVisibleToCaseClient(file.visibility, membership)
+    );
   }
 
   private fileEntryIds(file: CaseFile): string[] {
@@ -542,12 +546,15 @@ export class CaseEntryDetailComponent implements OnInit {
       return true;
     }
     const membership = this.currentMembership();
+    if (!membership || membership.permissions?.includes('case.read') !== true) {
+      return false;
+    }
     if (this.isLegalMembership(membership)) {
       return true;
     }
     return (
       membership?.permissions?.includes('case.comment') === true &&
-      isVisibleToCaseClient(comment.visibility)
+      isVisibleToCaseClient(comment.visibility, membership)
     );
   }
 

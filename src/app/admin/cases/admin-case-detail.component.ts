@@ -22,7 +22,7 @@ import { SafeRichHtmlPipe } from '../../pipes/safe-rich-html';
 import { CaseService } from '../../services/case.service';
 import { apiUrl } from '../../services/global';
 import { UserService } from '../../services/user.service';
-import { isVisibleToCaseClient } from '../../utils/case-visibility';
+import { caseVisibilityMode } from '../../utils/case-visibility';
 import { RichTextEditorComponent } from '../../components/web-utility/rich-text-editor/rich-text-editor.component';
 import { AuthFacade } from '../../store/auth/auth.facade';
 
@@ -80,11 +80,19 @@ type PlatformUser = {
         <form class="admin-case-detail__case-form" (ngSubmit)="saveCaseDetails()">
           <label>
             Título
-            <input name="caseTitle" [(ngModel)]="caseDraft.title" />
+            <input
+              name="caseTitle"
+              [(ngModel)]="caseDraft.title"
+              [disabled]="!canEditCaseMetadata()"
+            />
           </label>
           <label>
             Referencia
-            <input name="caseReference" [(ngModel)]="caseDraft.reference" />
+            <input
+              name="caseReference"
+              [(ngModel)]="caseDraft.reference"
+              [disabled]="!canEditCaseMetadata()"
+            />
           </label>
           <div class="admin-case-rich-field">
             <app-rich-text-editor
@@ -93,11 +101,17 @@ type PlatformUser = {
               placeholder="Descripción del caso"
               [(value)]="caseDraft.description"
               minHeight="180px"
+              [disabled]="!canEditCaseMetadata()"
             />
           </div>
           <label>
             Estado
-            <select id="case-status" name="status" [(ngModel)]="selectedStatusId">
+            <select
+              id="case-status"
+              name="status"
+              [(ngModel)]="selectedStatusId"
+              [disabled]="!canEditCaseStatus()"
+            >
               @for (status of statusesForCurrentType(); track status.id) {
               <option [value]="status.id">{{ statusLabel(status) }}</option>
               }
@@ -106,7 +120,7 @@ type PlatformUser = {
           <button
             type="submit"
             class="admin-case-detail__save"
-            [disabled]="caseSaving || !canSaveCaseDetails()"
+            [disabled]="caseSaving || !canEditCaseDetails() || !canSaveCaseDetails()"
           >
             {{ caseSaving ? 'Guardando...' : 'Guardar caso' }}
           </button>
@@ -117,7 +131,9 @@ type PlatformUser = {
         <section>
           <div class="admin-case-section-title">
             <h2>Entradas</h2>
+            @if (canCreateEntries()) {
             <a [routerLink]="['/admin/casos', caseId, 'entradas', 'nueva']">Nueva entrada</a>
+            }
           </div>
           <div class="admin-case-table-wrap">
             <table class="admin-case-table">
@@ -132,14 +148,16 @@ type PlatformUser = {
               <tbody>
                 @for (entry of entries; track entry.id) {
                 <tr>
-                  <td>{{ entry.title }}</td>
-                  <td>{{ entryVisibilityLabel(entry) }}</td>
-                  <td>{{ formatDate(entry.updatedAt || entry.createdAt) }}</td>
-                  <td class="admin-case-actions">
+                  <td data-label="Título">{{ entry.title }}</td>
+                  <td data-label="Visibilidad">{{ entryVisibilityLabel(entry) }}</td>
+                  <td data-label="Actualización">{{ formatDate(entry.updatedAt || entry.createdAt) }}</td>
+                  <td data-label="Acciones" class="admin-case-actions">
                     <a [routerLink]="entryViewLink(entry)">Ver la entrada</a>
+                    @if (canEditEntries()) {
                     <a [routerLink]="['/admin/casos', caseId, 'entradas', entry.id]">
                       Editar
                     </a>
+                    }
                     @if (canManageEntryVisibility()) {
                     <label class="admin-case-inline-control">
                       Visibilidad
@@ -188,19 +206,22 @@ type PlatformUser = {
               <tbody>
                 @for (member of members; track member.id) {
                 <tr>
-                  <td>
+                  <td data-label="Nombre">
                     @if (memberProfileLink(member); as profileLink) {
                     <a [routerLink]="profileLink">{{ memberName(member) }}</a>
                     } @else {
                     {{ memberName(member) }}
                     }
                   </td>
-                  <td>{{ member.email || 'Sin correo' }}</td>
-                  <td>{{ roleLabel(member.rolePreset) }}</td>
-                  <td>{{ permissionsSummary(member.permissions) }}</td>
-                  <td>
+                  <td data-label="Correo">{{ member.email || 'Sin correo' }}</td>
+                  <td data-label="Rol">{{ roleLabel(member.rolePreset) }}</td>
+                  <td data-label="Permisos">{{ permissionsSummary(member.permissions) }}</td>
+                  <td data-label="Acciones">
                     <div class="admin-case-actions">
+                      @if (canEditMembers()) {
                       <button type="button" (click)="startEditMember(member)">Editar</button>
+                      }
+                      @if (canManageMembers()) {
                       <button
                         type="button"
                         class="admin-case-button-danger"
@@ -209,6 +230,7 @@ type PlatformUser = {
                       >
                         {{ memberRemovingId === member.id ? 'Quitando...' : 'Quitar' }}
                       </button>
+                      }
                     </div>
                   </td>
                 </tr>
@@ -218,17 +240,26 @@ type PlatformUser = {
                     <form class="admin-case-member-editor" (ngSubmit)="saveMember(member)">
                       <label>
                         Nombre
-                        <input name="memberName" [(ngModel)]="memberDraft.displayName" />
+                        <input
+                          name="memberName"
+                          [(ngModel)]="memberDraft.displayName"
+                          [disabled]="!canManageMembers()"
+                        />
                       </label>
                       <label>
                         Rol
-                        <select name="memberRole" [(ngModel)]="memberDraft.rolePreset">
+                        <select
+                          name="memberRole"
+                          [(ngModel)]="memberDraft.rolePreset"
+                          [disabled]="!canManageMembers()"
+                        >
                           <option value="client">Cliente</option>
                           <option value="attorney">Abogado</option>
                           <option value="pasante">Pasante</option>
                           <option value="external_observer">Observador</option>
                         </select>
                       </label>
+                      @if (canManagePermissions()) {
                       <fieldset>
                         <legend>Permisos</legend>
                         @for (permission of permissionOptions; track permission.value) {
@@ -242,8 +273,12 @@ type PlatformUser = {
                         </label>
                         }
                       </fieldset>
+                      }
                       <div class="admin-case-actions">
-                        <button type="submit" [disabled]="memberSavingId === member.id">
+                        <button
+                          type="submit"
+                          [disabled]="memberSavingId === member.id || !canEditMembers()"
+                        >
                           {{ memberSavingId === member.id ? 'Guardando...' : 'Guardar miembro' }}
                         </button>
                         <button type="button" (click)="cancelEditMember()">Cancelar</button>
@@ -256,6 +291,7 @@ type PlatformUser = {
               </tbody>
             </table>
           </div>
+          @if (canManageMembers()) {
           <div class="admin-case-member-tools">
             <article class="admin-case-member-card">
               <h3>Agregar usuario existente</h3>
@@ -315,10 +351,12 @@ type PlatformUser = {
               habilitan desde permisos del miembro.
             </small>
           </div>
+          }
         </section>
 
         <section>
           <h2>Archivos</h2>
+          @if (canManageFiles()) {
           <form class="admin-case-form admin-case-form--stack" (ngSubmit)="addOneDriveLink()">
             <label>
               Entradas relacionadas
@@ -371,9 +409,11 @@ type PlatformUser = {
               {{ oneDriveBusy ? 'Guardando...' : 'Agregar enlace' }}
             </button>
           </form>
+          }
           <div class="admin-case-files">
             @for (file of files; track file.id) {
             <article class="admin-case-file">
+              @if (canManageExistingFiles()) {
               <label>
                 Nombre
                 <input
@@ -415,13 +455,22 @@ type PlatformUser = {
                   <option value="internal_only">Sólo interno</option>
                 </select>
               </label>
+              } @else {
+              <strong>{{ displayFileName(file) }}</strong>
               <span>{{ fileTypeLabel(file) }}</span>
               <span>Entradas: {{ fileEntryLabel(file) }}</span>
+              <span>{{ fileVisibilityStatusLabel(file.externalVisibilityStatus || '') }}</span>
+              }
+              @if (canManageExistingFiles()) {
+              <span>{{ fileTypeLabel(file) }}</span>
+              <span>Entradas: {{ fileEntryLabel(file) }}</span>
+              }
               @if (canDownloadFile(file)) {
               <a [href]="fileHref(file)" target="_blank" rel="noopener noreferrer">
                 {{ isOneDriveFile(file) ? 'Abrir documento' : 'Descargar' }}
               </a>
               }
+              @if (canManageExistingFiles()) {
               <button
                 type="button"
                 [disabled]="fileSavingId === file.id || !canSaveFile(file)"
@@ -429,9 +478,13 @@ type PlatformUser = {
               >
                 {{ fileSavingId === file.id ? 'Guardando...' : 'Guardar archivo' }}
               </button>
+              }
+              @if (canApproveFiles()) {
               <button type="button" (click)="approveFile(file.id)" [disabled]="!canApproveFile(file)">
                 Aprobar visibilidad
               </button>
+              }
+              @if (canManageExistingFiles()) {
               <button
                 type="button"
                 class="admin-case-button-danger"
@@ -440,11 +493,13 @@ type PlatformUser = {
               >
                 {{ fileRemovingId === file.id ? 'Eliminando...' : 'Eliminar' }}
               </button>
+              }
             </article>
             }
           </div>
         </section>
 
+        @if (canReadAudit()) {
         <section>
           <h2>Auditoría</h2>
           <div class="admin-case-table-wrap">
@@ -461,29 +516,30 @@ type PlatformUser = {
               <tbody>
                 @for (event of auditEvents; track event.id) {
                 <tr>
-                  <td>{{ formatDate(event.createdAt) }}</td>
-                  <td>
+                  <td data-label="Fecha">{{ formatDate(event.createdAt) }}</td>
+                  <td data-label="Quién">
                     @if (auditActorLink(event); as actorLink) {
                     <a [routerLink]="actorLink">{{ auditActor(event) }}</a>
                     } @else {
                     {{ auditActor(event) }}
                     }
                   </td>
-                  <td>{{ auditActionLabel(event.action) }}</td>
-                  <td>
+                  <td data-label="Acción">{{ auditActionLabel(event.action) }}</td>
+                  <td data-label="Objetivo">
                     @if (auditTargetLink(event); as targetLink) {
                     <a [routerLink]="targetLink">{{ auditTargetLabel(event) }}</a>
                     } @else {
                     {{ auditTargetLabel(event) }}
                     }
                   </td>
-                  <td>{{ auditDetails(event) }}</td>
+                  <td data-label="Detalle">{{ auditDetails(event) }}</td>
                 </tr>
                 }
               </tbody>
             </table>
           </div>
         </section>
+        }
       </div>
     </section>
   `,
@@ -686,7 +742,7 @@ type PlatformUser = {
         background: #ffffff;
         border: 1px solid #4b8ff5;
         color: #4b8ff5;
-        min-height: 36px;
+        min-height: 44px;
         padding: 6px 10px;
       }
 
@@ -725,6 +781,7 @@ type PlatformUser = {
         padding: 9px 10px;
         text-align: left;
         vertical-align: top;
+        overflow-wrap: anywhere;
       }
 
       .admin-case-table th {
@@ -776,6 +833,50 @@ type PlatformUser = {
 
         .admin-case-detail__save {
           justify-self: stretch;
+        }
+
+        .admin-case-table {
+          min-width: 0;
+        }
+
+        .admin-case-table thead {
+          display: none;
+        }
+
+        .admin-case-table,
+        .admin-case-table tbody,
+        .admin-case-table tr,
+        .admin-case-table td {
+          display: block;
+          width: 100%;
+        }
+
+        .admin-case-table tr {
+          border: 1px solid rgba(41, 48, 59, 0.18);
+          margin-bottom: 12px;
+        }
+
+        .admin-case-table td {
+          border: 0;
+          display: grid;
+          gap: 8px;
+          grid-template-columns: minmax(112px, 34%) 1fr;
+        }
+
+        .admin-case-table td::before {
+          color: rgba(41, 48, 59, 0.68);
+          content: attr(data-label);
+          font-size: 0.78rem;
+          font-weight: 800;
+        }
+
+        .admin-case-table td[colspan] {
+          display: block;
+        }
+
+        .admin-case-table td[colspan]::before {
+          content: '';
+          display: none;
         }
       }
     `,
@@ -865,16 +966,15 @@ export class AdminCaseDetailComponent implements OnInit {
       entries: this._caseService.listEntries(this.caseId),
       members: this._caseService.listMembers(this.caseId),
       files: this._caseService.listFiles(this.caseId),
-      auditEvents: this._caseService.listAuditEvents(this.caseId),
       users: this._userService.getUsers(0, 200, '-create_at').pipe(catchError(() => of([]))),
       knownCaseUsers: this.caseMemberUsers(),
-    }).subscribe(({ caseRecord, caseTypes, entries, members, files, auditEvents, users, knownCaseUsers }) => {
+    }).subscribe(({ caseRecord, caseTypes, entries, members, files, users, knownCaseUsers }) => {
       this.caseRecord = caseRecord.item;
       this.caseTypes = caseTypes.items || [];
       this.entries = entries.items || [];
       this.members = members.items || [];
       this.files = files.items || [];
-      this.auditEvents = auditEvents.items || [];
+      this.auditEvents = [];
       this.users = this.withCurrentUser(
         this.mergeUsers([...this.normalizeUsers(users), ...knownCaseUsers])
       );
@@ -885,6 +985,20 @@ export class AdminCaseDetailComponent implements OnInit {
         description: this.caseRecord.description || '',
         statusId: this.caseRecord.statusId || '',
       };
+      if (this.canReadAudit()) {
+        this.loadAuditEvents();
+      }
+    });
+  }
+
+  loadAuditEvents(): void {
+    this._caseService.listAuditEvents(this.caseId).subscribe({
+      next: (response) => {
+        this.auditEvents = response.items || [];
+      },
+      error: () => {
+        this.auditEvents = [];
+      },
     });
   }
 
@@ -892,11 +1006,101 @@ export class AdminCaseDetailComponent implements OnInit {
     return this.caseDraft.title.trim().length > 0 && Boolean(this.selectedStatusId);
   }
 
+  canEditCaseDetails(): boolean {
+    return this.canEditCaseMetadata() || this.canEditCaseStatus();
+  }
+
+  canEditCaseMetadata(): boolean {
+    return this.hasCasePermission('case.manage_permissions');
+  }
+
+  canEditCaseStatus(): boolean {
+    return this.hasCasePermission('case.manage_status');
+  }
+
+  canCreateEntries(): boolean {
+    return this.hasCasePermission('case.write_entry');
+  }
+
+  canEditEntries(): boolean {
+    return this.hasCasePermission('case.write_entry');
+  }
+
+  canManageMembers(): boolean {
+    return this.hasCasePermission('case.manage_members');
+  }
+
+  canManagePermissions(): boolean {
+    return this.hasCasePermission('case.manage_permissions');
+  }
+
+  canEditMembers(): boolean {
+    return this.canManageMembers() || this.canManagePermissions();
+  }
+
+  canManageFiles(): boolean {
+    return this.hasCasePermission('case.upload_file');
+  }
+
+  canManageExistingFiles(): boolean {
+    return this.canApproveFiles();
+  }
+
+  canApproveFiles(): boolean {
+    return this.hasCasePermission('case.approve_file_visibility');
+  }
+
+  canReadAudit(): boolean {
+    return this.hasCasePermission('case.read_audit');
+  }
+
   saveCaseDetails(): void {
+    if (!this.canEditCaseDetails()) {
+      this.showWarning(
+        'Permiso insuficiente',
+        'Tu usuario no tiene permisos para editar los datos del caso.'
+      );
+      return;
+    }
+
     if (!this.canSaveCaseDetails()) {
       return;
     }
+    if (!this.caseRecord) {
+      this.showError('No se pudo guardar el caso', 'Carga el caso nuevamente antes de editarlo.');
+      return;
+    }
+    const saveStatusIfNeeded = (baseCase: CaseRecord) => {
+      if (!this.canEditCaseStatus() || !this.selectedStatusId || this.selectedStatusId === baseCase.statusId) {
+        this.caseRecord = baseCase;
+        this.caseSaving = false;
+        this.showSuccess('Caso guardado', 'Los datos del caso se actualizaron.');
+        return;
+      }
+
+      this._caseService.updateCaseStatus(this.caseId, { statusId: this.selectedStatusId }).subscribe({
+        next: (statusResponse) => {
+          this.caseRecord = statusResponse.item;
+          this.caseSaving = false;
+          this.showSuccess('Caso guardado', 'Los datos del caso se actualizaron.');
+        },
+        error: (error) => {
+          this.caseSaving = false;
+          this.showError(
+            'No se pudo actualizar el estado',
+            'Los datos principales se guardaron, pero el estado no se pudo actualizar.',
+            error
+          );
+        },
+      });
+    };
+
     this.caseSaving = true;
+    if (!this.canEditCaseMetadata()) {
+      saveStatusIfNeeded(this.caseRecord);
+      return;
+    }
+
     this._caseService
       .updateCase(this.caseId, {
         title: this.caseDraft.title.trim(),
@@ -904,31 +1108,7 @@ export class AdminCaseDetailComponent implements OnInit {
         description: this.caseDraft.description.trim(),
       })
       .subscribe({
-        next: (response) => {
-          this.caseRecord = response.item;
-          if (this.selectedStatusId && this.selectedStatusId !== response.item.statusId) {
-            this._caseService
-              .updateCaseStatus(this.caseId, { statusId: this.selectedStatusId })
-              .subscribe({
-                next: (statusResponse) => {
-                  this.caseRecord = statusResponse.item;
-                  this.caseSaving = false;
-                  this.showSuccess('Caso guardado', 'Los datos del caso se actualizaron.');
-                },
-                error: (error) => {
-                  this.caseSaving = false;
-                  this.showError(
-                    'No se pudo actualizar el estado',
-                    'Los datos principales se guardaron, pero el estado no se pudo actualizar.',
-                    error
-                  );
-                },
-              });
-            return;
-          }
-          this.caseSaving = false;
-          this.showSuccess('Caso guardado', 'Los datos del caso se actualizaron.');
-        },
+        next: (response) => saveStatusIfNeeded(response.item),
         error: (error) => {
           this.caseSaving = false;
           this.showError('No se pudo guardar el caso', 'Intenta nuevamente.', error);
@@ -937,6 +1117,14 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   inviteMember(): void {
+    if (!this.canManageMembers()) {
+      this.showWarning(
+        'Permiso insuficiente',
+        'Tu usuario no tiene permisos para invitar miembros a este caso.'
+      );
+      return;
+    }
+
     if (!this.invite.email) {
       return;
     }
@@ -965,6 +1153,14 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   addExistingMember(): void {
+    if (!this.canManageMembers()) {
+      this.showWarning(
+        'Permiso insuficiente',
+        'Tu usuario no tiene permisos para agregar miembros a este caso.'
+      );
+      return;
+    }
+
     if (!this.canAddExistingMember()) {
       return;
     }
@@ -1007,6 +1203,14 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   addOneDriveLink(): void {
+    if (!this.canManageFiles()) {
+      this.showWarning(
+        'Permiso insuficiente',
+        'Tu usuario no tiene permisos para agregar documentos a este caso.'
+      );
+      return;
+    }
+
     if (!this.canCreateOneDriveLink()) {
       this.oneDriveError =
         'Selecciona una entrada, captura el nombre y usa un enlace de OneDrive o SharePoint válido.';
@@ -1042,6 +1246,14 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   approveFile(fileId: string): void {
+    if (!this.canApproveFiles()) {
+      this.showWarning(
+        'Permiso insuficiente',
+        'Tu usuario no tiene permisos para aprobar la visibilidad de documentos.'
+      );
+      return;
+    }
+
     this._caseService
       .updateFileVisibility(this.caseId, fileId, {
         externalVisibilityStatus: 'approved',
@@ -1059,6 +1271,14 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   updateFileAccess(file: CaseFile, visibilityMode: string): void {
+    if (!this.canApproveFiles()) {
+      this.showWarning(
+        'Permiso insuficiente',
+        'Tu usuario no tiene permisos para cambiar la visibilidad de documentos.'
+      );
+      return;
+    }
+
     const mode = visibilityMode === 'internal_only' ? 'internal_only' : 'case_members';
     this._caseService
       .updateFileVisibility(this.caseId, file.id, {
@@ -1091,6 +1311,7 @@ export class AdminCaseDetailComponent implements OnInit {
   canSaveFile(file: CaseFile): boolean {
     const draft = this.fileDraft(file);
     return (
+      this.canManageExistingFiles() &&
       draft.fileName.trim().length > 0 &&
       draft.linkUrl.trim().length > 0 &&
       draft.entryIds.length > 0 &&
@@ -1099,6 +1320,14 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   saveFile(file: CaseFile): void {
+    if (!this.canManageExistingFiles()) {
+      this.showWarning(
+        'Permiso insuficiente',
+        'Tu usuario no tiene permisos para editar documentos de este caso.'
+      );
+      return;
+    }
+
     if (!this.canSaveFile(file)) {
       this.showWarning(
         'Archivo incompleto',
@@ -1134,6 +1363,14 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   startEditMember(member: CaseMembership): void {
+    if (!this.canEditMembers()) {
+      this.showWarning(
+        'Permiso insuficiente',
+        'Tu usuario no tiene permisos para editar miembros de este caso.'
+      );
+      return;
+    }
+
     this.editingMemberId = member.id;
     this.memberDraft = {
       displayName: member.displayName || '',
@@ -1159,7 +1396,35 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   saveMember(member: CaseMembership): void {
+    if (!this.canEditMembers()) {
+      this.showWarning(
+        'Permiso insuficiente',
+        'Tu usuario no tiene permisos para editar miembros de este caso.'
+      );
+      return;
+    }
+
     this.memberSavingId = member.id;
+    if (!this.canManageMembers() && this.canManagePermissions()) {
+      this._caseService
+        .updateMemberPermissions(this.caseId, member.id, {
+          permissions: this.memberDraft.permissions,
+        })
+        .subscribe({
+          next: (permissionsResponse) => {
+            const updated = { ...member, ...permissionsResponse.item };
+            this.members = this.members.map((item) => (item.id === updated.id ? updated : item));
+            this.cancelEditMember();
+            this.showSuccess('Permisos guardados', 'Los permisos del miembro quedaron actualizados.');
+          },
+          error: (error) => {
+            this.memberSavingId = '';
+            this.showError('No se pudieron guardar los permisos', 'Intenta nuevamente.', error);
+          },
+        });
+      return;
+    }
+
     this._caseService
       .updateMember(this.caseId, member.id, {
         displayName: this.memberDraft.displayName.trim(),
@@ -1167,6 +1432,15 @@ export class AdminCaseDetailComponent implements OnInit {
       })
       .subscribe({
         next: (memberResponse) => {
+          if (!this.canManagePermissions()) {
+            this.members = this.members.map((item) =>
+              item.id === memberResponse.item.id ? memberResponse.item : item
+            );
+            this.cancelEditMember();
+            this.showSuccess('Miembro guardado', 'Los datos del miembro quedaron actualizados.');
+            return;
+          }
+
           this._caseService
             .updateMemberPermissions(this.caseId, member.id, {
               permissions: this.memberDraft.permissions,
@@ -1178,7 +1452,7 @@ export class AdminCaseDetailComponent implements OnInit {
                   item.id === updated.id ? updated : item
                 );
                 this.cancelEditMember();
-                this.showSuccess('Miembro guardado', 'Rol, relación y permisos quedaron actualizados.');
+                this.showSuccess('Miembro guardado', 'Rol y permisos quedaron actualizados.');
               },
               error: (error) => {
                 this.memberSavingId = '';
@@ -1198,6 +1472,14 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   async removeMember(member: CaseMembership): Promise<void> {
+    if (!this.canManageMembers()) {
+      this.showWarning(
+        'Permiso insuficiente',
+        'Tu usuario no tiene permisos para quitar miembros de este caso.'
+      );
+      return;
+    }
+
     if (!member.id) {
       return;
     }
@@ -1250,7 +1532,7 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   canAddExistingMember(): boolean {
-    return Boolean(this.selectedExistingUser()?.email);
+    return this.canManageMembers() && Boolean(this.selectedExistingUser()?.email);
   }
 
   userOptionLabel(user: PlatformUser): string {
@@ -1274,11 +1556,11 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   entryVisibleInPortal(entry: CaseEntry): boolean {
-    return isVisibleToCaseClient(entry.visibility);
+    return caseVisibilityMode(entry.visibility) !== 'internal_only';
   }
 
   entryVisibilityLabel(entry: CaseEntry): string {
-    return this.entryVisibleInPortal(entry) ? 'Visible para cliente' : 'Sólo interno';
+    return this.visibilityLabel(entry.visibility);
   }
 
   entryVisibilityDraft(entry: CaseEntry): 'case_members' | 'internal_only' {
@@ -1521,7 +1803,7 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   canApproveFile(file: CaseFile): boolean {
-    return file.uploadStatus !== 'pending_upload';
+    return this.canApproveFiles() && file.uploadStatus !== 'pending_upload';
   }
 
   canDownloadFile(file: CaseFile): boolean {
@@ -1529,6 +1811,14 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   async removeFile(file: CaseFile): Promise<void> {
+    if (!this.canManageExistingFiles()) {
+      this.showWarning(
+        'Permiso insuficiente',
+        'Tu usuario no tiene permisos para eliminar documentos de este caso.'
+      );
+      return;
+    }
+
     const confirmation = await Swal.fire({
       title: 'Eliminar documento',
       text: `¿Eliminar ${this.displayFileName(file)} del caso?`,
@@ -1572,6 +1862,7 @@ export class AdminCaseDetailComponent implements OnInit {
 
   canCreateOneDriveLink(): boolean {
     return (
+      this.canManageFiles() &&
       this.hasOneDriveInputs() &&
       this.looksLikeMicrosoftLink(this.oneDriveLink.linkUrl)
     );
@@ -1604,7 +1895,8 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   fileVisibilityMode(file: CaseFile): 'case_members' | 'internal_only' {
-    return file.externalVisibilityStatus === 'approved' && isVisibleToCaseClient(file.visibility)
+    return file.externalVisibilityStatus === 'approved' &&
+      caseVisibilityMode(file.visibility) !== 'internal_only'
       ? 'case_members'
       : 'internal_only';
   }
@@ -1822,7 +2114,7 @@ export class AdminCaseDetailComponent implements OnInit {
     );
   }
 
-  private fileVisibilityStatusLabel(status: string): string {
+  fileVisibilityStatusLabel(status: string): string {
     return (
       {
         pending: 'Pendiente de revisión',

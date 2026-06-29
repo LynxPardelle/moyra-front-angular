@@ -123,6 +123,7 @@ import { MainService } from '../../services/main.service';
         color: #4b8ff5;
         background: #ffffff;
         text-decoration: none;
+        min-height: 44px;
         padding: 8px 12px;
       }
 
@@ -154,6 +155,14 @@ import { MainService } from '../../services/main.service';
         align-items: center;
         justify-content: space-between;
         gap: 16px;
+      }
+
+      .case-row > div:first-child,
+      .case-row h2,
+      .case-row__reference,
+      .case-row__meta {
+        min-width: 0;
+        overflow-wrap: anywhere;
       }
 
       .case-row h2 {

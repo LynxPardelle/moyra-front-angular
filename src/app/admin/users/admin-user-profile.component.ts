@@ -237,14 +237,14 @@ type UserCaseMembership = {
       }
 
       select {
-        min-width: 180px;
+        min-width: 0;
       }
 
       button {
         background: #ffffff;
         border: 1px solid #4b8ff5;
         color: #4b8ff5;
-        min-height: 38px;
+        min-height: 44px;
         padding: 7px 10px;
       }
 
@@ -275,6 +275,17 @@ type UserCaseMembership = {
         background: #4b8ff5;
         color: #ffffff;
         outline: 0;
+      }
+
+      @media (max-width: 1120px) {
+        .admin-user-profile__form {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-user-profile__form button {
+          grid-column: 1 / -1;
+          justify-self: start;
+        }
       }
 
       @media (max-width: 720px) {

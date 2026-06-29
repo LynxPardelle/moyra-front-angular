@@ -1,4 +1,4 @@
-import { CaseVisibility, CaseVisibilityObject } from '../models/case';
+import { CaseMembership, CaseVisibility, CaseVisibilityObject } from '../models/case';
 
 const VALID_VISIBILITY_MODES = new Set([
   'case_members',
@@ -39,6 +39,26 @@ export function caseVisibilityMode(visibility: CaseVisibility | null | undefined
   return String(visibility || 'case_members');
 }
 
-export function isVisibleToCaseClient(visibility: CaseVisibility | null | undefined): boolean {
-  return caseVisibilityMode(visibility) !== 'internal_only';
+export function isVisibleToCaseClient(
+  visibility: CaseVisibility | null | undefined,
+  membership?: Pick<CaseMembership, 'id' | 'userId'> | null
+): boolean {
+  const mode = caseVisibilityMode(visibility);
+  if (mode === 'internal_only') {
+    return false;
+  }
+  if (mode === 'case_members') {
+    return true;
+  }
+  if (mode === 'selected_members') {
+    if (!membership || !visibility || typeof visibility !== 'object') {
+      return false;
+    }
+    const allowed = new Set((visibility.memberIds || []).map((id) => String(id)));
+    return [membership.id, membership.userId].some((id) => id && allowed.has(String(id)));
+  }
+  if (mode === 'selected_parties') {
+    return false;
+  }
+  return false;
 }

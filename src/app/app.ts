@@ -10,7 +10,17 @@ import {
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { isPlatformBrowser, Location } from '@angular/common';
 import { NgxAngoraService } from 'ngx-angora-css';
-import { Subscription, catchError, distinctUntilChanged, filter, map, of, switchMap } from 'rxjs';
+import {
+  Subscription,
+  catchError,
+  combineLatest,
+  distinctUntilChanged,
+  filter,
+  map,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
 
 // Services
 import { ApiRuntime, GlobalMain } from './services/global';
@@ -213,9 +223,6 @@ export class App implements OnDestroy, OnInit {
     this.scheduleCssCreate(true);
     this.refreshSessionFromCookie();
     this.watchCaseNotificationCount();
-    if (this.casesFeatureEnabled()) {
-      void this.startCaseNotificationClickRouting();
-    }
   }
 
   @HostListener('window:storage', ['$event'])
@@ -320,16 +327,26 @@ export class App implements OnDestroy, OnInit {
       return;
     }
 
-    this.notificationCountSubscription = this._authFacade.state$
+    const authenticated$ = this._authFacade.state$.pipe(
+      filter((state) => state.hydrated),
+      map((state) => state.isAuthenticated),
+      distinctUntilChanged()
+    );
+    const privateCaseRoute$ = this._router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      startWith(null),
+      map(() => this.isPrivateCaseRoute()),
+      distinctUntilChanged()
+    );
+
+    this.notificationCountSubscription = combineLatest([authenticated$, privateCaseRoute$])
       .pipe(
-        filter((state) => state.hydrated),
-        map((state) => state.isAuthenticated),
-        distinctUntilChanged(),
-        switchMap((isAuthenticated) => {
-          if (!isAuthenticated) {
+        switchMap(([isAuthenticated, isPrivateCaseRoute]) => {
+          if (!isAuthenticated || !isPrivateCaseRoute) {
             return of(null);
           }
 
+          void this.startCaseNotificationClickRouting();
           return this._caseService.getUnreadNotificationCount().pipe(catchError(() => of(null)));
         })
       )
@@ -341,6 +358,14 @@ export class App implements OnDestroy, OnInit {
 
         this.unreadNotificationsCount = null;
       });
+  }
+
+  private isPrivateCaseRoute(url = this._router.url): boolean {
+    return (
+      url.startsWith('/casos') ||
+      url.startsWith('/notificaciones') ||
+      url.startsWith('/admin/casos')
+    );
   }
 
   headerLogoUrl(): string {

@@ -250,6 +250,8 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
                   <app-rich-text-editor
                     [label]="text('casesCommentLabel', 'Escribe un comentario')"
                     [placeholder]="text('casesCommentPlaceholder', 'Escribe un comentario')"
+                    [controlId]="commentControlId(entry.id)"
+                    [controlName]="'comment-' + entry.id"
                     [(value)]="commentDrafts[entry.id]"
                     [disabled]="!canComment(entry) || commentBusyEntryId === entry.id"
                     minHeight="150px"
@@ -1044,11 +1046,13 @@ export class CaseDetailComponent implements OnInit {
         return false;
       }
     }
+    const membership = this.currentMembership(members);
     if (this.isOwnFile(file)) {
       return true;
     }
     return (
-      file.externalVisibilityStatus === 'approved' && isVisibleToCaseClient(file.visibility)
+      file.externalVisibilityStatus === 'approved' &&
+      isVisibleToCaseClient(file.visibility, membership)
     );
   }
 
@@ -1184,7 +1188,7 @@ export class CaseDetailComponent implements OnInit {
     if (this.isLegalMembership(membership)) {
       return true;
     }
-    return isVisibleToCaseClient(entry.visibility);
+    return isVisibleToCaseClient(entry.visibility, membership);
   }
 
   private canSeeComment(comment: CaseComment, members = this.members): boolean {
@@ -1192,10 +1196,16 @@ export class CaseDetailComponent implements OnInit {
       return true;
     }
     const membership = this.currentMembership(members);
+    if (!membership || membership.permissions?.includes('case.read') !== true) {
+      return false;
+    }
     if (this.isLegalMembership(membership)) {
       return true;
     }
-    return isVisibleToCaseClient(comment.visibility);
+    return (
+      membership.permissions?.includes('case.comment') === true &&
+      isVisibleToCaseClient(comment.visibility, membership)
+    );
   }
 
   private canWriteComments(entry?: CaseEntry): boolean {

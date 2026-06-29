@@ -15,6 +15,8 @@ export class RichTextEditorComponent {
   @Input() placeholder = 'Escribe el contenido...';
   @Input() minHeight = '260px';
   @Input() disabled = false;
+  @Input() controlId = '';
+  @Input() controlName = '';
   @Output() valueChange = new EventEmitter<string>();
   private editor: any;
 

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { EMPTY, defer, of } from 'rxjs';
 import { App } from './app';
 import { MainService } from './services/main.service';
@@ -152,6 +152,7 @@ describe('App', () => {
     casesEnabled = true;
     isAuthenticated = true;
     unreadCount = 2;
+    spyOnProperty(TestBed.inject(Router), 'url', 'get').and.returnValue('/casos');
 
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
@@ -182,6 +183,8 @@ describe('App', () => {
 
   it('starts private case notification click routing when the cases feature is enabled', async () => {
     casesEnabled = true;
+    isAuthenticated = true;
+    spyOnProperty(TestBed.inject(Router), 'url', 'get').and.returnValue('/casos');
 
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();

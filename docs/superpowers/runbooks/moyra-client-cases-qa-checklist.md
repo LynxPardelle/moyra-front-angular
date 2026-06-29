@@ -26,10 +26,19 @@
 - [ ] Confirm production is not being promoted during this QA pass.
 - [ ] Confirm `test` is the only browser environment under review.
 - [ ] Confirm public `Publicaciones` behavior is unchanged.
+- [ ] Confirm public test content is present after the 2026-06-28 nonproduction sync incident: `/api/v2/publications` includes `Publicación de prueba` and `/api/v2/articles` includes `Artículo Test`.
+- [ ] Confirm the nonproduction sync guard is deployed so an empty production public source cannot replace public test content.
 - [ ] Confirm private `Casos` content is not public and has no SEO/public publication metadata.
 - [ ] Confirm `CASE_EMAIL_NOTIFICATIONS_ENABLED=false` unless SES production access has been approved.
 - [ ] Confirm `CASE_WEB_PUSH_ENABLED=false` unless Web Push runtime secrets and frontend public key are configured.
 - [ ] Confirm external malware scanning/GuardDuty UI is not present in the current release.
+- [ ] Confirm PITR/backup retention and DynamoDB backup cost are accepted for public content tables before relying on point-in-time restore as the recovery path.
+
+## Latest Automated Verification
+
+- [x] 2026-06-29 01:07 CT: `npm test -- --watch=false --browsers=ChromeHeadless --no-progress` returned `167 SUCCESS`.
+- [x] 2026-06-29 01:09 CT: `npm run build` completed successfully.
+- [ ] Production budget warnings remain open: initial bundle is 15.85 kB over 1.12 MB, `admin-case-detail.component.ts` SCSS is 742 bytes over 4.00 kB, `admin-cases-list.component.ts` SCSS is 75 bytes over 4.00 kB, and `case-detail.component.ts` SCSS is 1.10 kB over 4.00 kB.
 
 ## Test Personas
 
@@ -51,8 +60,8 @@ Prepare this test data:
 - [ ] At least one attorney-defined case type with custom statuses.
 - [ ] At least one case entry visible to case members.
 - [ ] At least one internal-only entry or comment.
-- [ ] At least one uploaded document pending internal review.
-- [ ] At least one uploaded document approved for external visibility.
+- [ ] At least one OneDrive/SharePoint document link pending or restricted from external visibility.
+- [ ] At least one OneDrive/SharePoint document link approved for external visibility.
 
 ## Public Site Regression
 
@@ -135,20 +144,20 @@ As a member client:
 - [ ] Submitted comment persists after reload.
 - [ ] Browser console has no errors during comment submit.
 - [ ] Documents panel appears.
-- [ ] Upload input is labeled.
-- [ ] Client can upload only if they have `case.upload_file`.
-- [ ] Pending external file from current client is visible to that same client with the expected review label.
-- [ ] Pending external file from another external client is hidden until approved.
-- [ ] Approved file is visible/downloadable to authorized client.
-- [ ] Fixed footer does not cover document/upload controls at the bottom.
+- [ ] OneDrive/SharePoint link form is labeled.
+- [ ] Client can add document links only if they have `case.upload_file`.
+- [ ] Pending or restricted external document link from current client is visible to that same client with the expected review label.
+- [ ] Pending or restricted external document link from another external client is hidden until approved.
+- [ ] Approved document link is visible/openable to authorized client.
+- [ ] Fixed footer does not cover document/link controls at the bottom.
 - [ ] Mobile view has no horizontal overflow.
 
 Negative checks:
 
 - [ ] Client without `case.comment` sees comments disabled.
-- [ ] Client without `case.upload_file` sees upload disabled/unavailable.
+- [ ] Client without `case.upload_file` sees document link creation disabled/unavailable.
 - [ ] Non-member opening a guessed case id receives denial or not-found behavior.
-- [ ] Removed member cannot read, comment, upload, or download.
+- [ ] Removed member cannot read, comment, add document links, or open document links.
 
 ## Case Entry Detail - `/casos/:caseId/entrada/:entryId`
 
@@ -243,8 +252,8 @@ Validate each permission by both UI and API behavior where feasible.
 
 - [ ] `case.read`: can list/open assigned case.
 - [ ] `case.comment`: can submit comments.
-- [ ] `case.upload_file`: can upload documents.
-- [ ] `case.download_file`: can download authorized files.
+- [ ] `case.upload_file`: can add OneDrive/SharePoint document links.
+- [ ] `case.download_file`: can open authorized document links.
 - [ ] `case.write_entry`: can create/update entries only if intended.
 - [ ] `case.manage_members`: can add/remove members only if intended.
 - [ ] `case.manage_permissions`: can change permissions only if intended.
@@ -262,19 +271,19 @@ Negative checks:
 - [ ] Guessing another entry id fails.
 - [ ] Removed or inactive memberships fail closed.
 
-## File Uploads
+## Case Document Links
 
-- [ ] Upload accepts expected file types.
-- [ ] Upload rejects or handles unsupported file types safely.
-- [ ] Large file behavior is clear.
-- [ ] Failed upload shows retryable error.
-- [ ] Stale pending upload does not appear as approved.
-- [ ] Uploaded file starts in internal review state for external visibility.
+- [ ] Link creation accepts HTTPS OneDrive or SharePoint URLs.
+- [ ] Link creation rejects unsupported or non-HTTPS URLs safely.
+- [ ] Failed link creation shows retryable error.
+- [ ] Stale pending/restricted document links do not appear as approved.
+- [ ] New document link starts with the selected visibility and review state.
 - [ ] Internal users can see pending external review queue if exposed.
-- [ ] Other external members cannot see a pending file until approval.
-- [ ] Approved file becomes visible to authorized external members.
-- [ ] Restricted/rejected file is not visible to unauthorized external users.
-- [ ] Download links require auth and membership.
+- [ ] Other external members cannot see a restricted document link until approval.
+- [ ] Approved document link becomes visible to authorized external members.
+- [ ] Restricted/rejected document link is not visible to unauthorized external users.
+- [ ] Document links open in a new tab with `rel="noopener noreferrer"`.
+- [ ] Microsoft link permissions are reviewed outside Moyra before sharing; Moyra stores and opens the link but does not enforce Microsoft-side access.
 
 ## Accessibility And Layout
 
@@ -323,7 +332,7 @@ For each critical workflow:
 - [ ] Expected unauthenticated refresh `401` appears only on logged-out pages.
 - [ ] API calls use `Authorization` for private case endpoints.
 - [ ] Private case endpoints are not called from public pages.
-- [ ] Upload requests do not leak private data in URL query strings beyond signed upload requirements.
+- [ ] OneDrive/SharePoint URLs are not echoed into public routes, SEO metadata, or avoidable error messages.
 
 ## Cleanup After QA
 
@@ -335,7 +344,7 @@ For each critical workflow:
 - [ ] Delete temporary memberships.
 - [ ] Delete temporary cases.
 - [ ] Delete temporary case types if no longer needed.
-- [ ] Delete temporary uploaded objects if files were uploaded.
+- [ ] Delete temporary OneDrive/SharePoint document links created for QA.
 - [ ] Confirm cleanup errors are recorded as `[]` or list exact unresolved cleanup items.
 
 ## QA Result
