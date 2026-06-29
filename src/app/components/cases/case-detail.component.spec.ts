@@ -412,7 +412,7 @@ describe('CaseDetailComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Aún no hay actualizaciones visibles');
   });
 
-  it('lets a permitted member add a OneDrive document link', () => {
+  it('adds member-uploaded OneDrive links as internal until visibility is approved', () => {
     render();
     expandEntry('entry-1', false);
 
@@ -429,10 +429,38 @@ describe('CaseDetailComponent', () => {
       entryId: 'entry-1',
       entryIds: ['entry-1'],
       linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
-      visibility: { mode: 'case_members' },
+      visibility: { mode: 'internal_only' },
     });
     expect(fixture.nativeElement.textContent).toContain('Contrato firmado');
     expect(fixture.nativeElement.textContent).toContain('Abrir documento');
+  });
+
+  it('lets a member with file approval choose document visibility', () => {
+    permissions = [
+      'case.read',
+      'case.comment',
+      'case.upload_file',
+      'case.download_file',
+      'case.approve_file_visibility',
+    ];
+
+    render();
+    expandEntry('entry-1', false);
+
+    fixture.componentInstance.oneDriveDrafts['entry-1'] = {
+      fileName: 'Contrato firmado',
+      linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
+      visibilityMode: 'case_members',
+    };
+    fixture.componentInstance.addOneDriveLink('entry-1');
+
+    expect(createOneDriveLinkSpy).toHaveBeenCalledWith('case-1', {
+      fileName: 'Contrato firmado',
+      entryId: 'entry-1',
+      entryIds: ['entry-1'],
+      linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
+      visibility: { mode: 'case_members' },
+    });
   });
 
   it('explains invalid document links instead of silently blocking submit', () => {

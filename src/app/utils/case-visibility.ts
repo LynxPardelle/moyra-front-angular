@@ -13,7 +13,7 @@ export function normalizeCaseVisibilityForApi(
   if (visibility && typeof visibility === 'object') {
     const mode = VALID_VISIBILITY_MODES.has(String(visibility.mode))
       ? String(visibility.mode)
-      : 'case_members';
+      : 'internal_only';
     return {
       mode,
       ...(Array.isArray(visibility.memberIds) ? { memberIds: visibility.memberIds } : {}),
@@ -21,7 +21,10 @@ export function normalizeCaseVisibilityForApi(
     };
   }
 
-  const mode = String(visibility || 'case_members');
+  const mode = String(visibility || 'internal_only');
+  if (mode === 'case_members') {
+    return { mode: 'case_members' };
+  }
   if (mode === 'internal_only') {
     return { mode: 'internal_only' };
   }
@@ -29,14 +32,14 @@ export function normalizeCaseVisibilityForApi(
     return { mode };
   }
 
-  return { mode: 'case_members' };
+  return { mode: 'internal_only' };
 }
 
 export function caseVisibilityMode(visibility: CaseVisibility | null | undefined): string {
   if (visibility && typeof visibility === 'object') {
-    return String(visibility.mode || 'case_members');
+    return String(visibility.mode || 'internal_only');
   }
-  return String(visibility || 'case_members');
+  return String(visibility || 'internal_only');
 }
 
 export function isVisibleToCaseClient(

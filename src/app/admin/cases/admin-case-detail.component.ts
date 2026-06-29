@@ -391,6 +391,7 @@ type PlatformUser = {
                 type="url"
               />
             </label>
+            @if (canApproveFiles()) {
             <label>
               Visibilidad
               <select name="oneDriveVisibility" [(ngModel)]="oneDriveLink.visibilityMode">
@@ -398,6 +399,11 @@ type PlatformUser = {
                 <option value="internal_only">Sólo interno</option>
               </select>
             </label>
+            } @else {
+            <p class="admin-case-help admin-case-help--inline">
+              El enlace quedará interno hasta que un abogado apruebe su visibilidad.
+            </p>
+            }
             <small class="admin-case-help">
               Para Casos se guardan enlaces privados de OneDrive o SharePoint; los demás módulos
               siguen usando S3.
@@ -733,6 +739,11 @@ type PlatformUser = {
         line-height: 1.45;
       }
 
+      .admin-case-help--inline {
+        align-self: end;
+        margin: 0;
+      }
+
       .admin-case-error {
         color: #b42318;
         margin: 0;
@@ -941,7 +952,7 @@ export class AdminCaseDetailComponent implements OnInit {
     entryIds: [] as string[],
     fileName: '',
     linkUrl: '',
-    visibilityMode: 'case_members',
+    visibilityMode: 'internal_only',
   };
   oneDriveBusy = false;
   oneDriveError = '';
@@ -1224,7 +1235,9 @@ export class AdminCaseDetailComponent implements OnInit {
       entryIds: this.oneDriveLink.entryIds,
       fileName: this.oneDriveLink.fileName.trim(),
       linkUrl: this.oneDriveLink.linkUrl.trim(),
-      visibility: { mode: this.oneDriveLink.visibilityMode },
+      visibility: {
+        mode: this.canApproveFiles() ? this.oneDriveLink.visibilityMode : 'internal_only',
+      },
     }).subscribe({
       next: (response) => {
         this.files = [response.item, ...this.files];
@@ -1232,7 +1245,7 @@ export class AdminCaseDetailComponent implements OnInit {
           entryIds: [],
           fileName: '',
           linkUrl: '',
-          visibilityMode: 'case_members',
+          visibilityMode: 'internal_only',
         };
         this.oneDriveBusy = false;
         this.showSuccess('Enlace agregado', 'El documento de OneDrive quedó registrado.');

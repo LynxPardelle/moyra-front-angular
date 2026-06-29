@@ -351,20 +351,36 @@ For each critical workflow:
 - [ ] Delete temporary OneDrive/SharePoint document links created for QA.
 - [ ] Confirm cleanup errors are recorded as `[]` or list exact unresolved cleanup items.
 
+## Latest Review - 2026-06-29 05:18 CT
+
+- [x] Restored test public content was preserved in local route smoke: `Publicación de prueba` and `Artículo Test` rendered without escaped rich HTML markers.
+- [x] 2026-06-29 05:32 CT live test API recheck returned HTTP 200 for `/api/v2/publications` with `Publicación de prueba` and HTTP 200 for `/api/v2/articles` with `Artículo Test`.
+- [x] Case/file visibility parsing now fails closed to `internal_only` for missing or invalid values.
+- [x] Client-uploaded OneDrive/SharePoint links remain internal unless the current member can approve external visibility.
+- [x] Rich HTML normalization tests cover escaped Quill HTML and script stripping before safe rendering.
+- [x] Embed sandboxing no longer grants `allow-forms` by default; form embeds keep it explicitly.
+- [x] Local responsive smoke covered public content, solution, publication/article detail, and cases routes at mobile and desktop widths with no horizontal overflow.
+- [x] Full local frontend suite passed again at 2026-06-29 05:30 CT: `174 SUCCESS`.
+- [x] Local production build succeeded again at 2026-06-29 05:31 CT, with existing non-blocking budget warnings.
+- [ ] Deploy these frontend changes to `test`.
+- [ ] Run authenticated admin QA in `test` for case entry creation/edit/visibility, member permissions, file approval/edit/delete, profile update, and notifications.
+- [ ] Run authenticated client QA in `test` for assigned case access, visible-entry rendering, restricted comments, document visibility, and notification read/unread behavior.
+- [ ] Review Angular budget warnings before production if the bundle/style growth continues.
+
 ## QA Result
 
 - [ ] Approved for another test iteration.
 - [ ] Approved for production planning, but not promoted yet.
-- [ ] Blocked by findings.
+- [x] Blocked by findings.
 
 Findings:
 
 | ID | Screen | Severity | Finding | Expected | Actual | Evidence | Owner | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-|  |  |  |  |  |  |  |  |  |
+| CASE-QA-2026-06-29-01 | Cases/Auth | High | Current hardening is validated locally but not deployed and authenticated in test yet. | Production promotion only after test deploy plus admin/client browser pass. | Local tests/build/smoke passed, but authenticated test QA remains pending. | `Codex.md` Latest Verified State 2026-06-29 05:18 CT | Frontend | Open |
 
 Decision:
 
 - [ ] Keep in test.
-- [ ] Request fixes before more QA.
+- [x] Request fixes before more QA.
 - [ ] Prepare production promotion checklist separately.

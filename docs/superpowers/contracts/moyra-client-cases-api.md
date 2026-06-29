@@ -162,8 +162,8 @@ Suggested initial role presets:
 |---|---|---|
 | `owner_attorney` | Lead attorney/admin | All permissions |
 | `attorney` | Attorney collaborator | All except destructive system configuration if later added |
-| `pasante` | Intern/collaborator | Read, comment, upload, draft/internal entry if granted, no member/permission management by default |
-| `client` | External client | Read visible content, comment, upload, download approved visible files |
+| `pasante` | Intern/collaborator | Read, comment, upload, create draft/internal entries if granted, no visibility approval/member/permission management by default |
+| `client` | External client | Read visible content and download approved visible files; comment/upload only when explicitly granted per case |
 | `external_observer` | External limited participant | Read visible content, download visible files, no comment/upload by default |
 
 Role presets are starting templates. The persisted membership should store the resulting permission set plus any overrides so attorneys can adapt per case.
@@ -239,7 +239,6 @@ type CaseMembership = {
   displayName?: string;
   partyId?: string;
   partyLabel?: string;
-  memberType: "internal" | "external";
   rolePreset: "owner_attorney" | "attorney" | "pasante" | "client" | "external_observer";
   permissions: string[];
   status: "active" | "invited" | "removed";
@@ -486,9 +485,8 @@ Invite body:
   "email": "cliente@example.com",
   "displayName": "string",
   "partyLabel": "string",
-  "memberType": "external",
   "rolePreset": "client",
-  "permissions": ["case.read", "case.comment", "case.upload_file", "case.download_file"]
+  "permissions": ["case.read", "case.download_file"]
 }
 ```
 

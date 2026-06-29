@@ -6,7 +6,12 @@
 .article-rich-content,
 .article-section__content,
 .article-detail__intro,
-.publication-detail__content {
+.publication-detail__content,
+.case-detail-page__description,
+.case-entry__body,
+.case-entry-page__body,
+.case-comment,
+.case-entry-comment {
   box-sizing: border-box;
   max-width: min(100%, 72ch);
   min-width: 0;
@@ -19,7 +24,12 @@
 .article-rich-content :where(p, li, blockquote, h1, h2, h3, h4, h5, h6),
 .article-section__content :where(p, li, blockquote, h1, h2, h3, h4, h5, h6),
 .article-detail__intro :where(p, li, blockquote, h1, h2, h3, h4, h5, h6),
-.publication-detail__content :where(p, li, blockquote, h1, h2, h3, h4, h5, h6) {
+.publication-detail__content :where(p, li, blockquote, h1, h2, h3, h4, h5, h6),
+.case-detail-page__description :where(p, li, blockquote, h1, h2, h3, h4, h5, h6),
+.case-entry__body :where(p, li, blockquote, h1, h2, h3, h4, h5, h6),
+.case-entry-page__body :where(p, li, blockquote, h1, h2, h3, h4, h5, h6),
+.case-comment :where(p, li, blockquote, h1, h2, h3, h4, h5, h6),
+.case-entry-comment :where(p, li, blockquote, h1, h2, h3, h4, h5, h6) {
   overflow-wrap: anywhere;
 }
 
@@ -28,6 +38,11 @@
 .article-rich-content :where(img, video, iframe),
 .article-section__content :where(img, video, iframe),
 .publication-detail__content :where(img, video, iframe),
+.case-detail-page__description :where(img, video, iframe),
+.case-entry__body :where(img, video, iframe),
+.case-entry-page__body :where(img, video, iframe),
+.case-comment :where(img, video, iframe),
+.case-entry-comment :where(img, video, iframe),
 .content-embeds :where(iframe),
 .publication-card__embeds :where(iframe),
 .article-card__embeds :where(iframe) {
@@ -64,7 +79,12 @@ safe-embed-frame {
 .moyra-rich-text :where(table),
 .publication-rich-content :where(table),
 .article-rich-content :where(table),
-.publication-detail__content :where(table) {
+.publication-detail__content :where(table),
+.case-detail-page__description :where(table),
+.case-entry__body :where(table),
+.case-entry-page__body :where(table),
+.case-comment :where(table),
+.case-entry-comment :where(table) {
   display: block;
   max-width: 100%;
   overflow-x: auto;

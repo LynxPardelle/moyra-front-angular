@@ -147,6 +147,7 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
                     "
                     type="url"
                   />
+                  @if (canApproveFileVisibility()) {
                   <label [attr.for]="'case-onedrive-visibility-' + entry.id">
                     {{ text('casesOneDriveVisibilityLabel', 'Visibilidad') }}
                   </label>
@@ -162,6 +163,16 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
                       {{ text('casesOneDriveInternalOnlyOption', 'Sólo interno') }}
                     </option>
                   </select>
+                  } @else {
+                  <p class="case-onedrive-form__visibility-note">
+                    {{
+                      text(
+                        'casesOneDriveReviewRequiredText',
+                        'El enlace quedará interno hasta que un abogado apruebe su visibilidad.'
+                      )
+                    }}
+                  </p>
+                  }
                   <small>
                     {{
                       text(
@@ -494,7 +505,7 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
       .case-comments__toggle {
         flex: 0 0 auto;
         font-size: 0.85rem;
-        min-height: 36px;
+        min-height: 44px;
         padding: 7px 10px;
       }
 
@@ -545,6 +556,14 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         color: rgba(41, 48, 59, 0.68);
         grid-column: 1 / -1;
         line-height: 1.45;
+      }
+
+      .case-onedrive-form__visibility-note {
+        align-self: end;
+        color: rgba(41, 48, 59, 0.72);
+        font-size: 0.9rem;
+        line-height: 1.45;
+        margin: 0;
       }
 
       .case-onedrive-form .case-detail-page__error {
@@ -776,6 +795,10 @@ export class CaseDetailComponent implements OnInit {
     return this.hasPermission('case.upload_file');
   }
 
+  canApproveFileVisibility(): boolean {
+    return this.hasPermission('case.approve_file_visibility');
+  }
+
   canCreateOneDriveLink(entryId: string): boolean {
     const draft = this.oneDriveDraft(entryId);
     return (
@@ -797,7 +820,7 @@ export class CaseDetailComponent implements OnInit {
       this.oneDriveDrafts[entryId] = {
         fileName: '',
         linkUrl: '',
-        visibilityMode: 'case_members',
+        visibilityMode: 'internal_only',
       };
     }
     return this.oneDriveDrafts[entryId];
@@ -857,14 +880,16 @@ export class CaseDetailComponent implements OnInit {
       entryIds: [entryId],
       fileName: draft.fileName.trim(),
       linkUrl: draft.linkUrl.trim(),
-      visibility: { mode: draft.visibilityMode },
+      visibility: {
+        mode: this.canApproveFileVisibility() ? draft.visibilityMode : 'internal_only',
+      },
     }).subscribe({
       next: (response) => {
         this.files = [response.item, ...this.files];
         this.oneDriveDrafts[entryId] = {
           fileName: '',
           linkUrl: '',
-          visibilityMode: 'case_members',
+          visibilityMode: 'internal_only',
         };
         this.oneDriveBusyEntryId = '';
       },
@@ -1130,6 +1155,9 @@ export class CaseDetailComponent implements OnInit {
         (element) => element.getAttribute(targetName) === targetValue
       );
       target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      if (target && typeof window !== 'undefined') {
+        window.scrollBy({ top: -96, left: 0, behavior: 'smooth' });
+      }
     });
   }
 

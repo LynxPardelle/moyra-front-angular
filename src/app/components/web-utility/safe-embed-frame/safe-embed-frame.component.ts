@@ -11,6 +11,10 @@ import { EmbedItem } from '../../../utils/embeds';
   styleUrls: ['./safe-embed-frame.component.scss'],
 })
 export class SafeEmbedFrameComponent {
+  readonly defaultExternalAllow =
+    'clipboard-write; encrypted-media; fullscreen; picture-in-picture; web-share';
+  readonly defaultExternalSandbox =
+    'allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts';
   @Input() compact = false;
   @Input() embed: EmbedItem | null = null;
 }

@@ -180,6 +180,7 @@ import { RichTextEditorComponent } from '../web-utility/rich-text-editor/rich-te
         border: 1px solid #4b8ff5;
         background: #ffffff;
         color: #4b8ff5;
+        min-height: 44px;
         padding: 8px 12px;
         text-decoration: none;
       }
