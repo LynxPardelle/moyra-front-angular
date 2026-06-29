@@ -167,8 +167,7 @@ body {
   --site-footer-offset: 76px;
 
   background-color: #e4e5e7;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   overflow-x: hidden;
 
   :where(
@@ -495,10 +494,8 @@ body {
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0)),
       #e4e5e7 !important;
-    height: calc(100vh - var(--site-header-offset) - var(--site-footer-offset));
+    min-height: calc(100vh - var(--site-header-offset) - var(--site-footer-offset));
     margin: var(--site-header-offset) 0 var(--site-footer-offset) !important;
-    max-height: calc(100vh - var(--site-header-offset) - var(--site-footer-offset));
-    min-height: 0 !important;
     overflow-y: auto;
     overscroll-behavior: contain;
     padding:

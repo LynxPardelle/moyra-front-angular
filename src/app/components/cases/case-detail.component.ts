@@ -13,6 +13,7 @@ import {
   CaseRecord,
 } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { apiUrl } from '../../services/global';
 import { MainService } from '../../services/main.service';
 import { AuthFacade } from '../../store/auth/auth.facade';
 import { isVisibleToCaseClient } from '../../utils/case-visibility';
@@ -1010,17 +1011,16 @@ export class CaseDetailComponent implements OnInit {
   }
 
   canDownloadFile(file: CaseFile): boolean {
-    return (
-      this._authFacade.isAdmin() ||
-      file.externalVisibilityStatus === 'approved' ||
-      this.isOwnFile(file)
-    );
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
+    return this.hasPermission('case.download_file') && this.canShowFile(file);
   }
 
   downloadUrl(fileId: string): string {
-    return `/api/v2/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
+    return apiUrl(`/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
       fileId
-    )}/download`;
+    )}/download`);
   }
 
   private canShowFile(

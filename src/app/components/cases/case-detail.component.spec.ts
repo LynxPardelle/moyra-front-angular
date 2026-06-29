@@ -380,6 +380,18 @@ describe('CaseDetailComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Comentario enviado');
   });
 
+  it('does not render document links when the member lacks download permission', () => {
+    permissions = ['case.read', 'case.comment', 'case.upload_file'];
+
+    render();
+    expandEntry();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('aprobado.pdf');
+    expect(compiled.querySelector('a[href*="file-approved"]')).toBeNull();
+    expect(compiled.querySelector('a[href*="file-own-zip"]')).toBeNull();
+  });
+
   it('shows disabled comment and upload controls when membership lacks read permissions', () => {
     permissions = [];
 

@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 
 import { CaseEntry, CaseFile, CaseMembership, CaseVisibility } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { apiUrl } from '../../services/global';
 import { AuthFacade } from '../../store/auth/auth.facade';
 import { RichTextEditorComponent } from '../../components/web-utility/rich-text-editor/rich-text-editor.component';
 
@@ -115,9 +116,11 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
               <span>{{ fileTypeLabel(file) }}</span>
               <span>{{ fileReviewLabel(file) }}</span>
             </div>
+            @if (canDownloadFile(file)) {
             <a [href]="fileHref(file)" target="_blank" rel="noopener noreferrer">
               Abrir documento
             </a>
+            }
           </article>
           }
         </div>
@@ -128,9 +131,11 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
   styles: [
     `
       .admin-case-entry-editor {
-        width: min(980px, calc(100vw - 32px));
+        box-sizing: border-box;
+        max-width: 980px;
+        width: 100%;
         margin: 0 auto;
-        padding: 24px 0;
+        padding: 24px 16px;
         color: #29303b;
       }
 
@@ -177,7 +182,7 @@ import { RichTextEditorComponent } from '../../components/web-utility/rich-text-
 
       .admin-case-entry-editor__file-form {
         display: grid;
-        grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.4fr) minmax(160px, 220px) auto;
+        grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
         align-items: end;
         gap: 10px;
       }
@@ -310,6 +315,7 @@ export class AdminCaseEntryEditorComponent implements OnInit {
   oneDriveBusy = false;
   oneDriveError = '';
   canManageVisibility = false;
+  canDownloadFiles = false;
   saving = false;
   errorMessage = '';
 
@@ -477,9 +483,13 @@ export class AdminCaseEntryEditorComponent implements OnInit {
     if (this.isOneDriveFile(file) && linkUrl) {
       return linkUrl;
     }
-    return `/api/v2/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
+    return apiUrl(`/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
       file.id
-    )}/download`;
+    )}/download`);
+  }
+
+  canDownloadFile(file: CaseFile): boolean {
+    return file.uploadStatus !== 'pending_upload' && this.canDownloadFiles;
   }
 
   private visibilityModeFrom(visibility: CaseVisibility): string {
@@ -500,6 +510,7 @@ export class AdminCaseEntryEditorComponent implements OnInit {
   private loadVisibilityAccess(): void {
     if (this._authFacade.isAdmin()) {
       this.canManageVisibility = true;
+      this.canDownloadFiles = true;
       return;
     }
     this._caseService.listMembers(this.caseId).subscribe({
@@ -507,9 +518,11 @@ export class AdminCaseEntryEditorComponent implements OnInit {
         const membership = this.currentMembership(response.items || []);
         this.canManageVisibility =
           membership?.permissions?.includes('case.manage_entry_visibility') === true;
+        this.canDownloadFiles = membership?.permissions?.includes('case.download_file') === true;
       },
       error: () => {
         this.canManageVisibility = false;
+        this.canDownloadFiles = false;
       },
     });
   }

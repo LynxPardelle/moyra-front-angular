@@ -20,6 +20,7 @@ import {
 } from '../../models/case';
 import { SafeRichHtmlPipe } from '../../pipes/safe-rich-html';
 import { CaseService } from '../../services/case.service';
+import { apiUrl } from '../../services/global';
 import { UserService } from '../../services/user.service';
 import { isVisibleToCaseClient } from '../../utils/case-visibility';
 import { RichTextEditorComponent } from '../../components/web-utility/rich-text-editor/rich-text-editor.component';
@@ -489,9 +490,11 @@ type PlatformUser = {
   styles: [
     `
       .admin-case-detail {
-        width: min(1180px, calc(100vw - 32px));
+        box-sizing: border-box;
+        max-width: 1180px;
+        width: 100%;
         margin: 0 auto;
-        padding: 24px 0;
+        padding: 24px 16px;
         color: #29303b;
       }
 
@@ -573,7 +576,7 @@ type PlatformUser = {
 
       .admin-case-detail__case-form {
         display: grid;
-        grid-template-columns: repeat(3, minmax(160px, 1fr)) auto;
+        grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
         align-items: end;
         width: 100%;
       }
@@ -610,7 +613,7 @@ type PlatformUser = {
 
       .admin-case-form {
         display: grid;
-        grid-template-columns: minmax(220px, 1.1fr) minmax(180px, 0.9fr) minmax(160px, 220px) auto;
+        grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
         align-items: end;
         margin-bottom: 16px;
       }
@@ -711,6 +714,7 @@ type PlatformUser = {
       }
 
       .admin-case-table {
+        min-width: 760px;
         width: 100%;
         border-collapse: collapse;
       }
@@ -1521,7 +1525,7 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   canDownloadFile(file: CaseFile): boolean {
-    return file.uploadStatus !== 'pending_upload';
+    return file.uploadStatus !== 'pending_upload' && this.hasCasePermission('case.download_file');
   }
 
   async removeFile(file: CaseFile): Promise<void> {
@@ -1553,9 +1557,9 @@ export class AdminCaseDetailComponent implements OnInit {
   }
 
   downloadUrl(fileId: string): string {
-    return `/api/v2/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
+    return apiUrl(`/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
       fileId
-    )}/download`;
+    )}/download`);
   }
 
   fileHref(file: CaseFile): string {

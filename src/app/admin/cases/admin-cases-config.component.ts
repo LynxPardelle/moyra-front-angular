@@ -255,9 +255,11 @@ type CaseTypeEditor = {
   styles: [
     `
       .admin-cases-config {
-        width: min(1180px, calc(100vw - 32px));
+        box-sizing: border-box;
+        max-width: 1180px;
+        width: 100%;
         margin: 0 auto;
-        padding: 24px 0;
+        padding: 24px 16px;
         color: #29303b;
       }
 
@@ -287,7 +289,7 @@ type CaseTypeEditor = {
 
       .admin-cases-config__layout {
         display: grid;
-        grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+        grid-template-columns: minmax(min(280px, 100%), 360px) minmax(0, 1fr);
         gap: 16px;
         align-items: start;
       }
@@ -425,7 +427,7 @@ type CaseTypeEditor = {
 
       .admin-cases-config__status-row {
         display: grid;
-        grid-template-columns: minmax(180px, 1fr) 96px 88px 96px 96px auto;
+        grid-template-columns: minmax(min(220px, 100%), 1fr) 96px 88px 96px 96px auto;
         gap: 10px;
         align-items: end;
         border-top: 1px solid rgba(41, 48, 59, 0.14);

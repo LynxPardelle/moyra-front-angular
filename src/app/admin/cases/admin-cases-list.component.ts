@@ -280,9 +280,11 @@ type PlatformUser = {
   styles: [
     `
       .admin-cases-page {
-        width: min(1180px, calc(100vw - 32px));
+        box-sizing: border-box;
+        max-width: 1180px;
+        width: 100%;
         margin: 0 auto;
-        padding: 24px 0;
+        padding: 24px 16px;
         color: #29303b;
       }
 
@@ -362,7 +364,7 @@ type PlatformUser = {
 
       .admin-cases-create {
         display: grid;
-        grid-template-columns: repeat(2, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
         gap: 12px;
         margin-bottom: 16px;
       }
@@ -381,7 +383,7 @@ type PlatformUser = {
         display: grid;
         grid-column: 1 / -1;
         gap: 10px;
-        grid-template-columns: repeat(2, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
         margin: 0;
         padding: 12px;
       }
@@ -493,6 +495,7 @@ type PlatformUser = {
       }
 
       .admin-cases-table {
+        min-width: 760px;
         width: 100%;
         border-collapse: collapse;
         background: #ffffff;

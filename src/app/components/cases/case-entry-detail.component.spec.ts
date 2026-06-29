@@ -60,6 +60,17 @@ describe('CaseEntryDetailComponent', () => {
                     uploadStatus: 'linked',
                     visibility: { mode: 'case_members' },
                   },
+                  {
+                    id: 'file-other-pending',
+                    caseId: 'case-1',
+                    entryId: 'entry-1',
+                    fileName: 'Documento pendiente ajeno',
+                    contentType: 'application/pdf',
+                    externalVisibilityStatus: 'pending',
+                    uploadStatus: 'uploaded',
+                    uploadedByUserId: 'user-2',
+                    visibility: { mode: 'case_members' },
+                  },
                 ],
               }),
             listComments: () =>
@@ -134,8 +145,10 @@ describe('CaseEntryDetailComponent', () => {
     expect(text).toContain('Entrada privada');
     expect(text).toContain('Contenido autorizado');
     expect(text).toContain('Documento de entrada');
+    expect(text).not.toContain('Documento pendiente ajeno');
     expect(text).toContain('Comentario autorizado');
     expect(text).toContain('Cliente · Cliente');
+    expect(compiled.querySelector('a[href*="file-1"]')).toBeNull();
     expect(compiled.querySelector('a[href*="/publication"]')).toBeNull();
   });
 

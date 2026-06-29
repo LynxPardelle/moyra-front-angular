@@ -70,6 +70,15 @@ safe-embed-frame {
   overflow-x: auto;
 }
 
+.admin-usage-environment,
+.admin-usage-estimates {
+  overflow-x: auto;
+}
+
+.admin-usage-table {
+  min-width: 680px;
+}
+
 servicio img {
   height: auto;
   max-width: min(100%, 980px);

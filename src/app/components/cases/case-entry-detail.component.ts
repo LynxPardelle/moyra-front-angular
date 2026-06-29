@@ -7,6 +7,7 @@ import { catchError, forkJoin, of, switchMap } from 'rxjs';
 import { SafeRichHtmlPipe } from '../../pipes/safe-rich-html';
 import { CaseComment, CaseEntry, CaseFile, CaseMembership } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { apiUrl } from '../../services/global';
 import { MainService } from '../../services/main.service';
 import { AuthFacade } from '../../store/auth/auth.facade';
 import { isVisibleToCaseClient } from '../../utils/case-visibility';
@@ -253,8 +254,8 @@ export class CaseEntryDetailComponent implements OnInit {
               (item) => item.id === this.entryId && this.canSeeEntry(item)
             ) || null;
           this.entry = entry;
-          this.files = (files.items || []).filter((file) =>
-            file.entryId ? file.entryId === this.entryId : false
+          this.files = (files.items || []).filter(
+            (file) => this.fileEntryIds(file).includes(this.entryId) && this.canShowFile(file)
           );
           if (!entry) {
             this.errorMessage = this.text(
@@ -393,17 +394,16 @@ export class CaseEntryDetailComponent implements OnInit {
     if (this.isOneDriveFile(file) && linkUrl) {
       return linkUrl;
     }
-    return `/api/v2/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
+    return apiUrl(`/cases/${encodeURIComponent(this.caseId)}/files/${encodeURIComponent(
       file.id
-    )}/download`;
+    )}/download`);
   }
 
   canDownloadFile(file: CaseFile): boolean {
-    return (
-      this._authFacade.isAdmin() ||
-      file.externalVisibilityStatus === 'approved' ||
-      this.isOwnFile(file)
-    );
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
+    return this.hasPermission('case.download_file') && this.canShowFile(file);
   }
 
   private hasPermission(permission: string): boolean {
@@ -474,6 +474,31 @@ export class CaseEntryDetailComponent implements OnInit {
     const identity = this._authFacade.identity?.();
     const userId = identity?.id || identity?.sub || identity?.userId;
     return Boolean(userId && (file.uploadedByUserId === userId || file.uploaderUserId === userId));
+  }
+
+  private canShowFile(file: CaseFile): boolean {
+    if (this._authFacade.isAdmin()) {
+      return true;
+    }
+    const linkedToEntry = this.fileEntryIds(file).includes(this.entryId);
+    if (!linkedToEntry || !this.entry || !this.canSeeEntry(this.entry)) {
+      return false;
+    }
+    if (this.isOwnFile(file)) {
+      return true;
+    }
+    return file.externalVisibilityStatus === 'approved' && isVisibleToCaseClient(file.visibility);
+  }
+
+  private fileEntryIds(file: CaseFile): string[] {
+    const ids = Array.isArray(file.entryIds) ? file.entryIds : [];
+    return Array.from(
+      new Set(
+        [...ids, file.entryId]
+          .map((entryId) => String(entryId || '').trim())
+          .filter(Boolean)
+      )
+    );
   }
 
   private isOneDriveFile(file: CaseFile): boolean {
