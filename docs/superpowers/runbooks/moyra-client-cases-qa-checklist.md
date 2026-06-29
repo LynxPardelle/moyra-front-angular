@@ -39,6 +39,10 @@
 - [x] 2026-06-29 01:07 CT: `npm test -- --watch=false --browsers=ChromeHeadless --no-progress` returned `167 SUCCESS`.
 - [x] 2026-06-29 01:09 CT: `npm run build` completed successfully.
 - [ ] Production budget warnings remain open: initial bundle is 15.85 kB over 1.12 MB, `admin-case-detail.component.ts` SCSS is 742 bytes over 4.00 kB, `admin-cases-list.component.ts` SCSS is 75 bytes over 4.00 kB, and `case-detail.component.ts` SCSS is 1.10 kB over 4.00 kB.
+- [x] 2026-06-29 01:20 CT: `https://test.moyra.org/` served `main-Z4MRR7VY.js`; the served bundle includes the private notification routing guard and selected-entry document linkage.
+- [x] 2026-06-29 01:20 CT: read-only headless Chrome audit checked 22 route/viewport combinations on `https://test.moyra.org` at 1440px and 390px. Public routes `/`, `/publications`, `/blog`, `/publication/Publicacion-de-prueba`, `/articulo/Articulo-Test`, and `/solucion/administracion-en-linea` rendered expected restored content with no horizontal overflow and no escaped rich HTML markers. Unauthenticated checks for `/casos`, `/notificaciones`, `/admin/casos`, `/admin/usuarios`, and `/admin/configuraciones` found no known case/client data leaks.
+- [x] 2026-06-29 01:20 CT: public content API checks returned 200 on `https://api.test.moyra.org/api/v2/publications` with `Publicación de prueba` and 200 on `https://api.test.moyra.org/api/v2/articles` with `Artículo Test`.
+- [ ] Authenticated browser workflows still need one human QA pass in the integrated browser because the controllable in-app browser channel timed out twice during this audit turn; local tests cover the code paths, but manual review should confirm logged-in admin/client UX before production planning.
 
 ## Test Personas
 
