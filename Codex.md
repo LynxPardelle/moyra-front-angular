@@ -4,6 +4,7 @@ This file is for durable agent memory only. Dated implementation history belongs
 
 ## Product Direction
 
+- 2026-07-07 10:55 CT public Moyra site audit: `https://moyra.org/` was serving old CSS (`styles-X5EZD5QF.css`) with `body { height: 100vh; overflow: hidden }` and fixed-height `.site-main`, which traps scrolling inside `main`; `https://test.moyra.org/` served newer CSS without that body lock. Production scroll fix should stay minimal: port the existing `body`/`.site-main` min-height CSS from test, not merge all `test` branch changes. Image audit found `https://api.test.moyra.org/api/v2/files/...` returning `302` to S3 followed by final `404 Not Found` for the tested blog/publication images, while `https://api.moyra.org/api/v2/articles` and `/publications` returned `items: []`; no Angular URL alternative fixed those missing objects/data.
 - Moyra UI should stay rectilinear: no rounded borders. Shadows are acceptable when they support restrained glassmorphism or elevation.
 - Public/admin screens should feel like a legal operations tool: clear hierarchy, dense but readable information, direct controls, and no marketing-style filler.
 - Use the Moyra/MRA logo for browser and touch icons.
