@@ -4,6 +4,9 @@ This file is for durable agent memory only. Dated implementation history belongs
 
 ## Product Direction
 
+- 2026-07-07 10:55 CT public Moyra site audit: `https://moyra.org/` was serving old CSS (`styles-X5EZD5QF.css`) with `body { height: 100vh; overflow: hidden }` and fixed-height `.site-main`, which traps scrolling inside `main`; `https://test.moyra.org/` served newer CSS without that body lock. Production scroll fix should stay minimal: port the existing `body`/`.site-main` min-height CSS from test, not merge all `test` branch changes. Image audit found `https://api.test.moyra.org/api/v2/files/...` returning `302` to S3 followed by final `404 Not Found` for the tested blog/publication images, while `https://api.moyra.org/api/v2/articles` and `/publications` returned `items: []`; no Angular URL alternative fixed those missing objects/data.
+- 2026-07-07 11:02 CT production scroll fix deployed: commit `58c9481` was pushed to `origin/production`, `https://moyra.org/` served `styles-DYVW6X4I.css`, and the integrated browser verified window scrolling on `/`, `/blog`, and `/publications` with `bodyOverflowY="auto"`.
+- 2026-07-07 11:14 CT Brave-specific scroll follow-up: screenshots showed DevTools paused on caught exceptions from extensions/YouTube frames, not Moyra source; controlled Brave 150 CDP found `app-root` defaulting to `display:inline` with zero layout height and `.site-main` acting as its own scroll container. Keep `app-root` block-level and let `.site-main` overflow visibly so Brave uses normal page scrolling.
 - Moyra UI should stay rectilinear: no rounded borders. Shadows are acceptable when they support restrained glassmorphism or elevation.
 - Public/admin screens should feel like a legal operations tool: clear hierarchy, dense but readable information, direct controls, and no marketing-style filler.
 - Use the Moyra/MRA logo for browser and touch icons.

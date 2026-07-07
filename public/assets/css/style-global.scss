@@ -9,6 +9,11 @@ body {
   overflow-x: hidden;
 }
 
+app-root {
+  display: block;
+  min-height: 100vh;
+}
+
 .content-editor__workflow {
   display: grid;
   gap: 0.75rem;
@@ -496,13 +501,11 @@ body {
       #e4e5e7 !important;
     min-height: calc(100vh - var(--site-header-offset) - var(--site-footer-offset));
     margin: var(--site-header-offset) 0 var(--site-footer-offset) !important;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow: visible;
     padding:
       clamp(1.5rem, 3vw, 2.6rem)
       0
       calc(var(--site-footer-offset) + clamp(5rem, 8vw, 7rem));
-    scrollbar-gutter: stable;
   }
 
   main {
