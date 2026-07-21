@@ -13,8 +13,12 @@ import { ConfiguracionesComponent } from './configuraciones.component';
 import { UsuariosComponent } from './usuarios.component';
 import { UsoComponent } from './uso.component';
 import { AdminCaseDetailComponent } from './cases/admin-case-detail.component';
+import { AdminCaseEntryEditorComponent } from './cases/admin-case-entry-editor.component';
 import { AdminCasesConfigComponent } from './cases/admin-cases-config.component';
 import { AdminCasesListComponent } from './cases/admin-cases-list.component';
+import { AdminUserProfileComponent } from './users/admin-user-profile.component';
+import { AdminUserRelationshipsComponent } from './users/admin-user-relationships.component';
+import { AdminUsersListComponent } from './users/admin-users-list.component';
 
 /* PublicationComponents */
 import { PublicationsComponent } from '../components/publication/publications/publications.component';
@@ -47,13 +51,26 @@ const routes: Routes = [
       { path: 'configuraciones', component: ConfiguracionesComponent },
       { path: 'uso', component: UsoComponent },
       { path: 'archivos', component: ArchivosComponent },
+      { path: 'usuarios', component: AdminUsersListComponent },
       { path: 'usuarios/nuevo', component: UsuariosComponent },
+      { path: 'usuarios/relaciones', component: AdminUserRelationshipsComponent },
+      { path: 'usuarios/:userId', component: AdminUserProfileComponent },
 
       // Casos
       { path: 'casos', component: AdminCasesListComponent, canActivate: [CasesGuard] },
       {
         path: 'casos/configuracion',
         component: AdminCasesConfigComponent,
+        canActivate: [CasesGuard],
+      },
+      {
+        path: 'casos/:caseId/entradas/nueva',
+        component: AdminCaseEntryEditorComponent,
+        canActivate: [CasesGuard],
+      },
+      {
+        path: 'casos/:caseId/entradas/:entryId',
+        component: AdminCaseEntryEditorComponent,
         canActivate: [CasesGuard],
       },
       { path: 'casos/:caseId', component: AdminCaseDetailComponent, canActivate: [CasesGuard] },

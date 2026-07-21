@@ -21,4 +21,14 @@ describe('buildEmbedItems', () => {
     expect(embed.embedUrl).toContain('embedded=true');
     expect(embed.sandbox).toContain('allow-forms');
   });
+
+  it('does not allow forms for non-form iframe providers', () => {
+    const [embed] = buildEmbedItems([
+      'https://docs.google.com/document/d/example-document/preview',
+    ]);
+
+    expect(embed.kind).toBe('iframe');
+    expect(embed.title).toBe('Google Docs');
+    expect(embed.sandbox).not.toContain('allow-forms');
+  });
 });

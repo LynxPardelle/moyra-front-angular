@@ -89,6 +89,16 @@ describe('LoginComponent', () => {
     expect(loginHeading?.textContent).toContain('Acceso');
   });
 
+  it('keeps credential controls inside a real login form', () => {
+    const form = fixture.nativeElement.querySelector('.login-form') as HTMLFormElement | null;
+    const passwordInput = fixture.nativeElement.querySelector('#password') as HTMLInputElement | null;
+    const loginButton = fixture.nativeElement.querySelector('.login-button') as HTMLButtonElement | null;
+
+    expect(form).not.toBeNull();
+    expect(form?.contains(passwordInput)).toBeTrue();
+    expect(loginButton?.type).toBe('submit');
+  });
+
   it('shows a logged-out confirmation when redirected after logout', () => {
     setQueryParams({ auth: 'loggedout' });
     fixture = TestBed.createComponent(LoginComponent);

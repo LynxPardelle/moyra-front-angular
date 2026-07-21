@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform, SecurityContext } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
+import { normalizeRichContentHtml } from '../utils/rich-content';
 
 /**
  * Generated class for the SafeHtmlPipe pipe.
@@ -17,7 +18,7 @@ export class SafeHtmlPipe implements PipeTransform {
   transform(html: any) {
     const sanitized = this.sanitizer.sanitize(
       SecurityContext.HTML,
-      String(html || '')
+      normalizeRichContentHtml(html)
     );
     return this.sanitizer.bypassSecurityTrustHtml(sanitized || '');
   }

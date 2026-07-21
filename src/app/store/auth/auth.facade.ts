@@ -10,6 +10,7 @@ import {
   selectAuthToken,
   selectIsAdmin,
   selectIsAuthenticated,
+  selectIsLegalStaff,
 } from './auth.selectors';
 
 @Injectable({
@@ -24,6 +25,7 @@ export class AuthFacade {
   readonly hydrated = this.store.selectSignal(selectAuthHydrated);
   readonly isAuthenticated = this.store.selectSignal(selectIsAuthenticated);
   readonly isAdmin = this.store.selectSignal(selectIsAdmin);
+  readonly isLegalStaff = this.store.selectSignal(selectIsLegalStaff);
 
   hydrate(): void {
     this.store.dispatch(AuthActions.hydrateRequested());

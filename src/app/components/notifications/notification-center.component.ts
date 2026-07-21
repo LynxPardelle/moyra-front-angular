@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { CaseNotification } from '../../models/case';
 import { CaseService } from '../../services/case.service';
@@ -39,11 +39,13 @@ import { CaseService } from '../../services/case.service';
             <p>{{ notification.body }}</p>
           </div>
           <div class="notification-item__actions">
-            <a [routerLink]="safePath(notification)" [href]="safePath(notification)">
+            <a [href]="safePath(notification)" (click)="openNotification(notification, $event)">
               Ir al caso
             </a>
             @if (!notification.readAt) {
             <button type="button" (click)="markRead(notification.id)">Marcar leída</button>
+            } @else {
+            <button type="button" (click)="markUnread(notification.id)">Marcar no leída</button>
             }
           </div>
         </article>
@@ -122,6 +124,15 @@ import { CaseService } from '../../services/case.service';
         text-decoration: none;
       }
 
+      button:not(:disabled):hover,
+      button:not(:disabled):focus-visible,
+      a:hover,
+      a:focus-visible {
+        background: #4b8ff5;
+        color: #ffffff;
+        outline: 0;
+      }
+
       @media (max-width: 760px) {
         .notification-center__header,
         .notification-item {
@@ -136,7 +147,10 @@ export class NotificationCenterComponent implements OnInit {
   notifications: CaseNotification[] = [];
   loading = false;
 
-  constructor(private _caseService: CaseService) {}
+  constructor(
+    private _caseService: CaseService,
+    private _router: Router
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -164,21 +178,63 @@ export class NotificationCenterComponent implements OnInit {
     });
   }
 
+  markUnread(notificationId: string): void {
+    this._caseService.markNotificationUnread(notificationId).subscribe((response) => {
+      this.notifications = this.notifications.map((notification) =>
+        notification.id === notificationId ? response.item : notification
+      );
+    });
+  }
+
   markAllRead(): void {
     this._caseService.markAllNotificationsRead().subscribe(() => {
       const readAt = new Date().toISOString();
       this.notifications = this.notifications.map((notification) => ({
         ...notification,
         readAt: notification.readAt || readAt,
+        manualUnreadAt: undefined,
       }));
+    });
+  }
+
+  openNotification(notification: CaseNotification, event: Event): void {
+    event.preventDefault();
+    const targetPath = this.safePath(notification);
+    this._caseService.markNotificationRead(notification.id).subscribe({
+      next: (response) => {
+        this.notifications = this.notifications.map((item) =>
+          item.id === notification.id ? response.item : item
+        );
+        this._router.navigateByUrl(targetPath);
+      },
+      error: () => {
+        this._router.navigateByUrl(targetPath);
+      },
     });
   }
 
   safePath(notification: CaseNotification): string {
     const path = notification.link?.path || '';
     if (path.startsWith('/casos/')) {
+      return this.withTargetQuery(path, notification);
+    }
+    return this.withTargetQuery(`/casos/${encodeURIComponent(notification.caseId)}`, notification);
+  }
+
+  private withTargetQuery(path: string, notification: CaseNotification): string {
+    if (path.includes('entryId=') || path.includes('commentId=')) {
       return path;
     }
-    return `/casos/${encodeURIComponent(notification.caseId)}`;
+    if (notification.targetType === 'case-comment' && notification.targetId) {
+      return `${path}${path.includes('?') ? '&' : '?'}commentId=${encodeURIComponent(
+        notification.targetId
+      )}`;
+    }
+    if (notification.targetType === 'case-entry' && notification.targetId) {
+      return `${path}${path.includes('?') ? '&' : '?'}entryId=${encodeURIComponent(
+        notification.targetId
+      )}`;
+    }
+    return path;
   }
 }

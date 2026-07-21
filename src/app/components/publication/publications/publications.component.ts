@@ -16,7 +16,7 @@ import { SafeEmbedUrlPipe } from '../../../pipes/safe-embed-url';
 import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { buildEmbedItems, EmbedItem, embedTrackKey } from '../../../utils/embeds';
 import { FileKindBadge, fileKindBadges, fileKindSummary } from '../../../utils/file-kind';
-import { hasHtmlMarkup } from '../../../utils/rich-content';
+import { hasHtmlMarkup, normalizeRichContentHtml } from '../../../utils/rich-content';
 
 // Extras
 import Swal from 'sweetalert2';
@@ -182,7 +182,7 @@ export class PublicationsComponent implements OnChanges, OnInit {
   }
 
   richContent(text: string): string {
-    const content = String(text || '');
+    const content = normalizeRichContentHtml(text);
     if (hasHtmlMarkup(content)) {
       return content;
     }

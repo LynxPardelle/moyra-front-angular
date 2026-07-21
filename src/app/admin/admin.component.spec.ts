@@ -54,6 +54,14 @@ describe('AdminComponent', () => {
     expect(text).toContain('Uso y costos');
   });
 
+  it('renders the user directory link for full admins', () => {
+    const link = fixture.nativeElement.querySelector(
+      'a[href="/admin/usuarios"]'
+    ) as HTMLAnchorElement | null;
+
+    expect(link?.textContent).toContain('Usuarios');
+  });
+
   it('lets an admin close the session from the admin menu', () => {
     const authFacade = TestBed.inject(AuthFacade);
     const logoutSpy = spyOn(authFacade, 'logout');

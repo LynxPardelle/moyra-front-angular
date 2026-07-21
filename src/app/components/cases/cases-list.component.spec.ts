@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { CasesListComponent } from './cases-list.component';
 import { CaseRecord, CaseNotification, CaseType } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { MainService } from '../../services/main.service';
 
 describe('CasesListComponent', () => {
   let fixture: ComponentFixture<CasesListComponent>;
@@ -21,6 +22,9 @@ describe('CasesListComponent', () => {
         reference: 'MRA-001',
         caseTypeId: 'corporate',
         statusId: 'review',
+        createdAt: '2026-06-16T18:00:00.000Z',
+        createdByDisplayName: 'Pamela Betancourt',
+        createdByEmail: 'betan.pamela@gmail.com',
         lastActivityAt: '2026-06-18T20:00:00.000Z',
       },
       {
@@ -29,6 +33,8 @@ describe('CasesListComponent', () => {
         reference: 'MRA-002',
         caseTypeId: 'immigration',
         statusId: 'draft',
+        createdAt: '2026-06-15T18:00:00.000Z',
+        createdByEmail: 'hugo@moyra.org',
         updatedAt: '2026-06-17T20:00:00.000Z',
       },
     ];
@@ -71,6 +77,20 @@ describe('CasesListComponent', () => {
               of({ status: 'success', items: notifications, nextToken: null }),
           },
         },
+        {
+          provide: MainService,
+          useValue: {
+            getMain: () =>
+              of({
+                main: {
+                  pageTexts: {
+                    casesListTitle: 'Expedientes',
+                    casesOpenCaseButtonLabel: 'Entrar al expediente',
+                  },
+                },
+              }),
+          },
+        },
       ],
     }).compileComponents();
   });
@@ -87,7 +107,10 @@ describe('CasesListComponent', () => {
     const text = compiled.textContent || '';
 
     expect(text).toContain('Contrato corporativo');
+    expect(text).toContain('Expedientes');
     expect(text).toContain('En revisión');
+    expect(text).toContain('Creado');
+    expect(text).toContain('Pamela Betancourt');
     expect(text).toContain('2 sin leer');
     expect(text).toContain('Revisar novedades');
     expect(text).toContain('Consulta migratoria');

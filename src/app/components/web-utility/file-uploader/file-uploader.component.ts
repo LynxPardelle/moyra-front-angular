@@ -156,26 +156,48 @@ export class FileUploaderComponent implements OnInit {
   }
 
   // NGX_Bootstrap
-  openModal(template: TemplateRef<any>) {
-    (async () => {
-      await (async () => {
-        if (this.id === '') {
-          let recoverThing: any = {
-            type: this.type,
-            typeMeta: this.typeMeta,
-            typeThingComRes: this.typeThingComRes,
-            thing: this.thing,
-            id: this.id,
-          };
-          this.id = await this.pre_loader.emit(recoverThing);
-        }
-      })();
-      if (this.id !== '') {
-        this.modalRef = this.modalService.show(template);
-      } else {
-        Swal.fire('No hay id', 'error');
+  openModal(template: TemplateRef<any>): void {
+    void this.openModalWhenReady(template);
+  }
+
+  private async openModalWhenReady(template: TemplateRef<any>): Promise<void> {
+    if (!this.validEntityId()) {
+      if (!this.pre_loader.observed) {
+        await this.showMissingEntityError();
+        return;
       }
-    })();
+
+      const id = await new Promise<string>((complete) => {
+        this.pre_loader.emit({
+          type: this.type,
+          typeMeta: this.typeMeta,
+          typeThingComRes: this.typeThingComRes,
+          thing: this.thing,
+          id: this.id,
+          complete,
+        });
+      });
+      this.id = typeof id === 'string' ? id.trim() : '';
+    }
+
+    if (!this.validEntityId()) {
+      await this.showMissingEntityError();
+      return;
+    }
+
+    this.modalRef = this.modalService.show(template);
+  }
+
+  private validEntityId(): string {
+    return typeof this.id === 'string' ? this.id.trim() : '';
+  }
+
+  private async showMissingEntityError(): Promise<void> {
+    await Swal.fire({
+      title: 'Guarda el contenido primero',
+      text: 'No se pudo obtener un identificador para asociar el archivo.',
+      icon: 'error',
+    });
   }
 
   // NGXUploader

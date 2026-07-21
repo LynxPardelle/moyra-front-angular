@@ -32,7 +32,7 @@
       <p class="we-eyebrow">Nosotros</p>
       <h1>Experiencia legal con criterio práctico</h1>
       @if (main && main.desc && main.desc !== '') {
-      <div class="we-hero__copy" [innerHTML]="richContent(main.desc) | safeRichHtml"></div>
+      <div class="we-hero__copy moyra-rich-text" [innerHTML]="richContent(main.desc) | safeRichHtml"></div>
       }
     </div>
 
@@ -98,15 +98,7 @@
       [(value)]="main.desc"
     ></app-rich-text-editor>
     } @placeholder {
-    <textarea
-      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
-      type="text"
-      name="desc"
-      #desc="ngModel"
-      [(ngModel)]="main.desc"
-      placeholder="Descripción"
-      required
-    ></textarea>
+    <p class="ank ank-text-textM mb-0">Cargando editor enriquecido...</p>
     } @if (!main.desc) {
     <span class="ank ank-text-titleM font-weight-bold"> La descripción es obligatoria. </span>
     }
@@ -195,15 +187,13 @@
   </div>
   <!-- ErrorMessage Edit -->
   <div class="d-block w-75 mx-auto my-3">
-    <label class="ank ank-text-textM mb-1 d-block" for="errorMessage">Mensaje de error</label>
-    <textarea
-      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
-      type="text"
-      name="errorMessage"
-      #errorMessage="ngModel"
-      [(ngModel)]="main.errorMessage"
+    <app-rich-text-editor
+      label="Mensaje de error"
+      help="Texto largo que puede mostrarse en la página de error."
       placeholder="Mensaje de error"
-    ></textarea>
+      [(value)]="main.errorMessage"
+      minHeight="140px"
+    ></app-rich-text-editor>
   </div>
   <!-- SeoTags Edit -->
   <div class="d-block w-75 mx-auto my-3">
@@ -415,15 +405,7 @@
       [(value)]="equip.desc"
     ></app-rich-text-editor>
     } @placeholder {
-    <textarea
-      class="w-100 ank ank-text-bg1M ank-bg-textM border-0"
-      type="text"
-      name="desc"
-      #desc="ngModel"
-      [(ngModel)]="equip.desc"
-      placeholder="Descripción"
-      required
-    ></textarea>
+    <p class="ank ank-text-textM mb-0">Cargando editor enriquecido...</p>
     } @if (!equip.desc) {
     <span class="ank ank-text-titleM font-weight-bold"> La descripción es obligatoria. </span>
     }

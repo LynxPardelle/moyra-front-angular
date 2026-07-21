@@ -10,7 +10,17 @@ import {
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { isPlatformBrowser, Location } from '@angular/common';
 import { NgxAngoraService } from 'ngx-angora-css';
-import { Subscription, catchError, filter, map, of, switchMap } from 'rxjs';
+import {
+  Subscription,
+  catchError,
+  combineLatest,
+  distinctUntilChanged,
+  filter,
+  map,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
 
 // Services
 import { ApiRuntime, GlobalMain } from './services/global';
@@ -19,9 +29,13 @@ import { UserService } from './services/user.service';
 import { WebService } from './services/web.service';
 import { SharedService } from './services/shared.service';
 import { AuthFacade } from './store/auth/auth.facade';
-import { createAuthSession } from './store/auth/auth.storage';
+import {
+  consumeAuthStorageFailureReason,
+  createAuthSession,
+} from './store/auth/auth.storage';
 import { CasesFeatureService } from './components/cases/cases-feature.service';
 import { NotificationBellComponent } from './components/notifications/notification-bell.component';
+import { CaseService } from './services/case.service';
 
 // Models
 import { Main } from './models/main';
@@ -64,12 +78,14 @@ export class App implements OnDestroy, OnInit {
 
   // Utility
   public windowWidth = 0;
-  public readonly fallbackLogoUrl = '/assets/images/M&RALowQuality.png';
+  public readonly fallbackLogoUrl = '/assets/images/M&RALowQuality.png?v=20260710-serverless';
+  public unreadNotificationsCount: number | null = null;
   private cssCreateTimer?: ReturnType<typeof setTimeout>;
   private lastCssCreateAt = 0;
   private stylesheetsReady?: Promise<void>;
   private routeEventsSubscription?: Subscription;
   private refreshSessionSubscription?: Subscription;
+  private notificationCountSubscription?: Subscription;
   private notificationClickRoutingStarted = false;
 
   constructor(
@@ -84,6 +100,7 @@ export class App implements OnDestroy, OnInit {
     private _userService: UserService,
     private _authFacade: AuthFacade,
     private _casesFeature: CasesFeatureService,
+    private _caseService: CaseService,
     private _injector: Injector,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
@@ -208,9 +225,7 @@ export class App implements OnDestroy, OnInit {
     });
     this.scheduleCssCreate(true);
     this.refreshSessionFromCookie();
-    if (this.casesFeatureEnabled()) {
-      void this.startCaseNotificationClickRouting();
-    }
+    this.watchCaseNotificationCount();
   }
 
   @HostListener('window:storage', ['$event'])
@@ -223,6 +238,7 @@ export class App implements OnDestroy, OnInit {
   ngOnDestroy(): void {
     this.routeEventsSubscription?.unsubscribe();
     this.refreshSessionSubscription?.unsubscribe();
+    this.notificationCountSubscription?.unsubscribe();
     if (this.cssCreateTimer) {
       clearTimeout(this.cssCreateTimer);
     }
@@ -241,6 +257,10 @@ export class App implements OnDestroy, OnInit {
     return this._authFacade.isAdmin();
   }
 
+  canOpenAdminProfile(): boolean {
+    return this._authFacade.isAdmin() || this._authFacade.isLegalStaff();
+  }
+
   isAuthenticatedUser(): boolean {
     return this._authFacade.isAuthenticated();
   }
@@ -250,7 +270,32 @@ export class App implements OnDestroy, OnInit {
   }
 
   logout(): void {
+    this.unreadNotificationsCount = null;
     this._authFacade.logout();
+  }
+
+  hasUnreadNotifications(): boolean {
+    return (this.unreadNotificationsCount ?? 0) > 0;
+  }
+
+  notificationBadgeText(): string {
+    const count = this.unreadNotificationsCount ?? 0;
+    return count > 99 ? '99+' : `${count}`;
+  }
+
+  pageText(key: string, fallback: string): string {
+    const value = this.main?.pageTexts?.[key];
+    return typeof value === 'string' && value.trim() ? value : fallback;
+  }
+
+  menuButtonAriaLabel(): string {
+    if (!this.hasUnreadNotifications()) {
+      return 'Abrir menú';
+    }
+
+    const count = this.unreadNotificationsCount ?? 0;
+    const label = count === 1 ? 'notificación sin leer' : 'notificaciones sin leer';
+    return `Abrir menú. ${count} ${label}`;
   }
 
   private refreshSessionFromCookie(): void {
@@ -263,6 +308,10 @@ export class App implements OnDestroy, OnInit {
       .pipe(
         switchMap((state) => {
           if (state.isAuthenticated) {
+            return of(null);
+          }
+
+          if (consumeAuthStorageFailureReason() !== 'expired') {
             return of(null);
           }
 
@@ -279,6 +328,53 @@ export class App implements OnDestroy, OnInit {
       });
   }
 
+  private watchCaseNotificationCount(): void {
+    if (!isPlatformBrowser(this.platformId) || !this.casesFeatureEnabled()) {
+      this.unreadNotificationsCount = null;
+      return;
+    }
+
+    const authenticated$ = this._authFacade.state$.pipe(
+      filter((state) => state.hydrated),
+      map((state) => state.isAuthenticated),
+      distinctUntilChanged()
+    );
+    const privateCaseRoute$ = this._router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      startWith(null),
+      map(() => this.isPrivateCaseRoute()),
+      distinctUntilChanged()
+    );
+
+    this.notificationCountSubscription = combineLatest([authenticated$, privateCaseRoute$])
+      .pipe(
+        switchMap(([isAuthenticated, isPrivateCaseRoute]) => {
+          if (!isAuthenticated || !isPrivateCaseRoute) {
+            return of(null);
+          }
+
+          void this.startCaseNotificationClickRouting();
+          return this._caseService.getUnreadNotificationCount().pipe(catchError(() => of(null)));
+        })
+      )
+      .subscribe((response) => {
+        if (response?.status === 'success') {
+          this.unreadNotificationsCount = Math.max(0, Number(response.count) || 0);
+          return;
+        }
+
+        this.unreadNotificationsCount = null;
+      });
+  }
+
+  private isPrivateCaseRoute(url = this._router.url): boolean {
+    return (
+      url.startsWith('/casos') ||
+      url.startsWith('/notificaciones') ||
+      url.startsWith('/admin/casos')
+    );
+  }
+
   headerLogoUrl(): string {
     const logo = this.main?.logo;
     if (!logo) {
@@ -286,11 +382,9 @@ export class App implements OnDestroy, OnInit {
     }
 
     return (
-      logo.publicUrl ||
-      this.absoluteApiFileUrl(logo.url) ||
-      (logo.location
-        ? `${ApiRuntime.url}/files/main/${encodeURIComponent(logo.location)}`
-        : this.fallbackLogoUrl)
+      this.stableHeaderLogoUrl(logo.publicUrl) ||
+      this.stableHeaderLogoUrl(this.absoluteApiFileUrl(logo.url)) ||
+      this.fallbackLogoUrl
     );
   }
 
@@ -384,6 +478,23 @@ export class App implements OnDestroy, OnInit {
     return pathOrUrl.startsWith('/')
       ? `${apiOrigin}${pathOrUrl}`
       : `${ApiRuntime.url}/${pathOrUrl.replace(/^\/+/, '')}`;
+  }
+
+  private stableHeaderLogoUrl(pathOrUrl: string | null | undefined): string {
+    if (!pathOrUrl) {
+      return '';
+    }
+
+    const trimmed = pathOrUrl.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    if (trimmed.startsWith(`${ApiRuntime.url}/files/`)) {
+      return '';
+    }
+
+    return trimmed;
   }
 
   private shareMain(): void {

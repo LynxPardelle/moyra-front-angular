@@ -10,6 +10,7 @@ describe('NotificationCenterComponent', () => {
   let fixture: ComponentFixture<NotificationCenterComponent>;
   let notifications: CaseNotification[];
   let markReadSpy: jasmine.Spy;
+  let markUnreadSpy: jasmine.Spy;
   let markAllSpy: jasmine.Spy;
 
   beforeEach(async () => {
@@ -23,6 +24,16 @@ describe('NotificationCenterComponent', () => {
         item: {
           ...notifications[0],
           readAt: '2026-06-18T21:00:00.000Z',
+        },
+      })
+    );
+    markUnreadSpy = jasmine.createSpy('markNotificationUnread').and.returnValue(
+      of({
+        status: 'success',
+        item: {
+          ...notifications[1],
+          readAt: undefined,
+          manualUnreadAt: '2026-06-18T21:05:00.000Z',
         },
       })
     );
@@ -40,6 +51,7 @@ describe('NotificationCenterComponent', () => {
             listNotifications: () =>
               of({ status: 'success', items: notifications, nextToken: null }),
             markNotificationRead: markReadSpy,
+            markNotificationUnread: markUnreadSpy,
             markAllNotificationsRead: markAllSpy,
           },
         },
@@ -57,20 +69,22 @@ describe('NotificationCenterComponent', () => {
     expect(text).toContain('Nueva actualización');
     expect(text).toContain('Sin leer');
     expect(text).toContain('Leída');
-    expect(compiled.querySelector('a[href="/casos/case-1"]')).not.toBeNull();
+    expect(compiled.querySelector('a[href="/casos/case-1?entryId=entry-1"]')).not.toBeNull();
     expect(compiled.querySelector('a[href="/notificaciones/preferencias"]')).not.toBeNull();
     expect(compiled.querySelector('a[href*="publication"]')).toBeNull();
   });
 
-  it('marks one notification and all notifications as read', () => {
+  it('marks notifications read, unread, and all notifications as read', () => {
     fixture = TestBed.createComponent(NotificationCenterComponent);
     fixture.detectChanges();
 
     fixture.componentInstance.markRead('notification-1');
+    fixture.componentInstance.markUnread('notification-2');
     fixture.componentInstance.markAllRead();
     fixture.detectChanges();
 
     expect(markReadSpy).toHaveBeenCalledWith('notification-1');
+    expect(markUnreadSpy).toHaveBeenCalledWith('notification-2');
     expect(markAllSpy).toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).not.toContain('Sin leer');
   });

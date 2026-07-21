@@ -10,6 +10,7 @@ export type AuthState = {
   role: AuthRole;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isLegalStaff: boolean;
   hydrated: boolean;
   expiresAt: number | null;
 };
@@ -20,6 +21,7 @@ export const initialAuthState: AuthState = {
   role: 'ROLE_USER',
   isAuthenticated: false,
   isAdmin: false,
+  isLegalStaff: false,
   hydrated: false,
   expiresAt: null,
 };
@@ -51,6 +53,7 @@ function stateFromSession(
     role: session.role,
     isAuthenticated: true,
     isAdmin: session.role === 'ROLE_ADMIN',
+    isLegalStaff: session.role === 'ROLE_LEGAL_STAFF',
     hydrated,
     expiresAt: session.expiresAt,
   };

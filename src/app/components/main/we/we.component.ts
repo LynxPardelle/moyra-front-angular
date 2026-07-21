@@ -15,7 +15,7 @@ import { SharedService } from '../../../services/shared.service';
 import { Main, Equip } from '../../../models/main';
 import { SafeRichHtmlPipe } from '../../../pipes/safe-rich-html';
 import { renderTemplateExpressions } from '../../../utils/template-value';
-import { hasHtmlMarkup } from '../../../utils/rich-content';
+import { hasHtmlMarkup, normalizeRichContentHtml } from '../../../utils/rich-content';
 import { FileUploaderComponent } from '../../web-utility/file-uploader/file-uploader.component';
 import { RichTextEditorComponent } from '../../web-utility/rich-text-editor/rich-text-editor.component';
 
@@ -481,19 +481,19 @@ export class WeComponent implements OnInit, OnDestroy {
   }
 
   async pre_load(event: any) {
+    let id = '';
     try {
       switch (event.type) {
         case 'main':
           //this.onSubmit('main');
-          return this.main._id;
-          break;
+          id = this.main._id || '';
+          return id;
         case 'equip':
           await this.onSubmit('equip');
-          return this.equip._id;
-          break;
+          id = this.equip._id || '';
+          return id;
         default:
           return '';
-          break;
       }
     } catch (err: any) {
       this._webService.consoleLog(err, this.document + ' 108', this.customConsoleCSS);
@@ -524,6 +524,8 @@ export class WeComponent implements OnInit, OnDestroy {
       });
 
       return '';
+    } finally {
+      event.complete?.(id);
     }
   }
 
@@ -566,7 +568,7 @@ export class WeComponent implements OnInit, OnDestroy {
   }
 
   richContent(text: string): string {
-    const content = this.valuefy(text || '');
+    const content = normalizeRichContentHtml(this.valuefy(text || ''));
     return hasHtmlMarkup(content) ? content : this.Linkify(content, '#000', '#4b8ff5');
   }
 

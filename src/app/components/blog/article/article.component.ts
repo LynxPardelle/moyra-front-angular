@@ -26,6 +26,7 @@ import {
 } from '../../../utils/file-kind';
 import {
   hasHtmlMarkup,
+  normalizeRichContentHtml,
   richContentPlainText,
   richTextWordCount,
 } from '../../../utils/rich-content';
@@ -441,9 +442,15 @@ export class ArticleComponent implements OnInit {
     return result.isConfirmed;
   }
 
-  async pre_load() {
-    await this.onSubmit();
-    return this.articleRecordId(this.article);
+  async pre_load(event: any) {
+    let id = '';
+    try {
+      await this.onSubmit();
+      id = this.articleRecordId(this.article);
+      return id;
+    } finally {
+      event.complete?.(id);
+    }
   }
 
   switchEdit() {
@@ -520,7 +527,7 @@ export class ArticleComponent implements OnInit {
   }
 
   richContent(text: string, section?: ArticleSection): string {
-    const content = this.valuefy(text, section);
+    const content = normalizeRichContentHtml(this.valuefy(text, section));
     return hasHtmlMarkup(content) ? content : this.Linkify(content, '#29303b', '#4b8ff5');
   }
 

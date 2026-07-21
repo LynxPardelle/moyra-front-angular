@@ -1,6 +1,7 @@
 export type CasePermission =
   | 'case.read'
   | 'case.write_entry'
+  | 'case.manage_entry_visibility'
   | 'case.comment'
   | 'case.upload_file'
   | 'case.download_file'
@@ -28,9 +29,13 @@ export type CaseVisibilityObject = {
 
 export type CaseVisibility = CaseVisibilityObject | CaseVisibilityMode;
 
-export type CaseRolePreset = 'attorney' | 'pasante' | 'client' | 'observer' | string;
-
-export type CaseMemberType = 'internal' | 'external' | string;
+export type CaseRolePreset =
+  | 'attorney'
+  | 'pasante'
+  | 'client'
+  | 'external_observer'
+  | 'observer'
+  | string;
 
 export type CaseMemberStatus = 'active' | 'removed' | 'invited' | string;
 
@@ -71,11 +76,21 @@ export type CaseRecord = {
   caseTypeId: string;
   statusId: string;
   leadUserId?: string;
+  createdByUserId?: string;
+  createdByDisplayName?: string;
+  createdByEmail?: string;
   active?: boolean;
   unreadCount?: number;
   createdAt?: string;
   updatedAt?: string;
   lastActivityAt?: string;
+};
+
+export type CaseCommentAccessMode = 'legal_team' | 'case_members' | string;
+
+export type CaseCommentPolicy = {
+  read: CaseCommentAccessMode;
+  write: CaseCommentAccessMode;
 };
 
 export type CaseMembership = {
@@ -84,7 +99,6 @@ export type CaseMembership = {
   userId?: string;
   email?: string;
   displayName?: string;
-  memberType: CaseMemberType;
   rolePreset: CaseRolePreset;
   permissions: CasePermission[];
   status: CaseMemberStatus;
@@ -101,6 +115,7 @@ export type CaseEntry = {
   authorUserId?: string;
   authorDisplayName?: string;
   visibility: CaseVisibility;
+  commentPolicy?: CaseCommentPolicy;
   fileIds?: string[];
   status?: string;
   createdAt?: string;
@@ -124,17 +139,74 @@ export type CaseComment = {
 export type CaseFile = {
   id: string;
   caseId: string;
+  entryId?: string;
+  entryIds?: string[];
   fileName: string;
+  originalName?: string;
+  title?: string;
+  type?: string;
   contentType: string;
   size?: number;
+  storageProvider?: 's3' | 'onedrive' | string;
+  linkUrl?: string;
+  webUrl?: string;
   uploadedByUserId?: string;
   uploaderUserId?: string;
   uploadedAt?: string;
-  uploadStatus?: 'pending' | 'pending_upload' | 'uploaded' | string;
+  uploadStatus?: 'pending' | 'pending_upload' | 'uploaded' | 'linked' | string;
   externalVisibilityStatus: CaseExternalVisibilityStatus;
   visibility: CaseVisibility;
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type CaseOperationsSummary = {
+  generatedAt: string;
+  cases: {
+    total: number;
+    active: number;
+    archived: number;
+  };
+  files: {
+    total: number;
+    pendingUpload: number;
+    pendingExternalReview: number;
+  };
+  notifications: {
+    total: number;
+    email: Record<string, number>;
+    webPush: Record<string, number>;
+  };
+  queues: {
+    staleUploads: CaseOperationsFileQueueItem[];
+    pendingExternalFiles: CaseOperationsFileQueueItem[];
+    pendingInvites: CaseOperationsInviteQueueItem[];
+  };
+  recentAuditEvents: Array<Pick<
+    CaseAuditEvent,
+    'id' | 'caseId' | 'actorUserId' | 'action' | 'targetType' | 'targetId' | 'createdAt'
+  >>;
+};
+
+export type CaseOperationsFileQueueItem = Pick<
+  CaseFile,
+  | 'id'
+  | 'caseId'
+  | 'fileName'
+  | 'uploadStatus'
+  | 'externalVisibilityStatus'
+  | 'createdAt'
+  | 'updatedAt'
+>;
+
+export type CaseOperationsInviteQueueItem = {
+  id: string;
+  caseId: string;
+  email?: string;
+  displayName?: string;
+  rolePreset?: string;
+  status?: string;
+  createdAt?: string;
 };
 
 export type CaseNotification = {
@@ -162,11 +234,15 @@ export type CaseNotification = {
       failedAt?: string;
     };
     webPush: {
-      status: 'skipped' | 'queued' | 'sent' | 'failed';
+      status: 'skipped' | 'pending' | 'queued' | 'sent' | 'partial' | 'failed';
       reason?: string;
+      sentCount?: number;
+      failedCount?: number;
+      expiredCount?: number;
     };
   };
   dedupeKey?: string;
+  manualUnreadAt?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -205,6 +281,8 @@ export type CaseAuditEvent = {
   id: string;
   caseId: string;
   actorUserId?: string;
+  actorEmail?: string;
+  actorDisplayName?: string;
   action: string;
   targetType: string;
   targetId?: string;
@@ -238,8 +316,25 @@ export type CreateCaseEntryRequest = {
   title: string;
   text: string;
   visibility?: CaseVisibility;
+  commentPolicy?: CaseCommentPolicy;
   insertions?: unknown[];
   fileIds?: string[];
+};
+
+export type UpdateCaseEntryRequest = Partial<CreateCaseEntryRequest>;
+
+export type UpdateCaseRequest = {
+  title?: string;
+  reference?: string;
+  description?: string;
+  statusId?: string;
+};
+
+export type InitialAttorneyRequest = {
+  email: string;
+  displayName?: string;
+  userId?: string;
+  permissions?: CasePermission[];
 };
 
 export type InviteCaseMemberRequest = {
@@ -249,11 +344,19 @@ export type InviteCaseMemberRequest = {
   permissions?: CasePermission[];
 };
 
+export type UpdateCaseMemberRequest = {
+  displayName?: string;
+  partyId?: string;
+  partyLabel?: string;
+  rolePreset?: CaseRolePreset;
+};
+
 export type UpdateCasePermissionsRequest = {
   permissions: CasePermission[];
 };
 
 export type PresignCaseFileRequest = {
+  entryId: string;
   fileName: string;
   contentType: string;
   size?: number;
@@ -273,6 +376,24 @@ export type CaseFilePresignResponse = {
 export type CompleteCaseFileRequest = {
   fileId: string;
   etag?: string;
+};
+
+export type CreateCaseOneDriveLinkRequest = {
+  entryId?: string;
+  entryIds?: string[];
+  fileName: string;
+  linkUrl: string;
+  visibility?: CaseVisibility;
+};
+
+export type UpdateCaseFileRequest = {
+  entryId?: string;
+  entryIds?: string[];
+  fileName?: string;
+  title?: string;
+  linkUrl?: string;
+  visibility?: CaseVisibility;
+  externalVisibilityStatus?: CaseExternalVisibilityStatus;
 };
 
 export type CaseFileVisibilityRequest = {

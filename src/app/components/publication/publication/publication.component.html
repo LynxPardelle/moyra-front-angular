@@ -192,14 +192,7 @@
         [(value)]="publication.text"
       ></app-rich-text-editor>
       } @placeholder {
-      <textarea
-        class="w-100 ank ank-text-bg1M ank-bg-textM border-0 publication-textarea"
-        id="text"
-        name="text"
-        [(ngModel)]="publication.text"
-        placeholder="Contenido de la publicación"
-        required
-      ></textarea>
+      <p class="ank ank-text-textM mb-0">Cargando editor enriquecido...</p>
       }
     </div>
     <div class="d-block w-100 mx-auto my-3">
@@ -347,7 +340,7 @@
         [thing]="publication"
         [thingInside]="false"
         [id]="publicationRecordId(publication)"
-        (pre_loader)="pre_load()"
+        (pre_loader)="pre_load($event)"
         (recoverThing)="recoverThingFather()"
       ></app-file-uploader>
       <hr class="my-5" />
@@ -378,7 +371,7 @@
         [thing]="publication"
         [thingInside]="false"
         [id]="publicationRecordId(publication)"
-        (pre_loader)="pre_load()"
+        (pre_loader)="pre_load($event)"
         (recoverThing)="recoverThingFather()"
       ></app-file-uploader>
     </section>

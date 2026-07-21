@@ -1,15 +1,20 @@
-<div class="rich-editor">
+<div class="rich-editor" [class.is-disabled]="disabled">
   @if (label) {
-  <span class="rich-editor__label">{{ label }}</span>
+  <label class="rich-editor__label" [attr.for]="controlId || null">{{ label }}</label>
   } @if (help) {
   <small class="rich-editor__help">{{ help }}</small>
   }
   <quill-editor
     class="rich-editor__control"
+    [attr.id]="controlId || null"
+    [attr.name]="controlName || null"
     [ngModel]="value"
     (ngModelChange)="updateValue($event)"
+    (onEditorCreated)="onEditorCreated($event)"
     [modules]="editorModules"
     [placeholder]="placeholder"
+    [readOnly]="disabled"
+    [attr.aria-disabled]="disabled"
     [styles]="{ minHeight: minHeight }"
     [sanitize]="true"
     format="html"

@@ -47,12 +47,20 @@ export class AdminGuard implements CanActivate, CanActivateChild {
           return of(true);
         }
 
+        if (authState.isAuthenticated && authState.isLegalStaff) {
+          return of(this.legalStaffDecision(url));
+        }
+
         const authReason = consumeAuthStorageFailureReason();
         return this.tryRefreshSession().pipe(
           map((session) => {
             if (session?.role === 'ROLE_ADMIN') {
               this._authUiStore.clearDeniedAdminUrl();
               return true;
+            }
+
+            if (session?.role === 'ROLE_LEGAL_STAFF') {
+              return this.legalStaffDecision(url);
             }
 
             return this.deniedAdminTree(url, authReason);
@@ -89,5 +97,18 @@ export class AdminGuard implements CanActivate, CanActivateChild {
         ...(authReason ? { auth: authReason } : {}),
       },
     });
+  }
+
+  private legalStaffDecision(url: string): true | UrlTree {
+    if (url.startsWith('/admin/casos/configuracion')) {
+      return this._router.createUrlTree(['/admin/casos']);
+    }
+
+    if (url.startsWith('/admin/casos') || url === '/admin/usuarios/me') {
+      this._authUiStore.clearDeniedAdminUrl();
+      return true;
+    }
+
+    return this._router.createUrlTree(['/admin/casos']);
   }
 }

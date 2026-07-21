@@ -1,29 +1,67 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { UserService } from '../services/user.service';
 
-type UserRole = 'ROLE_USER' | 'ROLE_ADMIN';
+type UserRole = 'ROLE_USER' | 'ROLE_LEGAL_STAFF' | 'ROLE_ADMIN';
 
 type NewUserForm = {
   name: string;
   email: string;
   role: UserRole;
+  relationship: string;
   temporaryPassword: string;
   confirmTemporaryPassword: string;
 };
 
 @Component({
   selector: 'admin-usuarios',
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './usuarios.component.html',
   styleUrls: ['./usuarios.component.scss'],
 })
-export class UsuariosComponent {
+export class UsuariosComponent implements OnInit {
+  public readonly customRelationshipValue = '__custom__';
+  private readonly fallbackRelationshipOptions = [
+    'Equipo Moyra',
+    'Cliente o invitado externo',
+    'Cliente',
+    'Proveedor',
+    'Familiar',
+    'Representante legal',
+    'Perito',
+    'Testigo',
+  ];
+  public readonly caseRoleOptions = [
+    {
+      name: 'Cliente',
+      description: 'Ve sus casos asignados y abre documentos aprobados cuando tenga permiso.',
+    },
+    {
+      name: 'Abogado',
+      description: 'Colabora como miembro interno del caso con permisos operativos.',
+    },
+    {
+      name: 'Pasante',
+      description: 'Apoya internamente con lectura, comentarios y documentos del caso.',
+    },
+    {
+      name: 'Observador',
+      description: 'Consulta información y documentos visibles sin intervenir.',
+    },
+  ];
   public saving = false;
   public user: NewUserForm = this.emptyUser();
+  public relationshipPreset = '';
+  public relationshipOptions: string[] = [];
 
   constructor(private _userService: UserService) {}
+
+  ngOnInit(): void {
+    this.loadRelationshipOptions();
+  }
 
   passwordMeetsPolicy(): boolean {
     const password = this.user.temporaryPassword || '';
@@ -65,6 +103,7 @@ export class UsuariosComponent {
         name: this.user.name.trim(),
         email: this.user.email.trim().toLowerCase(),
         role: this.user.role,
+        relationship: this.user.relationship.trim(),
         temporaryPassword: this.user.temporaryPassword,
       };
 
@@ -78,6 +117,7 @@ export class UsuariosComponent {
       });
 
       this.user = this.emptyUser();
+      this.relationshipPreset = '';
     } catch (error: any) {
       await Swal.fire({
         title: 'No se pudo crear el usuario',
@@ -89,11 +129,22 @@ export class UsuariosComponent {
     }
   }
 
+  onRelationshipPresetChange(value: string): void {
+    if (value === this.customRelationshipValue) {
+      if (this.relationshipOptions.includes(this.user.relationship)) {
+        this.user.relationship = '';
+      }
+      return;
+    }
+    this.user.relationship = value;
+  }
+
   private emptyUser(): NewUserForm {
     return {
       name: '',
       email: '',
       role: 'ROLE_USER',
+      relationship: '',
       temporaryPassword: '',
       confirmTemporaryPassword: '',
     };
@@ -101,5 +152,21 @@ export class UsuariosComponent {
 
   private isValidEmail(value: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  }
+
+  private loadRelationshipOptions(): void {
+    this._userService.getRelationships().subscribe({
+      next: (response) => {
+        const options = (response.items || [])
+          .filter((item) => item.active !== false)
+          .sort((left, right) => (left.order || 0) - (right.order || 0))
+          .map((item) => item.label)
+          .filter(Boolean);
+        this.relationshipOptions = options.length ? options : [...this.fallbackRelationshipOptions];
+      },
+      error: () => {
+        this.relationshipOptions = [...this.fallbackRelationshipOptions];
+      },
+    });
   }
 }

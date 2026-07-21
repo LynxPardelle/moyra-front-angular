@@ -25,9 +25,13 @@ describe('CaseService', () => {
   let service: CaseService;
   let http: HttpTestingController;
   let storeToken: string | null;
+  let isAdmin: boolean;
+  let identity: any;
 
   beforeEach(() => {
     storeToken = validToken();
+    isAdmin = true;
+    identity = { id: 'admin-1', email: 'admin@moyra.org' };
     localStorage.clear();
     sessionStorage.clear();
 
@@ -38,6 +42,8 @@ describe('CaseService', () => {
           provide: AuthFacade,
           useValue: {
             token: () => storeToken,
+            isAdmin: () => isAdmin,
+            identity: () => identity,
           },
         },
         provideHttpClient(),
@@ -68,6 +74,40 @@ describe('CaseService', () => {
       status: 'success',
       items: [{ id: 'case-1', title: 'Expediente corporativo', active: true }],
       nextToken: null,
+    });
+  });
+
+  it('loads the admin cases operations summary from the private API', () => {
+    service.getOperationsSummary().subscribe((response) => {
+      expect(response.item.files.pendingExternalReview).toBe(1);
+      expect(response.item.notifications.webPush['failed']).toBe(2);
+    });
+
+    const req = http.expectOne(apiUrl('/case-operations/summary'));
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.get('Authorization')).toBe(storeToken);
+    req.flush({
+      status: 'success',
+      item: {
+        generatedAt: '2026-06-18T20:00:00.000Z',
+        cases: { total: 2, active: 1, archived: 1 },
+        files: {
+          total: 3,
+          pendingUpload: 0,
+          pendingExternalReview: 1,
+        },
+        notifications: {
+          total: 2,
+          email: { skipped: 2 },
+          webPush: { failed: 2 },
+        },
+        queues: {
+          staleUploads: [],
+          pendingExternalFiles: [],
+          pendingInvites: [],
+        },
+        recentAuditEvents: [],
+      },
     });
   });
 
@@ -140,16 +180,25 @@ describe('CaseService', () => {
     service.updateMemberPermissions('case-1', 'membership-1', {
       permissions: ['case.read', 'case.comment'],
     }).subscribe();
+    service.removeMember('case-1', 'membership-1').subscribe();
     service.presignCaseFile('case-1', {
+      entryId: 'entry-1',
       fileName: 'evidencia.pdf',
       contentType: 'application/pdf',
       size: 2048,
+    }).subscribe();
+    service.createOneDriveLink('case-1', {
+      entryId: 'entry-1',
+      fileName: 'Contrato firmado',
+      linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
+      visibility: 'case_members',
     }).subscribe();
     service.updateFileVisibility('case-1', 'file-1', {
       externalVisibilityStatus: 'approved',
       visibility: 'case_members',
     }).subscribe();
     service.markNotificationRead('notification-1').subscribe();
+    service.markNotificationUnread('notification-1').subscribe();
     service.getUnreadNotificationCount().subscribe();
     service.markAllNotificationsRead().subscribe();
 
@@ -180,10 +229,25 @@ describe('CaseService', () => {
     expect(permissionsReq.request.body.permissions).toEqual(['case.read', 'case.comment']);
     permissionsReq.flush({ status: 'success', item: {} });
 
+    const removeMemberReq = http.expectOne(apiUrl('/cases/case-1/members/membership-1'));
+    expect(removeMemberReq.request.method).toBe('DELETE');
+    removeMemberReq.flush({ status: 'success', item: {} });
+
     const presignReq = http.expectOne(apiUrl('/cases/case-1/files/presign'));
     expect(presignReq.request.method).toBe('POST');
+    expect(presignReq.request.body.entryId).toBe('entry-1');
     expect(presignReq.request.body.fileName).toBe('evidencia.pdf');
     presignReq.flush({ status: 'success', file: {}, upload: { method: 'PUT', url: 'signed' } });
+
+    const oneDriveReq = http.expectOne(apiUrl('/cases/case-1/files/onedrive-link'));
+    expect(oneDriveReq.request.method).toBe('POST');
+    expect(oneDriveReq.request.body).toEqual({
+      entryId: 'entry-1',
+      fileName: 'Contrato firmado',
+      linkUrl: 'https://moyra-my.sharepoint.com/documentos/contrato',
+      visibility: { mode: 'case_members' },
+    });
+    oneDriveReq.flush({ status: 'success', item: {} });
 
     const visibilityReq = http.expectOne(apiUrl('/cases/case-1/files/file-1/visibility'));
     expect(visibilityReq.request.method).toBe('PUT');
@@ -195,19 +259,98 @@ describe('CaseService', () => {
     expect(notificationReq.request.method).toBe('POST');
     notificationReq.flush({ status: 'success', item: {} });
 
-    const unreadReq = http.expectOne(apiUrl('/case-notifications/unread-count'));
+    const unreadNotificationReq = http.expectOne(apiUrl('/case-notifications/notification-1/unread'));
+    expect(unreadNotificationReq.request.method).toBe('POST');
+    unreadNotificationReq.flush({ status: 'success', item: {} });
+
+    const unreadReq = http.expectOne(apiUrl('/case-notifications'));
     expect(unreadReq.request.method).toBe('GET');
-    unreadReq.flush({ status: 'success', count: 2 });
+    unreadReq.flush({
+      status: 'success',
+      items: [
+        caseNotification('notification-2', 'case-1', 'case.entry.created', 'case-entry', undefined),
+        caseNotification(
+          'notification-3',
+          'case-1',
+          'case.entry.created',
+          'case-entry',
+          '2026-06-18T21:00:00.000Z'
+        ),
+      ],
+    });
 
     const readAllReq = http.expectOne(apiUrl('/case-notifications/read-all'));
     expect(readAllReq.request.method).toBe('POST');
     readAllReq.flush({ status: 'success', updatedCount: 2 });
   });
 
+  it('hides comment notifications from clients without comment permission', () => {
+    isAdmin = false;
+    identity = { id: 'client-1', email: 'cliente@moyra.org' };
+
+    service.listNotifications().subscribe((response) => {
+      expect(response.items.map((item) => item.id)).toEqual(['entry-notification']);
+    });
+
+    const listReq = http.expectOne(apiUrl('/case-notifications'));
+    listReq.flush({
+      status: 'success',
+      items: [
+        caseNotification('entry-notification', 'case-1', 'case.entry.created', 'case-entry'),
+        caseNotification('comment-notification', 'case-1', 'case.comment.created', 'case-comment'),
+      ],
+    });
+
+    const firstMembersReq = http.expectOne(apiUrl('/cases/case-1/members'));
+    firstMembersReq.flush({
+      status: 'success',
+      items: [
+        {
+          id: 'member-1',
+          caseId: 'case-1',
+          userId: 'client-1',
+          email: 'cliente@moyra.org',
+          rolePreset: 'client',
+          permissions: ['case.read'],
+          status: 'active',
+        },
+      ],
+    });
+
+    service.getUnreadNotificationCount().subscribe((response) => {
+      expect(response.count).toBe(1);
+    });
+
+    const countReq = http.expectOne(apiUrl('/case-notifications'));
+    countReq.flush({
+      status: 'success',
+      items: [
+        caseNotification('entry-notification', 'case-1', 'case.entry.created', 'case-entry'),
+        caseNotification('comment-notification', 'case-1', 'case.comment.created', 'case-comment'),
+      ],
+    });
+
+    const secondMembersReq = http.expectOne(apiUrl('/cases/case-1/members'));
+    secondMembersReq.flush({
+      status: 'success',
+      items: [
+        {
+          id: 'member-1',
+          caseId: 'case-1',
+          userId: 'client-1',
+          email: 'cliente@moyra.org',
+          rolePreset: 'client',
+          permissions: ['case.read'],
+          status: 'active',
+        },
+      ],
+    });
+  });
+
   it('uploads a case file through presigned PUT and completes metadata without exposing raw S3 links', () => {
     const file = new File(['contenido'], 'evidencia.pdf', { type: 'application/pdf' });
 
-    service.uploadCaseFile('case-1', file).subscribe((response) => {
+    service.uploadCaseFile('case-1', 'entry-1', file).subscribe((response) => {
       expect(response.item.id).toBe('file-1');
       expect(response.item.uploadStatus).toBe('uploaded');
     });
@@ -215,6 +358,7 @@ describe('CaseService', () => {
     const presignReq = http.expectOne(apiUrl('/cases/case-1/files/presign'));
     expect(presignReq.request.method).toBe('POST');
     expect(presignReq.request.body).toEqual({
+      entryId: 'entry-1',
       fileName: 'evidencia.pdf',
       contentType: 'application/pdf',
       size: file.size,
@@ -339,3 +483,29 @@ describe('CaseService', () => {
     });
   });
 });
+
+function caseNotification(
+  id: string,
+  caseId: string,
+  eventType: string,
+  targetType: string,
+  readAt?: string
+): any {
+  return {
+    id,
+    recipientUserId: 'client-1',
+    caseId,
+    eventType,
+    targetType,
+    targetId: `${targetType}-1`,
+    title: 'Notificación',
+    body: 'Mensaje',
+    link: { path: `/casos/${caseId}` },
+    readAt,
+    delivery: {
+      inApp: { status: 'created' },
+      email: { status: 'skipped' },
+      webPush: { status: 'skipped' },
+    },
+  };
+}

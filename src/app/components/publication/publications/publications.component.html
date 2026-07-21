@@ -79,7 +79,6 @@
               [src]="embed.embedUrl | safeEmbedUrl"
               [title]="embed.title"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-              allowfullscreen
               loading="eager"
               referrerpolicy="strict-origin-when-cross-origin"
             ></iframe>
@@ -88,9 +87,8 @@
               class="publication-card__embed-frame--external"
               [src]="embed.embedUrl | safeEmbedUrl"
               [title]="embed.title"
-              allow="clipboard-write; encrypted-media; fullscreen; picture-in-picture; web-share"
-              allowfullscreen
-              sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts"
+              [attr.allow]="embed.allow"
+              [attr.sandbox]="embed.sandbox"
               loading="eager"
               referrerpolicy="strict-origin-when-cross-origin"
               [style.height.px]="embed.height"

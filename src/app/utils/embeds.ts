@@ -15,17 +15,21 @@ type EmbedRule = {
   hosts: string[];
   label: string;
   paths: RegExp[];
+  sandbox?: string;
   transform?: (url: URL) => URL;
 };
 
 const DEFAULT_IFRAME_ALLOW = 'clipboard-write; encrypted-media; fullscreen; picture-in-picture; web-share';
 const DEFAULT_IFRAME_SANDBOX = [
-  'allow-forms',
   'allow-popups',
   'allow-popups-to-escape-sandbox',
   'allow-presentation',
   'allow-same-origin',
   'allow-scripts',
+].join(' ');
+const FORM_IFRAME_SANDBOX = [
+  'allow-forms',
+  DEFAULT_IFRAME_SANDBOX,
 ].join(' ');
 const YOUTUBE_ALLOW =
   'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
@@ -43,6 +47,7 @@ const EMBED_RULES: EmbedRule[] = [
     hosts: ['docs.google.com'],
     label: 'Google Forms',
     paths: [/^\/forms\//],
+    sandbox: FORM_IFRAME_SANDBOX,
     transform: (url) => {
       const normalized = new URL(url.toString());
       normalized.searchParams.set('embedded', 'true');
@@ -76,18 +81,21 @@ const EMBED_RULES: EmbedRule[] = [
     hosts: ['forms.office.com', 'forms.cloud.microsoft', 'forms.microsoft.com'],
     label: 'Microsoft Forms',
     paths: [/^\//],
+    sandbox: FORM_IFRAME_SANDBOX,
   },
   {
     defaultHeight: 520,
     hosts: ['airtable.com'],
     label: 'Airtable',
     paths: [/^\/embed\//],
+    sandbox: FORM_IFRAME_SANDBOX,
   },
   {
     defaultHeight: 520,
     hosts: ['calendly.com'],
     label: 'Calendly',
     paths: [/^\//],
+    sandbox: FORM_IFRAME_SANDBOX,
   },
   {
     defaultHeight: 520,
@@ -295,7 +303,7 @@ function toAllowedIframeEmbed(
     key: embedUrl,
     kind: 'iframe',
     original: source,
-    sandbox: DEFAULT_IFRAME_SANDBOX,
+    sandbox: rule.sandbox || DEFAULT_IFRAME_SANDBOX,
     title: iframeTitle || rule.label,
   };
 }

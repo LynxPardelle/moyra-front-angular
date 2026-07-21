@@ -1,8 +1,13 @@
 <!-- Edit/Delete Buttons -->
 @if ( canChange === true && isAdmin === true ) {
-<div class="position-fixed ank ank-top-15per top-md-10per end-0">
+<div class="solution-admin-actions position-fixed ank ank-top-15per top-md-10per end-0">
   @if (editSwitch == false) {
-  <button class="btn ank ank-btn-linkM ank-text-bg1M mr-2" (click)="switchEdit()">
+  <button
+    class="solution-admin-action btn ank ank-btn-linkM ank-text-bg1M"
+    (click)="switchEdit()"
+    aria-label="Editar solución"
+    title="Editar solución"
+  >
     <svg
       width="1em"
       height="1em"
@@ -19,16 +24,24 @@
         d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"
       />
     </svg>
+    <span>Editar</span>
   </button>
   } @if (editSwitch == true) {
   <button
-    class="btn ank ank-btn-linkM ank-text-bg1M mr-2 font-weight-normal float-right"
+    class="solution-admin-action btn ank ank-btn-linkM ank-text-bg1M font-weight-normal"
     (click)="switchEdit()"
+    aria-label="Cerrar edición"
+    title="Cerrar edición"
   >
-    X
+    Cerrar
   </button>
   }
-  <button class="btn btn-warning mr-2" (click)="deleteServicio(servicio._id)">
+  <button
+    class="solution-admin-action solution-admin-action--delete btn btn-warning"
+    (click)="deleteServicio(servicio._id)"
+    aria-label="Eliminar solución"
+    title="Eliminar solución"
+  >
     <svg
       width="1em"
       height="1em"
@@ -42,6 +55,7 @@
         d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5a.5.5 0 0 0-1 0v7a.5.5 0 0 0 1 0v-7z"
       />
     </svg>
+    <span>Eliminar</span>
   </button>
 </div>
 } @if (servicio && servicio.title) {
@@ -50,7 +64,7 @@
 </h2>
 } @if (servicio && servicio.mainImg && servicio.mainImg.location) {
 <img
-  class="ank ank-wmx-65per ank-hmx-500px mx-auto d-block obj-fit-cover"
+  class="solution-detail__image ank ank-wmx-65per ank-hmx-500px mx-auto d-block obj-fit-cover"
   [src]="servicio.mainImg.publicUrl || urlServicio + 'get-file/' + servicio.mainImg.location"
   alt="{{ servicio.mainImg.title }}"
 />
@@ -59,7 +73,7 @@
 <!-- Description -->
 @if (servicio.desc && servicio.desc !== '') {
 <div
-  class="ank ank-w-65per mx-auto my-5 text-center"
+  class="solution-detail__description ank ank-w-65per mx-auto my-5 text-center"
   [innerHTML]="richContent(servicio.desc) | safeRichHtml"
 ></div>
 }
@@ -98,14 +112,7 @@
       [(value)]="servicio.desc"
     ></app-rich-text-editor>
     } @placeholder {
-    <textarea
-      class="w-100 ank ank-text-bg1M ank-bg-textM border-0 servicio-textarea"
-      type="text"
-      name="desc"
-      [(ngModel)]="servicio.desc"
-      placeholder="Descripción"
-      required
-    ></textarea>
+    <p class="ank ank-text-textM mb-0">Cargando editor enriquecido...</p>
     } @if (!servicio.desc) {
     <span class="ank ank-text-titleM font-weight-bold"> La descripción es obligatoria. </span>
     }

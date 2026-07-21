@@ -8,6 +8,7 @@ import { PublicationService } from '../../../services/publication.service';
 import { ServicioService } from '../../../services/servicio.service';
 import { WebService } from '../../../services/web.service';
 import { PublicationsComponent } from '../../publication/publications/publications.component';
+import { richContentPlainText } from '../../../utils/rich-content';
 
 @Component({
   selector: 'app-home',
@@ -78,7 +79,7 @@ export class HomeComponent implements OnInit {
   }
 
   excerpt(text: string, length = 180): string {
-    const cleanText = stripHtml(text || '')
+    const cleanText = richContentPlainText(text || '')
       .replace(/\s+/g, ' ')
       .trim();
     if (cleanText.length <= length) {
@@ -119,8 +120,4 @@ export class HomeComponent implements OnInit {
     this._meta.updateTag({ name: 'twitter:title', content: title });
     this._meta.updateTag({ name: 'twitter:description', content: description });
   }
-}
-
-function stripHtml(value: string): string {
-  return value.replace(/<[^>]*>/g, ' ');
 }

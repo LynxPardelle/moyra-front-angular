@@ -23,7 +23,8 @@ export class AdminComponent implements OnInit {
       if (
         isPlatformBrowser(this.platformId) &&
         this._authFacade.hydrated() &&
-        !this._authFacade.isAdmin()
+        !this._authFacade.isAdmin() &&
+        !this._authFacade.isLegalStaff()
       ) {
         void this._router.navigate(['/login']);
       }
@@ -43,5 +44,17 @@ export class AdminComponent implements OnInit {
 
   casesFeatureEnabled(): boolean {
     return this._casesFeature.isEnabled();
+  }
+
+  isAdminUser(): boolean {
+    return this._authFacade.isAdmin();
+  }
+
+  showAdminMenu(): boolean {
+    return !this._authFacade.hydrated() || this._authFacade.isAdmin();
+  }
+
+  panelTitle(): string {
+    return this.showAdminMenu() ? 'Panel de administración' : 'Panel de casos';
   }
 }

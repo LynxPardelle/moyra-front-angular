@@ -1,11 +1,16 @@
 <section class="admin-users-page">
   <header class="admin-users-page__header">
-    <p>Usuarios</p>
-    <h1>Crear usuario</h1>
-    <span>
-      Alta administrada para cuentas de Moyra. El usuario recibirá una contraseña temporal y deberá
-      cambiarla en su primer inicio de sesión.
-    </span>
+    <div>
+      <p>Usuarios</p>
+      <h1>Crear usuario</h1>
+      <span>
+        Alta administrada para cuentas de Moyra. El usuario recibirá una contraseña temporal y deberá
+        cambiarla en su primer inicio de sesión.
+      </span>
+    </div>
+    <a class="admin-users-page__link" routerLink="/admin/usuarios/relaciones">
+      Administrar relaciones
+    </a>
   </header>
 
   <form class="admin-users-form" (ngSubmit)="createUser()" #userForm="ngForm">
@@ -23,9 +28,54 @@
       <span>Rol</span>
       <select name="role" [(ngModel)]="user.role" required>
         <option value="ROLE_USER">Usuario</option>
+        <option value="ROLE_LEGAL_STAFF">Equipo legal</option>
         <option value="ROLE_ADMIN">Administrador</option>
       </select>
+      <small>
+        Equipo legal entra al panel de Casos sin administrar el resto del sitio. Los permisos finos
+        se asignan dentro de cada caso.
+      </small>
     </label>
+
+    <label class="admin-users-field">
+      <span>Relación</span>
+      <select
+        name="relationshipPreset"
+        [(ngModel)]="relationshipPreset"
+        (ngModelChange)="onRelationshipPresetChange($event)"
+      >
+        <option value="">Sin relación definida</option>
+        @for (option of relationshipOptions; track option) {
+        <option [value]="option">{{ option }}</option>
+        }
+        <option [value]="customRelationshipValue">Otra relación</option>
+      </select>
+      @if (relationshipPreset === customRelationshipValue) {
+      <input
+        type="text"
+        name="relationship"
+        [(ngModel)]="user.relationship"
+        placeholder="Ej. Representante legal"
+      />
+      }
+      <small>Puede ser Equipo Moyra, cliente, proveedor, familiar u otra relación interna.</small>
+    </label>
+
+    <section class="admin-users-case-roles" aria-label="Roles disponibles en Casos">
+      <h2>Roles de Casos</h2>
+      <p>
+        Después de crear el usuario, agrégalo desde el caso correspondiente y define ahí su rol y
+        relación.
+      </p>
+      <div class="admin-users-case-roles__grid">
+        @for (role of caseRoleOptions; track role.name) {
+        <article>
+          <strong>{{ role.name }}</strong>
+          <span>{{ role.description }}</span>
+        </article>
+        }
+      </div>
+    </section>
 
     <label class="admin-users-field">
       <span>Contraseña temporal</span>

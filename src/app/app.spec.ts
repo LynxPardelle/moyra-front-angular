@@ -1,12 +1,16 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { EMPTY, of } from 'rxjs';
+import { Router, provideRouter } from '@angular/router';
+import { EMPTY, defer, of } from 'rxjs';
 import { App } from './app';
 import { MainService } from './services/main.service';
 import { UserService } from './services/user.service';
 import { WebService } from './services/web.service';
 import { SharedService } from './services/shared.service';
 import { AuthFacade } from './store/auth/auth.facade';
+import {
+  consumeAuthStorageFailureReason,
+  createAuthSession,
+} from './store/auth/auth.storage';
 import { NgxAngoraService } from 'ngx-angora-css';
 import { CasesFeatureService } from './components/cases/cases-feature.service';
 import { CaseService } from './services/case.service';
@@ -14,16 +18,23 @@ import { CaseWebPushService } from './components/notifications/case-web-push.ser
 
 describe('App', () => {
   let isAdmin: boolean;
+  let isLegalStaff: boolean;
   let isAuthenticated: boolean;
   let casesEnabled: boolean;
+  let unreadCount: number;
   let logoutSpy: jasmine.Spy;
+  let refreshSessionSpy: jasmine.Spy;
   let startNotificationClickRoutingSpy: jasmine.Spy;
 
   beforeEach(async () => {
+    consumeAuthStorageFailureReason();
     isAdmin = false;
+    isLegalStaff = false;
     isAuthenticated = false;
     casesEnabled = false;
+    unreadCount = 0;
     logoutSpy = jasmine.createSpy('logout');
+    refreshSessionSpy = jasmine.createSpy('refreshSession').and.returnValue(of(null));
     startNotificationClickRoutingSpy = jasmine.createSpy('startNotificationClickRouting');
 
     await TestBed.configureTestingModule({
@@ -40,7 +51,7 @@ describe('App', () => {
         {
           provide: UserService,
           useValue: {
-            refreshSession: () => of(null),
+            refreshSession: refreshSessionSpy,
           },
         },
         {
@@ -60,7 +71,9 @@ describe('App', () => {
           provide: AuthFacade,
           useValue: {
             hydrate: () => undefined,
+            state$: defer(() => of({ hydrated: true, isAuthenticated })),
             isAdmin: () => isAdmin,
+            isLegalStaff: () => isLegalStaff,
             isAuthenticated: () => isAuthenticated,
             logout: logoutSpy,
             authStateOnceAfterHydration$: () => of({ isAuthenticated: false }),
@@ -75,7 +88,7 @@ describe('App', () => {
         {
           provide: CaseService,
           useValue: {
-            getUnreadNotificationCount: () => of({ status: 'success', count: 0 }),
+            getUnreadNotificationCount: () => of({ status: 'success', count: unreadCount }),
           },
         },
         {
@@ -106,19 +119,17 @@ describe('App', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.site-header h1')).toBeNull();
-    expect(compiled.querySelector('.titleMontano__name')?.textContent).toContain(
-      'Montaño'
-    );
+    expect(compiled.querySelector('.titleMontano__name')?.textContent).toContain('Montaño');
   });
 
-  it('lets an admin close the session from the main navigation', () => {
+  it('lets an admin close the session from the menu navigation', () => {
     isAdmin = true;
     isAuthenticated = true;
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const logoutButton = compiled.querySelector<HTMLButtonElement>(
-      '[data-testid="site-logout"]'
+      '[data-testid="site-logout-offcanvas"]'
     );
 
     expect(logoutButton?.textContent).toContain('Cerrar sesión');
@@ -139,9 +150,28 @@ describe('App', () => {
 
     expect(links).toContain('Cambiar contraseña');
     expect(links).not.toContain('Panel');
-    expect(compiled.querySelector('[data-testid="site-logout"]')?.textContent).toContain(
+    expect(compiled.querySelector('[data-testid="site-logout-offcanvas"]')?.textContent).toContain(
       'Cerrar sesión'
     );
+  });
+
+  it('keeps the header compact behind a modal menu trigger with an unread badge', () => {
+    casesEnabled = true;
+    isAuthenticated = true;
+    unreadCount = 2;
+    spyOnProperty(TestBed.inject(Router), 'url', 'get').and.returnValue('/casos');
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const menuButton = compiled.querySelector<HTMLButtonElement>(
+      '[data-testid="site-menu-toggle"]'
+    );
+
+    expect(compiled.querySelector('.site-nav')).toBeNull();
+    expect(menuButton?.getAttribute('aria-controls')).toBe('offcanvasMenu');
+    expect(menuButton?.getAttribute('aria-label')).toContain('2 notificaciones sin leer');
+    expect(menuButton?.querySelector('.site-header__menuBadge')?.textContent?.trim()).toBe('2');
   });
 
   it('shows the private cases link only when the feature is enabled for authenticated users', () => {
@@ -160,12 +190,55 @@ describe('App', () => {
 
   it('starts private case notification click routing when the cases feature is enabled', async () => {
     casesEnabled = true;
+    isAuthenticated = true;
+    spyOnProperty(TestBed.inject(Router), 'url', 'get').and.returnValue('/casos');
 
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     await fixture.whenStable();
-    await Promise.resolve();
+    await waitUntil(() => startNotificationClickRoutingSpy.calls.count() === 1);
 
     expect(startNotificationClickRoutingSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('does not refresh the auth cookie for anonymous public visitors', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(refreshSessionSpy).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the auth cookie when a stored token expired', async () => {
+    createAuthSession({ email: 'expired@example.com' }, expiredJwt());
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(refreshSessionSpy).toHaveBeenCalledTimes(1);
+  });
 });
+
+function expiredJwt(): string {
+  const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }));
+  const payload = btoa(
+    JSON.stringify({
+      sub: 'expired-user',
+      email: 'expired@example.com',
+      exp: 1,
+    })
+  );
+
+  return `${header}.${payload}.`;
+}
+
+async function waitUntil(condition: () => boolean): Promise<void> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (condition()) {
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+}

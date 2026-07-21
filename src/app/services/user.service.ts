@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Observable, catchError, of, switchMap, throwError } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, catchError, finalize, of, shareReplay, switchMap, throwError } from 'rxjs';
 import {
   ApiRuntime,
   CognitoRuntime,
@@ -13,6 +13,15 @@ import {
 import { readStoredAuthSession } from '../store/auth/auth.storage';
 import { decodeJwtPayload } from '../utils/auth-token';
 
+export type UserRelationshipOption = {
+  id: string;
+  label: string;
+  active?: boolean;
+  order?: number;
+  system?: boolean;
+  usersCount?: number;
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -20,6 +29,7 @@ export class UserService {
   public urlUser: string;
   public identity: any;
   public token: any;
+  private refreshSessionRequest$?: Observable<any>;
 
   constructor(private _http: HttpClient) {
     this.urlUser = GlobalUser.url;
@@ -46,13 +56,31 @@ export class UserService {
     ipp: number = 0,
     sort: string = '-create_at'
   ): Observable<any> {
+    if (ApiRuntime.isV2) {
+      const params = new HttpParams()
+        .set('page', `${page}`)
+        .set('ipp', `${ipp}`)
+        .set('sort', sort);
+
+      return this._http.get(apiUrl('/users'), {
+        headers: this.authHeaders(),
+        params,
+      });
+    }
+
     const users = 'users/' + page + '/' + ipp + '/' + sort;
 
     return this._http.get(this.urlUser + users);
   }
 
   getUser(id: string): Observable<any> {
-    return this._http.get(this.urlUser + 'user/' + id);
+    const getUserUrl = ApiRuntime.isV2
+      ? apiUrl(`/users/${encodeURIComponent(id)}`)
+      : this.urlUser + 'user/' + id;
+
+    return this._http.get(getUserUrl, {
+      headers: this.authHeaders(),
+    });
   }
 
   login(userToLogin: any, gettoken: any = null): Observable<any> {
@@ -82,14 +110,25 @@ export class UserService {
       return of(null);
     }
 
-    return this._http.post(
+    if (this.refreshSessionRequest$) {
+      return this.refreshSessionRequest$;
+    }
+
+    this.refreshSessionRequest$ = this._http.post(
       apiUrl('/auth/refresh'),
       {},
       {
         headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
         withCredentials: true,
       }
+    ).pipe(
+      finalize(() => {
+        this.refreshSessionRequest$ = undefined;
+      }),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
+
+    return this.refreshSessionRequest$;
   }
 
   logoutSession(): Observable<any> {
@@ -167,6 +206,10 @@ export class UserService {
   }
 
   changePassword(currentPassword: string, newPassword: string): Observable<any> {
+    if (ApiRuntime.isV2 && CognitoRuntime.userPoolClientId) {
+      return this.changePasswordWithCognito(currentPassword, newPassword);
+    }
+
     const body = JSON.stringify({ currentPassword, newPassword });
     const headers = this.authHeaders();
 
@@ -184,10 +227,64 @@ export class UserService {
   updateUser(id: string, user: any): Observable<any> {
     const body = JSON.stringify(user);
     const headers = this.authHeaders();
+    const updateUserUrl = ApiRuntime.isV2
+      ? apiUrl(`/users/${encodeURIComponent(id)}`)
+      : this.urlUser + 'user/' + id;
 
-    return this._http.put(this.urlUser + 'user/' + id, body, {
+    return this._http.put(updateUserUrl, body, {
       headers: headers,
+      withCredentials: ApiRuntime.isV2 ? supportsCredentialedAuthCookies() : false,
     });
+  }
+
+  getRelationships(): Observable<{ status: string; items: UserRelationshipOption[] }> {
+    return this._http.get<{ status: string; items: UserRelationshipOption[] }>(
+      apiUrl('/user-relationships'),
+      {
+        headers: this.authHeaders(),
+      }
+    );
+  }
+
+  createRelationship(body: {
+    label: string;
+    active?: boolean;
+    order?: number;
+  }): Observable<{ status: string; item: UserRelationshipOption }> {
+    return this._http.post<{ status: string; item: UserRelationshipOption }>(
+      apiUrl('/user-relationships'),
+      body,
+      {
+        headers: this.authHeaders(),
+      }
+    );
+  }
+
+  updateRelationship(
+    relationshipId: string,
+    body: { label?: string; active?: boolean; order?: number }
+  ): Observable<{ status: string; item: UserRelationshipOption }> {
+    return this._http.put<{ status: string; item: UserRelationshipOption }>(
+      apiUrl(`/user-relationships/${encodeURIComponent(relationshipId)}`),
+      body,
+      {
+        headers: this.authHeaders(),
+      }
+    );
+  }
+
+  deleteRelationship(
+    relationshipId: string,
+    body: { replacementRelationshipId: string }
+  ): Observable<{ status: string; item: UserRelationshipOption; affectedUsers: any[] }> {
+    return this._http.request<{ status: string; item: UserRelationshipOption; affectedUsers: any[] }>(
+      'delete',
+      apiUrl(`/user-relationships/${encodeURIComponent(relationshipId)}`),
+      {
+        body,
+        headers: this.authHeaders(),
+      }
+    );
   }
 
   deleteUser(id: string): Observable<any> {

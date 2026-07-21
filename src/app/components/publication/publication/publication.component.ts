@@ -26,6 +26,7 @@ import {
 } from '../../../utils/file-kind';
 import {
   hasHtmlMarkup,
+  normalizeRichContentHtml,
   richContentPlainText,
   richTextWordCount,
 } from '../../../utils/rich-content';
@@ -305,9 +306,15 @@ export class PublicationComponent implements OnInit {
     });
   }
 
-  async pre_load() {
-    await this.onSubmit();
-    return this.publicationRecordId(this.publication);
+  async pre_load(event: any) {
+    let id = '';
+    try {
+      await this.onSubmit();
+      id = this.publicationRecordId(this.publication);
+      return id;
+    } finally {
+      event.complete?.(id);
+    }
   }
 
   switchEdit() {
@@ -418,7 +425,7 @@ export class PublicationComponent implements OnInit {
   }
 
   richContent(text: string): string {
-    const content = this.valuefy(text);
+    const content = normalizeRichContentHtml(this.valuefy(text));
     return hasHtmlMarkup(content) ? content : this.Linkify(content, '#29303b', '#4b8ff5');
   }
 

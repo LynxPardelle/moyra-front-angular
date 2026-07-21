@@ -12,8 +12,8 @@
 - Public Publications routes and public aggregate APIs have been smoke-tested.
 - `CASES_FEATURE_ENABLED` is enabled only in the intended environment.
 - `CASE_EMAIL_NOTIFICATIONS_ENABLED` stays disabled until the SES identity, sender, and DNS plan are confirmed.
-- `CASE_WEB_PUSH_ENABLED` stays disabled until VAPID private-key storage and runtime configuration are finished.
-- Client file-upload rollout acknowledges that malware scanning is not implemented in this MVP.
+- `CASE_WEB_PUSH_ENABLED` stays disabled until VAPID public config, backend subject, and `CASE_WEB_PUSH_PRIVATE_KEY_SECRET_ARN` are configured and tested.
+- External malware scanning is outside this release; do not add provider-specific upload scanning flags, routes, or UI controls without a separate cost-gated plan.
 - Hugo/Alec approve controlled test release before production promotion.
 
 ## Feature Flags
@@ -26,13 +26,15 @@ Backend flags:
 - `CASE_EMAIL_NOTIFICATIONS_ENABLED`: enables SES delivery for safe case summaries.
 - `CASE_EMAIL_FROM`, `CASE_EMAIL_REPLY_TO`, `CASE_EMAIL_IDENTITY_ARN`: SES sender and scoped identity settings; keep unset unless email delivery is enabled.
 - `CASE_APP_BASE_URL`: base URL used in authenticated case links.
-- `CASE_WEB_PUSH_ENABLED`: enables Web Push subscription writes and sender delivery.
+- `CASE_WEB_PUSH_ENABLED`: enables Web Push subscription writes and sender delivery only when subject, public key, and private-key secret ARN are present.
+- `CASE_WEB_PUSH_SUBJECT`, `CASE_WEB_PUSH_PUBLIC_KEY`, `CASE_WEB_PUSH_PRIVATE_KEY_SECRET_ARN`: VAPID runtime config; never use a raw private-key workflow variable.
 
 Frontend flags:
 
 - `casesFeatureEnabled`: shows private case navigation and allows `CasesGuard`.
 - `caseFeatureEnabledHosts`: host allowlist for controlled environments when `casesFeatureEnabled` stays false globally.
 - `caseServiceWorkerEnabled`: registers Angular service worker support.
+- `caseServiceWorkerEnabledHosts`: host allowlist for service-worker rollout when one production build serves test and production hosts.
 - `caseWebPushPublicKey`: browser VAPID public key; keep empty unless Web Push is enabled.
 
 Controlled test rollout posture:
@@ -90,7 +92,7 @@ Test deploy:
 1. Run workflow dispatch with `stageName=test`.
 2. Preserve the existing environment variables for custom domain, certificate, CORS origins, notification emails, and Bedrock settings.
 3. The workflow exposes Cases release settings through GitHub Environment variables and passes them into CDK.
-4. Do not pass Web Push VAPID private keys through workflow variables or CDK context; keep `CASE_WEB_PUSH_ENABLED=false` until secure runtime secret handling is designed.
+4. Do not pass Web Push VAPID private keys through workflow variables or CDK context; use `CASE_WEB_PUSH_PRIVATE_KEY_SECRET_ARN` after the secret exists.
 5. If a one-off CDK deploy is used instead, pass explicit context values and record the command in `Codex.md`.
 
 Production deploy:
@@ -217,8 +219,14 @@ SES:
 Web Push:
 
 - Do not store VAPID private keys in frontend environment files.
-- Enable only after backend runtime secret handling is configured.
+- Store the VAPID private key in AWS Secrets Manager and pass only `CASE_WEB_PUSH_PRIVATE_KEY_SECRET_ARN` to CDK/GitHub Actions.
+- Enable only after backend runtime secret handling is configured and `caseServiceWorkerEnabledHosts` limits first rollout to `test.moyra.org`.
 - Test expired subscriptions and service worker update behavior before production.
+
+External malware scanning:
+
+- Outside the current release.
+- Do not add a provider, flag, route, UI control, or activation checklist until a separate cost-gated plan is approved.
 
 ## Rollback
 
@@ -254,4 +262,4 @@ Record in `Codex.md`:
 - API Gateway route verification output.
 - Public smoke URLs and statuses.
 - Private smoke users and role matrix, without passwords or secrets.
-- Activation decisions for SES, Web Push, and client-upload scanning.
+- Activation decisions for SES and Web Push.

@@ -18,6 +18,7 @@ import { buildEmbedItems, EmbedItem, embedTrackKey } from '../../../utils/embeds
 import { FileKindBadge, fileKindBadges, fileKindSummary } from '../../../utils/file-kind';
 import {
   hasHtmlMarkup,
+  normalizeRichContentHtml,
   richContentPlainText,
   richTextWordCount,
 } from '../../../utils/rich-content';
@@ -163,7 +164,7 @@ export class BlogComponent implements OnInit {
   }
 
   richContent(text: string): string {
-    const content = String(text || '');
+    const content = normalizeRichContentHtml(text);
     if (hasHtmlMarkup(content)) {
       return content;
     }

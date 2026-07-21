@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FileService } from '../services/file.service';
+import { ApiRuntime } from '../services/global';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -107,5 +108,16 @@ export class ArchivosComponent implements OnInit {
       return `${Math.round(size / 1024)} KB`;
     }
     return `${(size / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  fileUrl(file: any): string {
+    const url = typeof file?.url === 'string' ? file.url.trim() : '';
+    const apiPathPrefix = '/api/v2/';
+
+    if (!url.startsWith(apiPathPrefix)) {
+      return url;
+    }
+
+    return `${ApiRuntime.url}/${url.slice(apiPathPrefix.length)}`;
   }
 }

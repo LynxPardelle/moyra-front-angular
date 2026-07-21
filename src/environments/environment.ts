@@ -10,6 +10,7 @@ export const environment = {
   casesFeatureEnabled: false,
   caseFeatureEnabledHosts: [],
   caseServiceWorkerEnabled: false,
+  caseServiceWorkerEnabledHosts: [],
   caseWebPushPublicKey: '',
 };
 

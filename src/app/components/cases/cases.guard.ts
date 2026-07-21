@@ -6,7 +6,7 @@ import {
   RouterStateSnapshot,
   UrlTree,
 } from '@angular/router';
-import { Observable, catchError, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, filter, map, of, race, switchMap, take, timer } from 'rxjs';
 
 import { UserService } from '../../services/user.service';
 import { ApiRuntime } from '../../services/global';
@@ -42,19 +42,32 @@ export class CasesGuard implements CanActivate {
         }
 
         return this.tryRefreshSession().pipe(
-          map((session) => {
+          switchMap((session) => {
             if (session) {
-              return true;
+              return of(true);
             }
 
-            return this._router.createUrlTree(['/login'], {
-              queryParams: {
-                returnUrl: url,
-              },
-            });
+            return this.waitForSessionOrLogin(url);
           })
         );
       })
+    );
+  }
+
+  private waitForSessionOrLogin(url: string): Observable<boolean | UrlTree> {
+    const loginTree = this._router.createUrlTree(['/login'], {
+      queryParams: {
+        returnUrl: url,
+      },
+    });
+
+    return race(
+      this._authFacade.state$.pipe(
+        filter((state) => state.isAuthenticated),
+        take(1),
+        map(() => true)
+      ),
+      timer(800).pipe(map(() => loginTree))
     );
   }
 

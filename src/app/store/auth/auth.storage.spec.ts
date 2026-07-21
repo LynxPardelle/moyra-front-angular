@@ -30,6 +30,20 @@ describe('auth storage session normalization', () => {
     expect(session?.identity.role).toBe('ROLE_ADMIN');
   });
 
+  it('accepts legal staff role from trusted token claims', () => {
+    const session = createAuthSession(
+      { role: 'ROLE_USER', email: 'abogado@moyra.org' },
+      fakeJwt({
+        sub: 'legal-user',
+        exp: futureExpiration(),
+        'cognito:groups': ['ROLE_LEGAL_STAFF'],
+      })
+    );
+
+    expect(session?.role).toBe('ROLE_LEGAL_STAFF');
+    expect(session?.identity.role).toBe('ROLE_LEGAL_STAFF');
+  });
+
   it('rejects expired JWT sessions', () => {
     const session = createAuthSession(
       { role: 'ROLE_ADMIN' },

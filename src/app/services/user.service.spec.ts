@@ -41,6 +41,37 @@ describe('UserService auth transport', () => {
     });
   });
 
+  it('lists users through the v2 users endpoint with auth query params', () => {
+    service.getUsers(0, 200, '-create_at').subscribe();
+
+    const request = http.expectOne(
+      (candidate) =>
+        candidate.url === apiUrl('/users') &&
+        candidate.params.get('page') === '0' &&
+        candidate.params.get('ipp') === '200' &&
+        candidate.params.get('sort') === '-create_at'
+    );
+    expect(request.request.method).toBe('GET');
+
+    request.flush({ status: 'success', users: [] });
+  });
+
+  it('updates users through the authenticated v2 users endpoint', () => {
+    const token = jwt({ exp: 2000000000, token_use: 'access' });
+    localStorage.setItem('token', token);
+
+    service.updateUser('user-1', { displayName: 'Usuario editado' }).subscribe();
+
+    const request = http.expectOne(apiUrl('/users/user-1'));
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.withCredentials).toBeFalse();
+    expect(request.request.headers.get('Authorization')).toBe(token);
+    expect(request.request.body).toBe(JSON.stringify({ displayName: 'Usuario editado' }));
+
+    request.flush({ status: 'success', item: { id: 'user-1', displayName: 'Usuario editado' } });
+    localStorage.removeItem('token');
+  });
+
   it('skips refresh calls locally when credentialed auth cookies are unavailable', (done) => {
     service.refreshSession().subscribe((response) => {
       expect(response).toBeNull();
@@ -190,50 +221,24 @@ describe('UserService auth transport', () => {
     cognitoRequest.flush({});
   });
 
-  it('changes the current user password with the stored access token', () => {
-    const token = 'eyJhbGciOiJub25lIn0.eyJleHAiOjIwMDAwMDAwMDB9.signature';
-    localStorage.setItem('token', token);
-
-    service.changePassword('old-password', 'new-password').subscribe();
-
-    const request = http.expectOne(apiUrl('/auth/change-password'));
-    expect(request.request.method).toBe('POST');
-    expect(request.request.headers.get('Authorization')).toBe(token);
-    expect(request.request.body).toBe(
-      JSON.stringify({
-        currentPassword: 'old-password',
-        newPassword: 'new-password',
-      })
-    );
-
-    request.flush({ status: 'success' });
-    localStorage.removeItem('token');
-  });
-
-  it('falls back to Cognito direct password change with a stored access token when the auth API route is not deployed', () => {
+  it('changes the current user password directly with Cognito when an access token is stored', () => {
     const token = jwt({ exp: 2000000000, token_use: 'access' });
     localStorage.setItem('token', token);
 
     service.changePassword('old-password', 'new-password').subscribe();
 
-    const apiRequest = http.expectOne(apiUrl('/auth/change-password'));
-    apiRequest.flush(
-      { message: 'Not Found' },
-      { status: 404, statusText: 'Not Found' }
-    );
-
-    const cognitoRequest = http.expectOne(COGNITO_ENDPOINT);
-    expect(cognitoRequest.request.method).toBe('POST');
-    expect(cognitoRequest.request.headers.get('X-Amz-Target')).toBe(
+    const request = http.expectOne(COGNITO_ENDPOINT);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.headers.get('X-Amz-Target')).toBe(
       'AWSCognitoIdentityProviderService.ChangePassword'
     );
-    expect(cognitoRequest.request.body).toEqual({
+    expect(request.request.body).toEqual({
       AccessToken: token,
       PreviousPassword: 'old-password',
       ProposedPassword: 'new-password',
     });
 
-    cognitoRequest.flush({});
+    request.flush({});
     localStorage.removeItem('token');
   });
 
@@ -248,12 +253,6 @@ describe('UserService auth transport', () => {
     localStorage.setItem('token', idToken);
 
     service.changePassword('old-password', 'new-password').subscribe();
-
-    const apiRequest = http.expectOne(apiUrl('/auth/change-password'));
-    apiRequest.flush(
-      { message: 'Not Found' },
-      { status: 404, statusText: 'Not Found' }
-    );
 
     const authRequest = http.expectOne(COGNITO_ENDPOINT);
     expect(authRequest.request.headers.get('X-Amz-Target')).toBe(

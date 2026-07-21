@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 
 import { CaseStatusDefinition, CaseType, caseStatusLabel } from '../../models/case';
 import { CaseService } from '../../services/case.service';
+import { RichTextEditorComponent } from '../../components/web-utility/rich-text-editor/rich-text-editor.component';
 
 type CaseStatusEditor = {
   id: string;
@@ -25,7 +26,7 @@ type CaseTypeEditor = {
 
 @Component({
   selector: 'app-admin-cases-config',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, RichTextEditorComponent],
   template: `
     <section class="admin-cases-config">
       <a routerLink="/admin/casos" class="admin-cases-config__back">Casos</a>
@@ -48,39 +49,6 @@ type CaseTypeEditor = {
       <div class="admin-cases-config__layout">
         <section class="admin-cases-config__panel">
           <h2>Tipos</h2>
-          <form class="admin-cases-config__form" (ngSubmit)="createCaseType()">
-            <label>
-              Nombre
-              <input
-                name="newTypeName"
-                [(ngModel)]="newTypeName"
-                maxlength="120"
-                placeholder="Ej. Litigio civil"
-              />
-            </label>
-            <label>
-              Descripción
-              <textarea
-                name="newTypeDescription"
-                [(ngModel)]="newTypeDescription"
-                maxlength="2000"
-                placeholder="Uso interno del tipo de caso"
-              ></textarea>
-            </label>
-            <label>
-              Primer estado
-              <input
-                name="newTypeStatus"
-                [(ngModel)]="newTypeStatusLabel"
-                maxlength="120"
-                placeholder="Ej. En revisión"
-              />
-            </label>
-            <button type="submit" [disabled]="creating">
-              {{ creating ? 'Creando...' : 'Crear tipo' }}
-            </button>
-          </form>
-
           @if (caseTypes.length === 0) {
           <p class="admin-cases-config__empty">Aún no hay tipos de caso configurados.</p>
           } @else {
@@ -97,6 +65,41 @@ type CaseTypeEditor = {
             }
           </nav>
           }
+
+          <hr class="admin-cases-config__divider" />
+          <h3 class="admin-cases-config__create-title">Crear nuevo tipo</h3>
+          <form class="admin-cases-config__form" (ngSubmit)="createCaseType()">
+            <label>
+              Nombre
+              <input
+                name="newTypeName"
+                [(ngModel)]="newTypeName"
+                maxlength="120"
+                placeholder="Ej. Litigio civil"
+              />
+            </label>
+            <div class="admin-cases-config__rich-field">
+              <app-rich-text-editor
+                label="Descripción"
+                help="Uso interno del tipo de caso."
+                placeholder="Uso interno del tipo de caso"
+                [(value)]="newTypeDescription"
+                minHeight="150px"
+              />
+            </div>
+            <label>
+              Primer estado
+              <input
+                name="newTypeStatus"
+                [(ngModel)]="newTypeStatusLabel"
+                maxlength="120"
+                placeholder="Ej. En revisión"
+              />
+            </label>
+            <button type="submit" [disabled]="creating">
+              {{ creating ? 'Creando...' : 'Crear tipo' }}
+            </button>
+          </form>
         </section>
 
         <section class="admin-cases-config__panel admin-cases-config__editor">
@@ -117,27 +120,19 @@ type CaseTypeEditor = {
               Nombre
               <input name="typeName" [(ngModel)]="editForm.name" maxlength="120" />
             </label>
-            <label>
-              Descripción
-              <textarea
-                name="typeDescription"
-                [(ngModel)]="editForm.description"
-                maxlength="2000"
-              ></textarea>
-            </label>
+            <div class="admin-cases-config__rich-field">
+              <app-rich-text-editor
+                label="Descripción"
+                help="Texto interno para orientar el uso de este tipo de caso."
+                placeholder="Descripción"
+                [(value)]="editForm.description"
+                minHeight="150px"
+              />
+            </div>
 
             <div class="admin-cases-config__statuses">
               <div class="admin-cases-config__statuses-head">
                 <h3>Estados</h3>
-                <div class="admin-cases-config__add-status">
-                  <input
-                    name="newStatusLabel"
-                    [(ngModel)]="newStatusLabel"
-                    maxlength="120"
-                    placeholder="Nuevo estado"
-                  />
-                  <button type="button" (click)="addStatus()">Agregar estado</button>
-                </div>
               </div>
 
               @for (status of sortedEditableStatuses(); track status.id || $index; let index = $index) {
@@ -173,6 +168,72 @@ type CaseTypeEditor = {
                 </label>
               </article>
               }
+
+              <article class="admin-cases-config__status-row admin-cases-config__status-row--new">
+                <label>
+                  Nueva etiqueta
+                  <input
+                    name="newStatusLabel"
+                    [(ngModel)]="newStatusDraft.label"
+                    maxlength="120"
+                    placeholder="Nuevo estado"
+                  />
+                </label>
+                <label>
+                  Color
+                  <input name="newStatusColor" type="color" [(ngModel)]="newStatusDraft.color" />
+                </label>
+                <label>
+                  Orden
+                  <input name="newStatusOrder" type="number" [(ngModel)]="newStatusDraft.order" />
+                </label>
+                <label class="admin-cases-config__toggle">
+                  <input name="newStatusActive" type="checkbox" [(ngModel)]="newStatusDraft.active" />
+                  Activo
+                </label>
+                <label class="admin-cases-config__toggle">
+                  <input
+                    name="newStatusDefault"
+                    type="checkbox"
+                    [(ngModel)]="newStatusDraft.isDefault"
+                  />
+                  Inicial
+                </label>
+                <button type="button" [disabled]="saving" (click)="addStatus()">
+                  Agregar estado
+                </button>
+              </article>
+
+              @if (copyableCaseTypes().length > 0) {
+              <div class="admin-cases-config__copy-status">
+                <h4>Copiar estado de otro tipo</h4>
+                <label>
+                  Tipo origen
+                  <select name="copyStatusTypeId" [(ngModel)]="copyStatusTypeId" (ngModelChange)="copyStatusId = ''">
+                    <option value="">Selecciona un tipo</option>
+                    @for (caseType of copyableCaseTypes(); track caseType.id) {
+                    <option [value]="caseType.id">{{ caseType.name }}</option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  Estado
+                  <select name="copyStatusId" [(ngModel)]="copyStatusId">
+                    <option value="">Selecciona un estado</option>
+                    @for (status of statusesForCopySource(); track status.id) {
+                    <option [value]="status.id">{{ statusLabel(status) }}</option>
+                    }
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  [disabled]="saving || !copyStatusTypeId || !copyStatusId"
+                  (click)="copyStatusFromSource()"
+                >
+                  Copiar estado
+                </button>
+              </div>
+              }
             </div>
 
             @if (successMessage) {
@@ -194,9 +255,11 @@ type CaseTypeEditor = {
   styles: [
     `
       .admin-cases-config {
-        width: min(1180px, calc(100vw - 32px));
+        box-sizing: border-box;
+        max-width: 1180px;
+        width: 100%;
         margin: 0 auto;
-        padding: 24px 0;
+        padding: 24px 16px;
         color: #29303b;
       }
 
@@ -226,7 +289,7 @@ type CaseTypeEditor = {
 
       .admin-cases-config__layout {
         display: grid;
-        grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+        grid-template-columns: minmax(min(280px, 100%), 360px) minmax(0, 1fr);
         gap: 16px;
         align-items: start;
       }
@@ -254,29 +317,76 @@ type CaseTypeEditor = {
         font-size: 0.82rem;
       }
 
-      input,
-      textarea,
-      button {
-        border: 1px solid rgba(41, 48, 59, 0.35);
-        min-height: 38px;
-        padding: 7px 10px;
+      .admin-cases-config__rich-field {
+        display: block;
+      }
+
+      input:not([type='checkbox']):not([type='radio']):not([type='color']),
+      select,
+      textarea {
         background: #ffffff;
+        border: 1px solid rgba(41, 48, 59, 0.28);
+        border-radius: 0;
+        box-shadow:
+          0 8px 18px rgba(41, 48, 59, 0.06),
+          inset 4px 0 0 rgba(75, 143, 245, 0.62);
         color: #29303b;
+        font-size: 1rem;
+        font-weight: 650;
+        line-height: 1.45;
+        min-height: 42px;
+        padding: 0.8rem 0.9rem 0.8rem 1rem;
+        width: 100%;
       }
 
       textarea {
-        min-height: 84px;
+        min-height: 120px;
         resize: vertical;
       }
 
+      input[type='color'] {
+        background: #ffffff;
+        border: 1px solid rgba(41, 48, 59, 0.28);
+        min-height: 42px;
+        padding: 4px;
+        width: 100%;
+      }
+
+      input:not([type='checkbox']):not([type='radio']):not([type='color']):hover,
+      select:hover,
+      textarea:hover,
+      input:not([type='checkbox']):not([type='radio']):not([type='color']):focus,
+      select:focus,
+      textarea:focus {
+        border-color: #4b8ff5;
+        box-shadow:
+          0 0 0 3px rgba(75, 143, 245, 0.22),
+          0 12px 24px rgba(41, 48, 59, 0.08),
+          inset 4px 0 0 #4b8ff5;
+        outline: 0;
+      }
+
       button {
+        background: #ffffff;
+        border: 1px solid #4b8ff5;
         border-color: #4b8ff5;
         color: #4b8ff5;
+        min-height: 38px;
+        padding: 7px 10px;
       }
 
       button:disabled {
         border-color: rgba(41, 48, 59, 0.24);
         color: rgba(41, 48, 59, 0.48);
+      }
+
+      button:not(:disabled):hover,
+      button:not(:disabled):focus-visible,
+      .admin-cases-config__back:hover,
+      .admin-cases-config__back:focus-visible {
+        background: #4b8ff5;
+        color: #ffffff;
+        outline: 0;
       }
 
       .admin-cases-config__types button {
@@ -295,9 +405,19 @@ type CaseTypeEditor = {
         color: rgba(41, 48, 59, 0.62);
       }
 
+      .admin-cases-config__divider {
+        border: 0;
+        border-top: 1px solid rgba(41, 48, 59, 0.18);
+        margin: 18px 0;
+      }
+
+      .admin-cases-config__create-title {
+        font-size: 1rem;
+        margin-bottom: 10px;
+      }
+
       .admin-cases-config__editor-head,
-      .admin-cases-config__statuses-head,
-      .admin-cases-config__add-status {
+      .admin-cases-config__statuses-head {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
@@ -305,17 +425,32 @@ type CaseTypeEditor = {
         justify-content: space-between;
       }
 
-      .admin-cases-config__add-status {
-        justify-content: flex-start;
-      }
-
       .admin-cases-config__status-row {
         display: grid;
-        grid-template-columns: minmax(180px, 1fr) 96px 88px 96px 96px;
+        grid-template-columns: minmax(min(220px, 100%), 1fr) 96px 88px 96px 96px auto;
         gap: 10px;
         align-items: end;
         border-top: 1px solid rgba(41, 48, 59, 0.14);
         padding-top: 12px;
+      }
+
+      .admin-cases-config__status-row--new {
+        background: #f8fafc;
+        padding: 12px;
+      }
+
+      .admin-cases-config__copy-status {
+        border-top: 1px solid rgba(41, 48, 59, 0.14);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(180px, 1fr)) auto;
+        gap: 10px;
+        padding-top: 12px;
+        align-items: end;
+      }
+
+      .admin-cases-config__copy-status h4 {
+        grid-column: 1 / -1;
+        margin: 0;
       }
 
       .admin-cases-config__toggle {
@@ -339,7 +474,8 @@ type CaseTypeEditor = {
 
       @media (max-width: 900px) {
         .admin-cases-config__layout,
-        .admin-cases-config__status-row {
+        .admin-cases-config__status-row,
+        .admin-cases-config__copy-status {
           grid-template-columns: 1fr;
         }
       }
@@ -359,7 +495,16 @@ export class AdminCasesConfigComponent implements OnInit {
   newTypeName = '';
   newTypeDescription = '';
   newTypeStatusLabel = 'En revisión';
-  newStatusLabel = '';
+  newStatusDraft: CaseStatusEditor = {
+    id: '',
+    label: '',
+    color: '#334155',
+    order: 1,
+    active: true,
+    isDefault: false,
+  };
+  copyStatusTypeId = '';
+  copyStatusId = '';
 
   constructor(private _caseService: CaseService) {}
 
@@ -463,6 +608,9 @@ export class AdminCasesConfigComponent implements OnInit {
     if (!this.editForm.statuses.some((status) => status.isDefault)) {
       this.editForm.statuses[0].isDefault = true;
     }
+    this.resetNewStatusDraft();
+    this.copyStatusTypeId = '';
+    this.copyStatusId = '';
     this.formError = '';
     this.successMessage = '';
   }
@@ -513,26 +661,62 @@ export class AdminCasesConfigComponent implements OnInit {
     if (!this.editForm) {
       return;
     }
-    const label = this.newStatusLabel.trim();
+    const label = this.newStatusDraft.label.trim();
     if (!label) {
       this.formError = 'Captura la etiqueta del nuevo estado.';
       return;
     }
-    const nextOrder =
-      Math.max(0, ...this.editForm.statuses.map((status) => Number(status.order) || 0)) + 1;
+    const statusToAdd: CaseStatusEditor = {
+      ...this.newStatusDraft,
+      id: this.newStatusId(label),
+      label,
+      color: this.newStatusDraft.color || '#334155',
+      order: Number(this.newStatusDraft.order) || this.nextStatusOrder(),
+      active: this.newStatusDraft.active !== false,
+      isDefault: this.newStatusDraft.isDefault === true,
+    };
+    if (statusToAdd.isDefault) {
+      this.editForm.statuses = this.editForm.statuses.map((status) => ({
+        ...status,
+        isDefault: false,
+      }));
+    }
+    this.editForm.statuses = [
+      ...this.editForm.statuses,
+      statusToAdd,
+    ];
+    this.resetNewStatusDraft();
+    this.formError = '';
+    this.saveSelectedCaseType();
+  }
+
+  copyStatusFromSource(): void {
+    if (!this.editForm || !this.copyStatusTypeId || !this.copyStatusId) {
+      return;
+    }
+    const sourceStatus = this.statusesForCopySource().find(
+      (status) => status.id === this.copyStatusId
+    );
+    if (!sourceStatus) {
+      this.formError = 'Selecciona un estado válido para copiar.';
+      return;
+    }
+
+    const label = caseStatusLabel(sourceStatus);
     this.editForm.statuses = [
       ...this.editForm.statuses,
       {
         id: this.newStatusId(label),
         label,
-        color: '#334155',
-        order: nextOrder,
-        active: true,
+        color: sourceStatus.color || '#334155',
+        order: this.nextStatusOrder(),
+        active: sourceStatus.active !== false,
         isDefault: false,
       },
     ];
-    this.newStatusLabel = '';
+    this.copyStatusId = '';
     this.formError = '';
+    this.saveSelectedCaseType();
   }
 
   markDefaultStatus(status: CaseStatusEditor): void {
@@ -549,6 +733,22 @@ export class AdminCasesConfigComponent implements OnInit {
     return [...(this.editForm?.statuses || [])].sort(
       (left, right) => (Number(left.order) || 0) - (Number(right.order) || 0)
     );
+  }
+
+  copyableCaseTypes(): CaseType[] {
+    return this.caseTypes.filter(
+      (caseType) => caseType.id !== this.editForm?.id && (caseType.statuses || []).length > 0
+    );
+  }
+
+  statusesForCopySource(): CaseStatusDefinition[] {
+    return (
+      this.caseTypes.find((caseType) => caseType.id === this.copyStatusTypeId)?.statuses || []
+    );
+  }
+
+  statusLabel(status: CaseStatusDefinition): string {
+    return caseStatusLabel(status);
   }
 
   activeStatusCount(caseType: CaseType): number {
@@ -594,5 +794,20 @@ export class AdminCasesConfigComponent implements OnInit {
       .slice(0, 48);
     const suffix = this.editForm ? this.editForm.statuses.length + 1 : 1;
     return `${this.editForm?.id || 'case-type'}:status:${base || 'estado'}-${suffix}`;
+  }
+
+  private nextStatusOrder(): number {
+    return Math.max(0, ...(this.editForm?.statuses || []).map((status) => Number(status.order) || 0)) + 1;
+  }
+
+  private resetNewStatusDraft(): void {
+    this.newStatusDraft = {
+      id: '',
+      label: '',
+      color: '#334155',
+      order: this.nextStatusOrder(),
+      active: true,
+      isDefault: false,
+    };
   }
 }
