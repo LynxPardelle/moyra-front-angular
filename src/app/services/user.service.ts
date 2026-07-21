@@ -206,6 +206,10 @@ export class UserService {
   }
 
   changePassword(currentPassword: string, newPassword: string): Observable<any> {
+    if (ApiRuntime.isV2 && CognitoRuntime.userPoolClientId) {
+      return this.changePasswordWithCognito(currentPassword, newPassword);
+    }
+
     const body = JSON.stringify({ currentPassword, newPassword });
     const headers = this.authHeaders();
 
