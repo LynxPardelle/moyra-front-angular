@@ -481,19 +481,19 @@ export class WeComponent implements OnInit, OnDestroy {
   }
 
   async pre_load(event: any) {
+    let id = '';
     try {
       switch (event.type) {
         case 'main':
           //this.onSubmit('main');
-          return this.main._id;
-          break;
+          id = this.main._id || '';
+          return id;
         case 'equip':
           await this.onSubmit('equip');
-          return this.equip._id;
-          break;
+          id = this.equip._id || '';
+          return id;
         default:
           return '';
-          break;
       }
     } catch (err: any) {
       this._webService.consoleLog(err, this.document + ' 108', this.customConsoleCSS);
@@ -524,6 +524,8 @@ export class WeComponent implements OnInit, OnDestroy {
       });
 
       return '';
+    } finally {
+      event.complete?.(id);
     }
   }
 
