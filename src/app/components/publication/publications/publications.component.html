@@ -79,7 +79,6 @@
               [src]="embed.embedUrl | safeEmbedUrl"
               [title]="embed.title"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-              allowfullscreen
               loading="eager"
               referrerpolicy="strict-origin-when-cross-origin"
             ></iframe>
@@ -89,7 +88,6 @@
               [src]="embed.embedUrl | safeEmbedUrl"
               [title]="embed.title"
               [attr.allow]="embed.allow"
-              allowfullscreen
               [attr.sandbox]="embed.sandbox"
               loading="eager"
               referrerpolicy="strict-origin-when-cross-origin"

@@ -43,6 +43,11 @@ app.use(
     maxAge: '1y',
     index: false,
     redirect: false,
+    setHeaders(res, filePath) {
+      if (filePath.replace(/\\/g, '/').includes('/assets/')) {
+        res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
+      }
+    },
   }),
 );
 
