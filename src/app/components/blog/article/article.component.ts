@@ -442,9 +442,15 @@ export class ArticleComponent implements OnInit {
     return result.isConfirmed;
   }
 
-  async pre_load() {
-    await this.onSubmit();
-    return this.articleRecordId(this.article);
+  async pre_load(event: any) {
+    let id = '';
+    try {
+      await this.onSubmit();
+      id = this.articleRecordId(this.article);
+      return id;
+    } finally {
+      event.complete?.(id);
+    }
   }
 
   switchEdit() {
