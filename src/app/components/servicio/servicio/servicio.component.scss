@@ -1,3 +1,25 @@
+.solution-admin-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  z-index: 20;
+}
+
+.solution-admin-action {
+  align-items: center;
+  border-radius: 0;
+  display: inline-flex;
+  font-weight: 700;
+  gap: 0.4rem;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.65rem 0.9rem;
+}
+
+.solution-admin-action--delete {
+  color: #29303b;
+}
+
 .solution-detail__image {
   height: auto;
   max-height: 500px;

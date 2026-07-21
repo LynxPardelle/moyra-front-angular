@@ -428,15 +428,15 @@ export class ServicioComponent implements OnInit {
   }
 
   async pre_load(event: any) {
+    let id = '';
     try {
       switch (event.type) {
         case 'servicio':
           await this.onSubmit();
-          return this.servicio.urltitle;
-          break;
+          id = this.servicio._id || this.servicio.urltitle || '';
+          return id;
         default:
           return '';
-          break;
       }
     } catch (err: any) {
       this._webService.consoleLog(err, this.document + ' 108', this.customConsoleCSS);
@@ -467,6 +467,8 @@ export class ServicioComponent implements OnInit {
       });
 
       return '';
+    } finally {
+      event.complete?.(id);
     }
   }
 

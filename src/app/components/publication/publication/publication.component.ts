@@ -306,9 +306,15 @@ export class PublicationComponent implements OnInit {
     });
   }
 
-  async pre_load() {
-    await this.onSubmit();
-    return this.publicationRecordId(this.publication);
+  async pre_load(event: any) {
+    let id = '';
+    try {
+      await this.onSubmit();
+      id = this.publicationRecordId(this.publication);
+      return id;
+    } finally {
+      event.complete?.(id);
+    }
   }
 
   switchEdit() {

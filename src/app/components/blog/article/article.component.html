@@ -319,7 +319,7 @@
         [thing]="article"
         [thingInside]="false"
         [id]="articleRecordId(article)"
-        (pre_loader)="pre_load()"
+        (pre_loader)="pre_load($event)"
         (recoverThing)="recoverThingFather()"
       ></app-file-uploader>
     </section>

@@ -35,8 +35,8 @@
         @for (file of visibleFiles(); track file) {
         <tr>
           <td>
-            @if (file.url) {
-            <a [href]="file.url" target="_blank" rel="noopener noreferrer">
+            @if (fileUrl(file)) {
+            <a [href]="fileUrl(file)" target="_blank" rel="noopener noreferrer">
               {{ file.title || file.location || file.id }}
             </a>
             } @if (!file.url) {
