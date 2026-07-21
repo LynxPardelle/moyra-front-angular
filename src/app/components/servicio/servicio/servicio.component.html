@@ -1,9 +1,9 @@
 <!-- Edit/Delete Buttons -->
 @if ( canChange === true && isAdmin === true ) {
-<div class="position-fixed ank ank-top-15per top-md-10per end-0">
+<div class="solution-admin-actions position-fixed ank ank-top-15per top-md-10per end-0">
   @if (editSwitch == false) {
   <button
-    class="btn ank ank-btn-linkM ank-text-bg1M mr-2"
+    class="solution-admin-action btn ank ank-btn-linkM ank-text-bg1M"
     (click)="switchEdit()"
     aria-label="Editar solución"
     title="Editar solución"
@@ -24,19 +24,20 @@
         d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"
       />
     </svg>
+    <span>Editar</span>
   </button>
   } @if (editSwitch == true) {
   <button
-    class="btn ank ank-btn-linkM ank-text-bg1M mr-2 font-weight-normal float-right"
+    class="solution-admin-action btn ank ank-btn-linkM ank-text-bg1M font-weight-normal"
     (click)="switchEdit()"
     aria-label="Cerrar edición"
     title="Cerrar edición"
   >
-    X
+    Cerrar
   </button>
   }
   <button
-    class="btn btn-warning mr-2"
+    class="solution-admin-action solution-admin-action--delete btn btn-warning"
     (click)="deleteServicio(servicio._id)"
     aria-label="Eliminar solución"
     title="Eliminar solución"
@@ -54,6 +55,7 @@
         d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5a.5.5 0 0 0-1 0v7a.5.5 0 0 0 1 0v-7z"
       />
     </svg>
+    <span>Eliminar</span>
   </button>
 </div>
 } @if (servicio && servicio.title) {

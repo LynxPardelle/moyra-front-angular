@@ -37,4 +37,31 @@ describe('ServicioComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('renders explicit labels for solution edit and delete controls', () => {
+    component.canChange = true;
+    component.isAdmin = true;
+    component.servicio = {
+      _id: 'solution-123',
+      title: 'Solución de prueba',
+      desc: '',
+      urltitle: 'solucion-de-prueba',
+    } as any;
+    component.editSwitch = false;
+    fixture.detectChanges();
+
+    let labels = Array.from(
+      fixture.nativeElement.querySelectorAll('.solution-admin-actions button')
+    ).map((button: any) => button.textContent.trim());
+
+    expect(labels).toEqual(['Editar', 'Eliminar']);
+
+    component.editSwitch = true;
+    fixture.detectChanges();
+    labels = Array.from(
+      fixture.nativeElement.querySelectorAll('.solution-admin-actions button')
+    ).map((button: any) => button.textContent.trim());
+
+    expect(labels).toEqual(['Cerrar', 'Eliminar']);
+  });
 });
