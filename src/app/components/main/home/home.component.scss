@@ -20,6 +20,8 @@
 
 .home-hero__content {
   max-width: 650px;
+  min-width: 0;
+  width: 100%;
 }
 
 .home-hero__eyebrow,
@@ -220,12 +222,21 @@
 
 @media (max-width: 640px) {
   .home-page {
+    max-width: 100vw;
+    overflow-x: hidden;
     padding-inline: 0.75rem;
   }
 
   .home-hero {
     gap: 1rem;
+    max-width: calc(100vw - 1.5rem);
+    overflow-x: hidden;
     padding: 1rem 0 1.5rem;
+    width: 100%;
+  }
+
+  .home-hero__content {
+    max-width: calc(100vw - 1.5rem);
   }
 
   .home-hero__media {
@@ -233,15 +244,18 @@
   }
 
   .home-hero__title {
-    font-size: clamp(1.86rem, 8.8vw, 2.34rem);
-    line-height: 1.08;
-    max-width: 100%;
-    overflow-wrap: anywhere;
+    font-size: clamp(1.75rem, 7.4vw, 2.05rem);
+    line-height: 1.12;
+    max-width: calc(100vw - 1.5rem);
+    overflow-wrap: break-word;
+    width: min(100%, 12ch, calc(100vw - 1.5rem));
   }
 
   .home-hero__copy {
     font-size: 1rem;
     line-height: 1.62;
+    max-width: calc(100vw - 1.5rem);
+    width: min(100%, 32ch, calc(100vw - 1.5rem));
   }
 
   .home-section__heading {

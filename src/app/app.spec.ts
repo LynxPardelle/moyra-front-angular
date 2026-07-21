@@ -7,6 +7,10 @@ import { UserService } from './services/user.service';
 import { WebService } from './services/web.service';
 import { SharedService } from './services/shared.service';
 import { AuthFacade } from './store/auth/auth.facade';
+import {
+  consumeAuthStorageFailureReason,
+  createAuthSession,
+} from './store/auth/auth.storage';
 import { NgxAngoraService } from 'ngx-angora-css';
 import { CasesFeatureService } from './components/cases/cases-feature.service';
 import { CaseService } from './services/case.service';
@@ -19,15 +23,18 @@ describe('App', () => {
   let casesEnabled: boolean;
   let unreadCount: number;
   let logoutSpy: jasmine.Spy;
+  let refreshSessionSpy: jasmine.Spy;
   let startNotificationClickRoutingSpy: jasmine.Spy;
 
   beforeEach(async () => {
+    consumeAuthStorageFailureReason();
     isAdmin = false;
     isLegalStaff = false;
     isAuthenticated = false;
     casesEnabled = false;
     unreadCount = 0;
     logoutSpy = jasmine.createSpy('logout');
+    refreshSessionSpy = jasmine.createSpy('refreshSession').and.returnValue(of(null));
     startNotificationClickRoutingSpy = jasmine.createSpy('startNotificationClickRouting');
 
     await TestBed.configureTestingModule({
@@ -44,7 +51,7 @@ describe('App', () => {
         {
           provide: UserService,
           useValue: {
-            refreshSession: () => of(null),
+            refreshSession: refreshSessionSpy,
           },
         },
         {
@@ -189,8 +196,49 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     await fixture.whenStable();
-    await Promise.resolve();
+    await waitUntil(() => startNotificationClickRoutingSpy.calls.count() === 1);
 
     expect(startNotificationClickRoutingSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('does not refresh the auth cookie for anonymous public visitors', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(refreshSessionSpy).not.toHaveBeenCalled();
+  });
+
+  it('refreshes the auth cookie when a stored token expired', async () => {
+    createAuthSession({ email: 'expired@example.com' }, expiredJwt());
+
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(refreshSessionSpy).toHaveBeenCalledTimes(1);
+  });
 });
+
+function expiredJwt(): string {
+  const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }));
+  const payload = btoa(
+    JSON.stringify({
+      sub: 'expired-user',
+      email: 'expired@example.com',
+      exp: 1,
+    })
+  );
+
+  return `${header}.${payload}.`;
+}
+
+async function waitUntil(condition: () => boolean): Promise<void> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (condition()) {
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+}
