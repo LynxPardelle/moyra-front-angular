@@ -19,7 +19,10 @@ import { UserService } from './services/user.service';
 import { WebService } from './services/web.service';
 import { SharedService } from './services/shared.service';
 import { AuthFacade } from './store/auth/auth.facade';
-import { createAuthSession } from './store/auth/auth.storage';
+import {
+  consumeAuthStorageFailureReason,
+  createAuthSession,
+} from './store/auth/auth.storage';
 import { CasesFeatureService } from './components/cases/cases-feature.service';
 import { NotificationBellComponent } from './components/notifications/notification-bell.component';
 
@@ -64,7 +67,7 @@ export class App implements OnDestroy, OnInit {
 
   // Utility
   public windowWidth = 0;
-  public readonly fallbackLogoUrl = '/assets/images/M&RALowQuality.png';
+  public readonly fallbackLogoUrl = '/assets/images/M&RALowQuality.png?v=20260710-serverless';
   private cssCreateTimer?: ReturnType<typeof setTimeout>;
   private lastCssCreateAt = 0;
   private stylesheetsReady?: Promise<void>;
@@ -266,6 +269,10 @@ export class App implements OnDestroy, OnInit {
             return of(null);
           }
 
+          if (consumeAuthStorageFailureReason() !== 'expired') {
+            return of(null);
+          }
+
           return this._userService.refreshSession().pipe(
             map((response: any) => createAuthSession(response?.user, response?.token)),
             catchError(() => of(null))
@@ -286,11 +293,9 @@ export class App implements OnDestroy, OnInit {
     }
 
     return (
-      logo.publicUrl ||
-      this.absoluteApiFileUrl(logo.url) ||
-      (logo.location
-        ? `${ApiRuntime.url}/files/main/${encodeURIComponent(logo.location)}`
-        : this.fallbackLogoUrl)
+      this.stableHeaderLogoUrl(logo.publicUrl) ||
+      this.stableHeaderLogoUrl(this.absoluteApiFileUrl(logo.url)) ||
+      this.fallbackLogoUrl
     );
   }
 
@@ -384,6 +389,23 @@ export class App implements OnDestroy, OnInit {
     return pathOrUrl.startsWith('/')
       ? `${apiOrigin}${pathOrUrl}`
       : `${ApiRuntime.url}/${pathOrUrl.replace(/^\/+/, '')}`;
+  }
+
+  private stableHeaderLogoUrl(pathOrUrl: string | null | undefined): string {
+    if (!pathOrUrl) {
+      return '';
+    }
+
+    const trimmed = pathOrUrl.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    if (trimmed.startsWith(`${ApiRuntime.url}/files/`)) {
+      return '';
+    }
+
+    return trimmed;
   }
 
   private shareMain(): void {

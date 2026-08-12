@@ -11,6 +11,7 @@ lerna-debug.log*
 
 # Compiled output
 /dist
+/Output/
 /tmp
 /out-tsc
 /bazel-out
