@@ -234,11 +234,15 @@ function expiredJwt(): string {
 }
 
 async function waitUntil(condition: () => boolean): Promise<void> {
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  const deadline = Date.now() + 3000;
+
+  while (Date.now() < deadline) {
     if (condition()) {
       return;
     }
 
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
+
+  throw new Error('Timed out waiting for the asynchronous app condition.');
 }

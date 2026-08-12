@@ -41,6 +41,15 @@
             "allowedCommonJsDependencies": [
               "quill-delta"
             ],
+            "security": {
+              "allowedHosts": [
+                "moyra.org",
+                "www.moyra.org",
+                "test.moyra.org",
+                "localhost",
+                "127.0.0.1"
+              ]
+            },
             "server": "src/main.server.ts",
             "outputMode": "server",
             "ssr": {
